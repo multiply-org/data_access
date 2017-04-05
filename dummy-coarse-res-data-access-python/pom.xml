@@ -2,18 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>data_access</artifactId>
+        <groupId>org.eu.multiply</groupId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.eu.multiply</groupId>
-    <artifactId>data_access</artifactId>
-    <packaging>pom</packaging>
-
+    <artifactId>dummy-coarse-res-data-access-python</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <modules>
-        <module>aux-data-access</module>
-        <module>aux-data-access-python-dummy</module>
-        <module>dummy-coarse-res-data-access-python</module>
-        <module>dummy-brdf-access-python</module>
-    </modules>
 
 </project>
