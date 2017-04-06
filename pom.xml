@@ -14,6 +14,8 @@
         <module>aux-data-access-python-dummy</module>
         <module>dummy-coarse-res-data-access-python</module>
         <module>dummy-brdf-access-python</module>
+        <module>dummy-high-res-data-access</module>
+        <module>dummy-sar-data-access</module>
     </modules>
 
 </project>
