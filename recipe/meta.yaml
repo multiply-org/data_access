@@ -1,0 +1,21 @@
+about:
+  summary: "MULTIPLY data access package"
+  home: https://github.com/multiply-org/data_access
+
+package:
+  name: multiply_data_access
+  version: "0.1"
+
+source:
+  git_url: "https://github.com/multiply-org/data_access.git"
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
