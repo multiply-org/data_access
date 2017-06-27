@@ -22,7 +22,7 @@ class SARDataAccessProvider(DataAccessProvider):
         """
 
 
-        return 'abc'
+        return self.output_dir
 
         
 
