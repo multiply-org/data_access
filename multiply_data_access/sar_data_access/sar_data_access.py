@@ -7,8 +7,8 @@ from .. data_access import DataAccessProvider
 
 
 class SARDataAccessProvider(DataAccessProvider):
-    def __init__(self):
-        pass
+    def __init__(self, **kwargs):
+        super(SARDataAccessProvider, self).__init__(**kwargs)
 
     def get_data(self):
         """
@@ -20,6 +20,9 @@ class SARDataAccessProvider(DataAccessProvider):
         d : str
             directory where downloaded unprocessed data can be found
         """
+
+
+        return 'abc'
 
         
 
