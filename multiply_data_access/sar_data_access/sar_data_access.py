@@ -21,10 +21,4 @@ class SARDataAccessProvider(DataAccessProvider):
             directory where downloaded unprocessed data can be found
         """
 
-
         return self.output_dir
-
-        
-
-
-
