@@ -12,4 +12,12 @@ setup(name='multiply-data-access',
                 'multiply_data_access.coarse_res_data_access',
                 'multiply_data_access.high_res_data_access',
                 'multiply_data_access.sar_data_access'],
+      entry_points={
+          'console_scripts': [
+              'multiply = multiply_data_access.data_access_command:main'
+          ],
+          # 'multiply_plugins': [
+          #     'multiply_data_access = multiply_data_access:multiply_data_access_init',
+          # ]
+      },
      )
