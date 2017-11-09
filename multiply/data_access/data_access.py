@@ -20,10 +20,11 @@ class DataSetMetaInfo:
     A representation of meta information about a data set. To be retrieved from a query on a MetaInfProvider.
     """
 
-    def __init__(self, coverage: str, start_time: str, end_time: str, identifier: str):
+    def __init__(self, coverage: str, start_time: str, end_time: str, data_type:str, identifier: str):
         self._coverage = coverage
         self._start_time = start_time
         self._end_time = end_time
+        self._data_type = data_type
         self._identifier = identifier
 
     @property
@@ -40,6 +41,11 @@ class DataSetMetaInfo:
     def coverage(self) -> str:
         """The dataset's spatial coverage, given as WKT string."""
         return self._coverage
+
+    @property
+    def data_type(self) -> str:
+        """The type of the dataset."""
+        return self._data_type
 
     @property
     def identifier(self) -> str:
