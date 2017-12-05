@@ -240,5 +240,5 @@ class WritableFileSystem(FileSystem):
     """
 
     @abstractmethod
-    def put(self, from_url: str):
+    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo):
         """Adds a data set to the file system by putting it at the expected location."""

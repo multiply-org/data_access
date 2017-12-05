@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
 from typing import Sequence
 import os.path
+import shutil
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
@@ -51,8 +52,6 @@ class LocalFileSystem(WritableFileSystem):
     def _get_validated_path(path: str) -> str:
         if not os.path.exists(path):
             raise ValueError('Could not find path {0}'.format(path))
-        if not path.startswith('/'):
-            path = '/' + path
         if not path.endswith('/'):
             path = path + '/'
         return path
@@ -77,13 +76,6 @@ class LocalFileSystem(WritableFileSystem):
         file_refs = []
         time = start_time
         while time <= end_time:
-            # start_time += start_time.timedelta(days=1)
-            # for yy in range(start_time.year, min(start_time.year + 1, end_time.year)):
-            #     relative_path.replace('/yy/', '/{}/'.format(yy))
-            #     for mm in range(start_time.month, min(start_time.month + 1, end_time.month)):
-            #         relative_path.replace('/mm/', '/{}/'.format(mm))
-            #         for dd in range(start_time.day, min(start_time.day + 1, end_time.day)):
-            #             relative_path.replace('/dd/', '/{}/'.format(dd))
             relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
             relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
             relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
@@ -110,6 +102,15 @@ class LocalFileSystem(WritableFileSystem):
                 return time + timedelta(days=365)
         return datetime(year=MAXYEAR, month=12, day=31)
 
-
-    def put(self, from_url: str):
-        pass
+    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo):
+        # we assume here that it suffices to consider the start time for putting a data set correctly
+        time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
+        relative_path = self.path + self.pattern
+        relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
+                                              '/{}/'.format(data_set_meta_info.data_type))
+        relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
+        relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
+        relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
+        if not os.path.exists(relative_path):
+            os.makedirs(relative_path)
+        shutil.copy(from_url, relative_path)
