@@ -21,8 +21,8 @@ START_TIME_HELP_TEXT = 'The earliest time for which EO data is requested. Given 
                        'than end_time. Optional'
 END_TIME_HELP_TEXT = 'The latest time for which EO data is requested. Given in ISO format, must not be earlier than ' \
                      'start_time. Optional.'
-DATA_TYPES_HELP_TEXT = 'List of string values. The types of EO data shall actually be retrieved. If not given, ' \
-                       'no data will be retrieved.'
+DATA_TYPES_HELP_TEXT = 'List of string values. The types of EO data shall actually be retrieved, to be separated ' \
+                       'by '',''. If not given, no data will be retrieved.'
 WORKING_DIR_HELP_TEXT = 'Directory to which the list with the urls shall be downloaded. If not given, the list will ' \
                         'be downloaded to the default working directory.'
 DOWNLOAD_DIR_HELP_TEXT = 'Directory to which data shall be downloaded. If not given, no data will be downloaded and ' \

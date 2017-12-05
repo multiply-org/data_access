@@ -155,22 +155,3 @@ def test_meta_info_provider_get_data_types():
     data_types = MetaInfoProvider.get_data_types_from_query_string(query_string)
     assert len(data_types) == 0
     assert_equal(data_types, [])
-
-
-def test_meta_info_provider_get_days_of_month():
-    assert MetaInfoProvider.get_days_of_month(2017, 1) == 31
-    assert MetaInfoProvider.get_days_of_month(2017, 2) == 28
-    assert MetaInfoProvider.get_days_of_month(2017, 3) == 31
-    assert MetaInfoProvider.get_days_of_month(2017, 4) == 30
-    assert MetaInfoProvider.get_days_of_month(2017, 5) == 31
-    assert MetaInfoProvider.get_days_of_month(2017, 6) == 30
-    assert MetaInfoProvider.get_days_of_month(2017, 7) == 31
-    assert MetaInfoProvider.get_days_of_month(2017, 8) == 31
-    assert MetaInfoProvider.get_days_of_month(2017, 9) == 30
-    assert MetaInfoProvider.get_days_of_month(2017, 10) == 31
-    assert MetaInfoProvider.get_days_of_month(2017, 11) == 30
-    assert MetaInfoProvider.get_days_of_month(2017, 12) == 31
-    assert MetaInfoProvider.get_days_of_month(2016, 2) == 29
-    assert MetaInfoProvider.get_days_of_month(2000, 2) == 28
-    assert MetaInfoProvider.get_days_of_month(1900, 2) == 29
-    assert MetaInfoProvider.get_days_of_month(1600, 2) == 28

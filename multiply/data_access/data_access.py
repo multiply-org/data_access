@@ -6,7 +6,7 @@ This module contains the MULTIPLY data access API.
 """
 
 from abc import ABCMeta, abstractmethod
-from typing import List, Sequence
+from typing import List
 from datetime import datetime, timedelta
 from shapely.wkt import loads
 from shapely.geometry import Polygon
@@ -20,7 +20,7 @@ class DataSetMetaInfo:
     A representation of meta information about a data set. To be retrieved from a query on a MetaInfProvider.
     """
 
-    def __init__(self, coverage: str, start_time: str, end_time: str, data_type:str, identifier: str):
+    def __init__(self, coverage: str, start_time: str, end_time: str, data_type: str, identifier: str):
         self._coverage = coverage
         self._start_time = start_time
         self._end_time = end_time
@@ -79,12 +79,8 @@ class FileSystem(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def get(self) -> Sequence[FileRef]:
+    def get(self, data_set_meta_info: DataSetMetaInfo) -> FileRef:
         """Retrieves a sequence of 'FileRef's."""
-
-    @abstractmethod
-    def open(self):
-        """"""
 
 
 class MetaInfoProvider(metaclass=ABCMeta):
@@ -110,15 +106,27 @@ class MetaInfoProvider(metaclass=ABCMeta):
     @staticmethod
     def get_start_time_from_query_string(query_string: str):
         start_time_as_string = query_string.split(';')[1]
-        return MetaInfoProvider._get_time_from_string(start_time_as_string, False)
+        return DataUtils.get_time_from_string(start_time_as_string, False)
 
     @staticmethod
     def get_end_time_from_query_string(query_string: str):
         end_time_as_string = query_string.split(';')[2]
-        return MetaInfoProvider._get_time_from_string(end_time_as_string, True)
+        return DataUtils.get_time_from_string(end_time_as_string, True)
 
     @staticmethod
-    def _get_time_from_string(time_string: str, upper_bound: bool) -> datetime:
+    def get_data_types_from_query_string(query_string: str) -> List[str]:
+        data_types = query_string.split(';')[3].split(',')
+        if len(data_types) == 1 and data_types[0] == '':
+            return []
+        for i, data_type in enumerate(data_types):
+            data_types[i] = data_type.strip()
+        return data_types
+
+
+class DataUtils:
+
+    @staticmethod
+    def get_time_from_string(time_string: str, upper_bound: bool = False) -> datetime:
         # note: This an excerpt of a method in cate_core
         format_to_timedelta = [("%Y-%m-%dT%H:%M:%S", timedelta(), False),
                                ("%Y-%m-%d %H:%M:%S", timedelta(), False),
@@ -129,7 +137,7 @@ class MetaInfoProvider(metaclass=ABCMeta):
             try:
                 dt = datetime.strptime(time_string, f)
                 if adjust:
-                    td = timedelta(days=MetaInfoProvider.get_days_of_month(dt.year, dt.month), seconds=-1)
+                    td = timedelta(days=DataUtils.get_days_of_month(dt.year, dt.month), seconds=-1)
                 return dt + td if upper_bound else dt
             except ValueError:
                 pass
@@ -142,24 +150,31 @@ class MetaInfoProvider(metaclass=ABCMeta):
             raise ValueError('Invalid month: %', month)
         if month in [1, 3, 5, 7, 8, 10, 12]:
             return 31
-        elif month in [4, 6, 9, 11]:
+        if month in [4, 6, 9, 11]:
             return 30
-        if year % 4 > 0:
-            return 28
-        if year % 400 == 0:
-            return 28
-        if year % 100 == 0:
+        if DataUtils.is_leap_year(year):
             return 29
-        return 29
+        return 28
 
     @staticmethod
-    def get_data_types_from_query_string(query_string: str) -> List[str]:
-        data_types = query_string.split(';')[3].split(',')
-        if len(data_types) == 1 and data_types[0] == '':
-            return []
-        for i, data_type in enumerate(data_types):
-            data_types[i] = data_type.strip()
-        return data_types
+    def is_leap_year(year: int) -> bool:
+        if year % 4 > 0:
+            return False
+        if year % 400 == 0:
+            return True
+        if year % 100 == 0:
+            return False
+        return True
+
+    @staticmethod
+    def get_mime_type(file_name: str):
+        if file_name.endswith('.nc'):
+            return 'application/x-netcdf'
+        elif file_name.endswith('.zip'):
+            return 'application/zip'
+        elif file_name.endswith('.json'):
+            return 'application/json'
+        return 'unknown mime type'
 
 
 class DataStore(object):
@@ -177,12 +192,12 @@ class DataStore(object):
         """The identifier of the data store."""
         return self._id
 
-    def get(self):
+    def get(self, data_set_meta_info: DataSetMetaInfo):
         """
         Retrieves data
         :return:
         """
-        self._file_system.get()
+        self._file_system.get(data_set_meta_info)
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         """
@@ -225,5 +240,5 @@ class WritableFileSystem(FileSystem):
     """
 
     @abstractmethod
-    def put(self):
+    def put(self, from_url: str):
         """Adds a data set to the file system by putting it at the expected location."""

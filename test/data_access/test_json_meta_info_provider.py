@@ -3,7 +3,7 @@ from multiply_data_access.data_access import DataSetMetaInfo
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
-path_to_json_file = '../test_data/test_meta_info.json'
+path_to_json_file = './test/test_data/test_meta_info.json'
 
 
 def test_json_meta_info_provider_query_for_region():

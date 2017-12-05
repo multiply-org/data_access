@@ -1,4 +1,4 @@
-from .data_access import MetaInfoProvider, DataSetMetaInfo
+from .data_access import MetaInfoProvider, DataSetMetaInfo, DataUtils
 from typing import List
 from shapely.wkt import loads
 import json
@@ -25,10 +25,10 @@ class JsonMetaInfoProvider(MetaInfoProvider):
             data_set_coverage = loads(data_set_info.get('coverage'))
             if not roi.intersects(data_set_coverage):
                 continue
-            data_set_start_time = self._get_time_from_string(data_set_info.get('start_time'), False)
+            data_set_start_time = DataUtils.get_time_from_string(data_set_info.get('start_time'), False)
             if query_end_time < data_set_start_time:
                 continue
-            data_set_end_time = self._get_time_from_string(data_set_info.get('end_time'), True)
+            data_set_end_time = DataUtils.get_time_from_string(data_set_info.get('end_time'), True)
             if data_set_end_time < query_start_time:
                 continue
             if data_set_info.get('data_type') in data_types:
