@@ -28,6 +28,7 @@ WORKING_DIR_HELP_TEXT = 'Directory to which the list with the urls shall be down
 DOWNLOAD_DIR_HELP_TEXT = 'Directory to which data shall be downloaded. If not given, no data will be downloaded and ' \
                          'only locally available data will be considered.'
 
+
 class GetDataUrlsCommand(SubCommandCommand):
 
     @classmethod
@@ -54,6 +55,7 @@ class GetDataUrlsCommand(SubCommandCommand):
 
 # list of commands supported by the CLI. Entries are classes derived from :py:class:'Command' class-
 COMMAND_REGISTRY = [GetDataUrlsCommand]
+
 
 def main(args=None) -> int:
     # noinspection PyTypeChecker

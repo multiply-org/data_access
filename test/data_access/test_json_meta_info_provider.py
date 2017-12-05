@@ -1,5 +1,4 @@
-from multiply.data_access import JsonMetaInfoProvider
-from multiply_data_access.data_access import DataSetMetaInfo
+from multiply_data_access import DataSetMetaInfo, JsonMetaInfoProvider
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 

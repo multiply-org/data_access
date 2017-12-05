@@ -1,5 +1,5 @@
 from nose.tools import assert_equal
-from multiply.data_access import DataUtils
+from multiply_data_access import DataUtils
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 

@@ -1,5 +1,4 @@
-from multiply.data_access.data_access import DataSetMetaInfo
-from multiply.data_access.local_file_system import LocalFileSystem
+from multiply_data_access import DataSetMetaInfo, LocalFileSystem
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
