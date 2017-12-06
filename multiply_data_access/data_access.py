@@ -206,13 +206,6 @@ class DataStore(object):
         """
         return self._meta_info_provider.query(query_string)
 
-    def open(self):
-        """
-        Retrieves a data set.
-        :return:
-        """
-        self._file_system.open()
-
 
 class WritableDataStore(DataStore):
     """
@@ -241,4 +234,9 @@ class WritableFileSystem(FileSystem):
 
     @abstractmethod
     def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo):
-        """Adds a data set to the file system by putting it at the expected location."""
+        """Adds a data set to the file system by copying it from the given url to the expected location within
+        the file system."""
+
+    @abstractmethod
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        """Removes all data sets from the file system that are described by the data set meta info"""

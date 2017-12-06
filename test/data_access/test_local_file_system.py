@@ -58,12 +58,43 @@ def test_get_weird_pattern():
 def test_put():
     local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
     url = open('gfhnfd.nc', 'w+').name
+    data_set_meta_info = DataSetMetaInfo('doesn\'t matter', '2016-12-15', '2016-12-16', 'my_data_type',
+                                         'doesn\'t matter')
     try:
-        data_set_meta_info = DataSetMetaInfo('doesn\'t matter', '2016-12-15', '2016-12-16', 'my_data_type',
-                                             'doesn\'t matter')
         local_file_system.put(url, data_set_meta_info)
         assert os.path.exists('./test/test_data/my_data_type/2016/12/15/gfhnfd.nc')
     finally:
         os.remove(url)
         if os.path.exists('./test/test_data/my_data_type/2016/'):
             shutil.rmtree('./test/test_data/my_data_type/2016/')
+
+
+def test_remove_one_file_in_folder():
+    local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
+    if not os.path.exists('./test/test_data/my_data_type/2015/12/15/'):
+        os.makedirs('./test/test_data/my_data_type/2015/12/15/')
+    open('./test/test_data/my_data_type/2015/12/15/gfhnfd.nc', 'w+')
+    data_set_meta_info = DataSetMetaInfo('doesn\'t matter', '2015-12-15', '2015-12-16', 'my_data_type', '')
+    try:
+        local_file_system.remove(data_set_meta_info)
+        assert not os.path.exists('./test/test_data/my_data_type/2015/12/15/gfhnfd.nc')
+    finally:
+        if os.path.exists('./test/test_data/my_data_type/2015/'):
+            shutil.rmtree('./test/test_data/my_data_type/2015/')
+
+
+def test_remove_two_files_in_folder():
+    local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
+    if not os.path.exists('./test/test_data/my_data_type/2015/12/15/'):
+        os.makedirs('./test/test_data/my_data_type/2015/12/15/')
+    open('./test/test_data/my_data_type/2015/12/15/gfhnfd.nc', 'w+')
+    open('./test/test_data/my_data_type/2015/12/15/bcdvhftzd.nc', 'w+')
+    data_set_meta_info = DataSetMetaInfo('doesn\'t matter', '2015-12-15', '2015-12-16', 'my_data_type',
+                                         'gfhnfd.nc')
+    try:
+        local_file_system.remove(data_set_meta_info)
+        assert not os.path.exists('./test/test_data/my_data_type/2015/12/15/gfhnfd.nc')
+        assert os.path.exists('./test/test_data/my_data_type/2015/12/15/bcdvhftzd.nc')
+    finally:
+        if os.path.exists('./test/test_data/my_data_type/2015/'):
+            shutil.rmtree('./test/test_data/my_data_type/2015/')

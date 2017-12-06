@@ -56,7 +56,6 @@ class LocalFileSystem(WritableFileSystem):
             path = path + '/'
         return path
 
-
     @staticmethod
     def _validate_pattern(pattern: str):
         if not pattern:
@@ -64,7 +63,7 @@ class LocalFileSystem(WritableFileSystem):
         pattern = pattern[1:-1]
         split_pattern = pattern.split('/')
         for token in split_pattern:
-            if not token in _ALLOWED_PATTERNS:
+            if token not in _ALLOWED_PATTERNS:
                 raise ValueError('Invalid pattern: {0} not allowed in {1}'.format(token, pattern))
 
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
@@ -114,3 +113,20 @@ class LocalFileSystem(WritableFileSystem):
         if not os.path.exists(relative_path):
             os.makedirs(relative_path)
         shutil.copy(from_url, relative_path)
+
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
+        relative_path = self.path + self.pattern
+        relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
+                                              '/{}/'.format(data_set_meta_info.data_type))
+        relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
+        relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
+        relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
+        if os.path.exists(relative_path):
+            file_names = os.listdir(relative_path)
+            for file_name in file_names:
+                if data_set_meta_info.identifier in file_name:
+                    os.remove(relative_path + file_name)
+        while not self.path == relative_path and len(os.listdir(relative_path)) == 0:
+            os.rmdir(relative_path)
+            relative_path = relative_path[:relative_path[:relative_path.rfind('/')].rfind('/')]
