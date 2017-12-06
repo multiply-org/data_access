@@ -49,4 +49,4 @@ install:
   - pip install https://github.com/multiply-org/data-access/zipball/master
 
 script:
-  - pytest
+  - nosetests
