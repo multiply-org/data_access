@@ -126,8 +126,15 @@ class MetaInfoProvider(metaclass=ABCMeta):
 class DataUtils:
 
     @staticmethod
-    def get_time_from_string(time_string: str, upper_bound: bool = False) -> datetime:
+    def get_time_from_string(time_string: str, adjust_to_last_day: bool = False) -> datetime:
         # note: This an excerpt of a method in cate_core
+        """
+        Retrieves a datetime object from a string. If this is not possible, a ValueError is thrown.
+        :param time_string: A string in UTC time format
+        :param adjust_to_last_day: If true (and if the time string has no information about the number of days of
+        the month), the returned datetime will be set to the last day of the month; otherwise to the first.
+        :return: A datetime object corresponding to the UTC string that ahs been passed in.
+        """
         format_to_timedelta = [("%Y-%m-%dT%H:%M:%S", timedelta(), False),
                                ("%Y-%m-%d %H:%M:%S", timedelta(), False),
                                ("%Y-%m-%d", timedelta(hours=24, seconds=-1), False),
@@ -138,14 +145,19 @@ class DataUtils:
                 dt = datetime.strptime(time_string, f)
                 if adjust:
                     td = timedelta(days=DataUtils.get_days_of_month(dt.year, dt.month), seconds=-1)
-                return dt + td if upper_bound else dt
+                return dt + td if adjust_to_last_day else dt
             except ValueError:
                 pass
         raise ValueError('Invalid date/time value: "%s"' % time_string)
 
     @staticmethod
-    # not private so it can be tested
     def get_days_of_month(year: int, month: int) -> int:
+        """
+        Determines the number of days for a given month
+        :param year: The year (required to determine whether it is a leap year)
+        :param month: The month
+        :return: The number of days of this month
+        """
         if month < 1 or month > 12:
             raise ValueError('Invalid month: %', month)
         if month in [1, 3, 5, 7, 8, 10, 12]:
@@ -158,6 +170,11 @@ class DataUtils:
 
     @staticmethod
     def is_leap_year(year: int) -> bool:
+        """
+        Determines whether a year is a leap year.
+        :param year: The year.
+        :return: True, when the given year is a leap year
+        """
         if year % 4 > 0:
             return False
         if year % 400 == 0:
