@@ -5,7 +5,7 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 #: Name of command line executable
 CLI_NAME = 'multiply'
-CLI_DESCRIPTION = 'The MULTIPLY Data Access command line interface'
+CLI_DESCRIPTION = 'The MULTIPLY Command Line Interface'
 
 __version__ = '0.1'
 
