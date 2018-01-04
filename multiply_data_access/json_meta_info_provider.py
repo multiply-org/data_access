@@ -1,9 +1,11 @@
-from .data_access import MetaInfoProvider, DataSetMetaInfo, DataUtils
+from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProvider, MetaInfoProviderAccessor
 from typing import List
 from shapely.wkt import loads
 import json
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
+
+_NAME = 'JsonMetaInfoProvider'
 
 
 class JsonMetaInfoProvider(MetaInfoProvider):
@@ -39,3 +41,17 @@ class JsonMetaInfoProvider(MetaInfoProvider):
                                                      identifier=data_set_info.get('name'))
                 data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
+
+
+class JsonMetaInfoProviderAccessor(MetaInfoProviderAccessor):
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of the file system implementation."""
+        return _NAME
+
+    @classmethod
+    def create_from_parameters(cls, parameters: dict) -> JsonMetaInfoProvider:
+        if 'path_to_json_file' not in parameters.keys():
+            raise ValueError('Required parameter path_to_json_file is missing')
+        return JsonMetaInfoProvider(path_to_json_file=parameters['path_to_json_file'])

@@ -83,6 +83,17 @@ class FileSystem(metaclass=ABCMeta):
         """Retrieves a sequence of 'FileRef's."""
 
 
+class FileSystemAccessor(metaclass=ABCMeta):
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of the file system implementation."""
+
+    @classmethod
+    def create_from_parameters(cls, parameters: dict) -> FileSystem:
+        """Returns a FileSystem object."""
+
+
 class MetaInfoProvider(metaclass=ABCMeta):
     """
     An abstraction of a provider that contains meta information about the files provided by a data store.
@@ -121,6 +132,17 @@ class MetaInfoProvider(metaclass=ABCMeta):
         for i, data_type in enumerate(data_types):
             data_types[i] = data_type.strip()
         return data_types
+
+
+class MetaInfoProviderAccessor(metaclass=ABCMeta):
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of the meta info provider implementation."""
+
+    @classmethod
+    def create_from_parameters(cls, parameters: dict) -> MetaInfoProvider:
+        """Returns a MetaInfoProvider object."""
 
 
 class DataUtils:

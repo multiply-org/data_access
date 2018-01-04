@@ -4,7 +4,7 @@ Description
 
 This module contains an implementation of a file system that allows to get and put data stored on the local hard drive.
 """
-from .data_access import DataSetMetaInfo, DataUtils, FileRef, WritableFileSystem
+from .data_access import DataSetMetaInfo, DataUtils, FileRef, FileSystemAccessor, WritableFileSystem
 from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
 from typing import Sequence
@@ -18,13 +18,7 @@ _DAY_PATTERN = 'dd'
 _MONTH_PATTERN = 'mm'
 _YEAR_PATTERN = 'yy'
 _ALLOWED_PATTERNS = [_DATA_TYPE_PATTERN, _YEAR_PATTERN, _MONTH_PATTERN, _DAY_PATTERN]
-
-
-class TimeStep(Enum):
-    DAILY = 0
-    MONTHLY = 1
-    YEARLY = 2
-    NONE = 3
+_NAME = 'LocalFileSystem'
 
 
 class LocalFileSystem(WritableFileSystem):
@@ -130,3 +124,26 @@ class LocalFileSystem(WritableFileSystem):
         while not self.path == relative_path and len(os.listdir(relative_path)) == 0:
             os.rmdir(relative_path)
             relative_path = relative_path[:relative_path[:relative_path.rfind('/')].rfind('/')]
+
+
+class TimeStep(Enum):
+    DAILY = 0
+    MONTHLY = 1
+    YEARLY = 2
+    NONE = 3
+
+
+class LocalFileSystemAccessor(FileSystemAccessor):
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of the file system implementation."""
+        return _NAME
+
+    @classmethod
+    def create_from_parameters(cls, parameters: dict) -> LocalFileSystem:
+        if 'path' not in parameters.keys():
+            raise ValueError('Required parameter path is missing')
+        if 'pattern' not in parameters.keys():
+            raise ValueError('Required parameter pattern is missing')
+        return LocalFileSystem(path=parameters['path'], pattern=parameters['pattern'])

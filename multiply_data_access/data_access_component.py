@@ -1,6 +1,21 @@
-from typing import List, NewType, Sequence
+from multiply_data_access import DataStore, FileSystem, MetaInfoProvider
+from typing import List
+import pkg_resources
+import yaml
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
+
+
+#: List of FileSystem implementations supported by the CLI.
+# Entries are classes derived from :py:class:`FileSystem` class.
+#: MULTIPLY plugins may extend this list by their implementations during plugin initialisation.
+FILE_SYSTEM_REGISTRY = []
+
+
+#: List of MetaInfoProvider implementations supported by the CLI.
+# Entries are classes derived from :py:class:`MetaInfoProvider` class.
+#: MULTIPLY plugins may extend this list by their implementations during plugin initialisation.
+META_INFO_PROVIDER_REGISTRY = []
 
 
 class DataAccessComponent(object):
@@ -10,8 +25,8 @@ class DataAccessComponent(object):
     """
 
     def __init__(self):
-        # todo read data stores here
-        self._data_stores = []
+        self._set_file_system_registry()
+        self._set_meta_info_provider_registry()
 
     def get_data_urls(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[str]:
         """
@@ -39,3 +54,48 @@ class DataAccessComponent(object):
         :return:    A query string that may be passed on to a data store
         """
         return roi + ';' + start_time + ';' + end_time + ';' + data_types
+
+    def read_data_stores(self, file: str) -> List[DataStore]:
+        data_stores = []
+        stream = open(file, 'r')
+        data_store_lists = yaml.load(stream)
+        for index, data_store_entry in enumerate(data_store_lists['DataStores']):
+            if 'FileSystem' not in data_store_entry.keys():
+                raise UserWarning('DataStore is missing FileSystem: Cannot read DataStore')
+            if 'MetaInfoProvider' not in data_store_entry.keys():
+                raise UserWarning('DataStore is missing MetaInfoProvider: Cannot read DataStore')
+            file_system = self._create_file_system_from_dict(data_store_entry['FileSystem'])
+            meta_info_provider = self._create_meta_info_provider_from_dict(data_store_entry['MetaInfoProvider'])
+            if 'Id' in data_store_entry.keys():
+                id = data_store_entry['Id']
+            else:
+                id = index
+            data_store = DataStore(file_system, meta_info_provider, id)
+            data_stores.append(data_store)
+        return data_stores
+
+    def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
+        parameters = file_system_as_dict['parameters']
+        for file_system_accessor in FILE_SYSTEM_REGISTRY:
+            if file_system_accessor.name() == file_system_as_dict['type']:
+                return file_system_accessor.create_from_parameters(parameters)
+        raise UserWarning('Could not find file system of type {0}'.format(file_system_as_dict['type']))
+
+    def _create_meta_info_provider_from_dict(self, meta_info_provider_as_dict: dict) -> MetaInfoProvider:
+        parameters = meta_info_provider_as_dict['parameters']
+        for meta_info_provider_accessor in META_INFO_PROVIDER_REGISTRY:
+            if meta_info_provider_accessor.name() == meta_info_provider_as_dict['type']:
+                return meta_info_provider_accessor.create_from_parameters(parameters)
+        raise UserWarning('Could not find meta infor provider of type {0}'.format(meta_info_provider_as_dict['type']))
+
+    @staticmethod
+    def _set_file_system_registry():
+        registered_file_systems = pkg_resources.iter_entry_points('file_system_plugins')
+        for registered_file_system in registered_file_systems:
+            FILE_SYSTEM_REGISTRY.append(registered_file_system.load())
+
+    @staticmethod
+    def _set_meta_info_provider_registry():
+        registered_meta_info_providers = pkg_resources.iter_entry_points('meta_info_provider_plugins')
+        for registered_meta_info_provider in registered_meta_info_providers:
+            META_INFO_PROVIDER_REGISTRY.append(registered_meta_info_provider.load())
