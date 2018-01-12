@@ -4,7 +4,8 @@ from setuptools import setup
 
 requirements = [
     'nose',
-    'shapely'
+    'shapely',
+    'cate'
 ]
 
 setup(name='multiply-data-access',
