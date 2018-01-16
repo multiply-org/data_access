@@ -5,7 +5,7 @@ from setuptools import setup
 requirements = [
     'nose',
     'shapely',
-    'cate'
+    'yaml'
 ]
 
 setup(name='multiply-data-access',
@@ -14,9 +14,6 @@ setup(name='multiply-data-access',
       author='MULTIPLY Team',
       packages=['multiply_data_access'],
       entry_points={
-          'console_scripts': [
-              'multiply = multiply_data_access.data_access_command:main'
-          ],
           'file_system_plugins': [
               'local_file_system = multiply_data_access:local_file_system.LocalFileSystemAccessor',
           ],
