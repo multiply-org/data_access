@@ -5,7 +5,7 @@ from setuptools import setup
 requirements = [
     'nose',
     'shapely',
-    'yaml'
+    'pyyaml'
 ]
 
 setup(name='multiply-data-access',
