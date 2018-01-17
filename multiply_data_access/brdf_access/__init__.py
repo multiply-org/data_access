@@ -1,1 +1,0 @@
-from .dummy_brdf_archive import DummyBRDFArchive
