@@ -27,6 +27,7 @@ class DataAccessComponent(object):
     def __init__(self):
         self._set_file_system_registry()
         self._set_meta_info_provider_registry()
+        self._read_registered_data_stores()
 
     def get_data_urls(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[str]:
         """
@@ -54,6 +55,9 @@ class DataAccessComponent(object):
         :return:    A query string that may be passed on to a data store
         """
         return roi + ';' + start_time + ';' + end_time + ';' + data_types
+
+    def _read_registered_data_stores(self) -> None:
+        self._data_stores = self.read_data_stores()
 
     def read_data_stores(self, file: str) -> List[DataStore]:
         data_stores = []
