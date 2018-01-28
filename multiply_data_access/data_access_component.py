@@ -1,5 +1,7 @@
 from multiply_data_access import DataStore, FileSystem, MetaInfoProvider
+from pathlib import Path
 from typing import List
+import os
 import pkg_resources
 import yaml
 
@@ -16,6 +18,8 @@ FILE_SYSTEM_REGISTRY = []
 # Entries are classes derived from :py:class:`MetaInfoProvider` class.
 #: MULTIPLY plugins may extend this list by their implementations during plugin initialisation.
 META_INFO_PROVIDER_REGISTRY = []
+MULTIPLY_DIR_NAME = '.multiply'
+DATA_STORES_FILE_NAME = 'data_stores.yml'
 
 
 class DataAccessComponent(object):
@@ -57,12 +61,21 @@ class DataAccessComponent(object):
         return roi + ';' + start_time + ';' + end_time + ';' + data_types
 
     def _read_registered_data_stores(self) -> None:
-        self._data_stores = self.read_data_stores()
+        home_dir = str(Path.home())
+        multiply_home_dir = '{0}/{1}'.format(home_dir, MULTIPLY_DIR_NAME)
+        if not os.path.exists(multiply_home_dir):
+            os.mkdir(multiply_home_dir)
+        data_stores_file = '{0}/{1}'.format(multiply_home_dir, DATA_STORES_FILE_NAME)
+        if not os.path.exists(data_stores_file):
+            open(data_stores_file, 'w+')
+        self._data_stores = self.read_data_stores(data_stores_file)
 
     def read_data_stores(self, file: str) -> List[DataStore]:
         data_stores = []
         stream = open(file, 'r')
         data_store_lists = yaml.load(stream)
+        if data_store_lists is None:
+            return data_stores
         for index, data_store_entry in enumerate(data_store_lists['DataStores']):
             if 'FileSystem' not in data_store_entry.keys():
                 raise UserWarning('DataStore is missing FileSystem: Cannot read DataStore')
