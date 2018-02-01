@@ -6,10 +6,11 @@ This module contains the MULTIPLY data access API.
 """
 
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Sequence
 from datetime import datetime, timedelta
 from shapely.wkt import loads
 from shapely.geometry import Polygon
+import os
 
 __author__ = 'Alexander Löw (Ludwig Maximilians-Universität München), ' \
              'Tonio Fincke (Brockmann Consult GmbH)'
@@ -79,7 +80,7 @@ class FileSystem(metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def get(self, data_set_meta_info: DataSetMetaInfo) -> FileRef:
+    def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         """Retrieves a sequence of 'FileRef's."""
 
 
@@ -109,6 +110,8 @@ class MetaInfoProvider(metaclass=ABCMeta):
     @staticmethod
     def get_roi_from_query_string(query_string: str) -> Polygon:
         roi_as_wkt = query_string.split(';')[0]
+        if roi_as_wkt == '':
+            return None
         roi = loads(roi_as_wkt)
         if not isinstance(roi, Polygon):
             raise ValueError('ROI must be a polygon')
@@ -213,6 +216,8 @@ class DataUtils:
             return 'application/zip'
         elif file_name.endswith('.json'):
             return 'application/json'
+        elif os.path.isdir(file_name):
+            return 'application/x-directory'
         return 'unknown mime type'
 
 
@@ -231,12 +236,12 @@ class DataStore(object):
         """The identifier of the data store."""
         return self._id
 
-    def get(self, data_set_meta_info: DataSetMetaInfo):
+    def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         """
         Retrieves data
         :return:
         """
-        self._file_system.get(data_set_meta_info)
+        return self._file_system.get(data_set_meta_info)
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         """

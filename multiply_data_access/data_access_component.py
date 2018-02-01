@@ -31,6 +31,7 @@ class DataAccessComponent(object):
     def __init__(self):
         self._set_file_system_registry()
         self._set_meta_info_provider_registry()
+        self._data_stores = []
         self._read_registered_data_stores()
 
     def get_data_urls(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[str]:
@@ -44,8 +45,9 @@ class DataAccessComponent(object):
         for data_store in self._data_stores:
             query_results = data_store.query(query_string)
             for query_result in query_results:
-                file_ref = data_store.get(query_result)
-                urls.append(file_ref.url)
+                file_refs = data_store.get(query_result)
+                for file_ref in file_refs:
+                    urls.append(file_ref.url)
         return urls
 
     @staticmethod
@@ -68,7 +70,7 @@ class DataAccessComponent(object):
         data_stores_file = '{0}/{1}'.format(multiply_home_dir, DATA_STORES_FILE_NAME)
         if not os.path.exists(data_stores_file):
             open(data_stores_file, 'w+')
-        self._data_stores = self.read_data_stores(data_stores_file)
+        self.read_data_stores(data_stores_file)
 
     def read_data_stores(self, file: str) -> List[DataStore]:
         data_stores = []
@@ -89,6 +91,7 @@ class DataAccessComponent(object):
                 id = index
             data_store = DataStore(file_system, meta_info_provider, id)
             data_stores.append(data_store)
+        self._data_stores = self._data_stores + data_stores
         return data_stores
 
     def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
