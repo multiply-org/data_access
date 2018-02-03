@@ -61,10 +61,14 @@ class LocalFileSystem(WritableFileSystem):
                 raise ValueError('Invalid pattern: {0} not allowed in {1}'.format(token, pattern))
 
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
+        file_refs = []
+        if os.path.exists(data_set_meta_info.identifier):
+            mime_type = DataUtils.get_mime_type(data_set_meta_info.identifier)
+            file_refs.append(FileRef(data_set_meta_info.identifier, mime_type))
+            return file_refs
         relative_path = (self.path + self.pattern).replace('//', '/')
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
                                               '/{}/'.format(data_set_meta_info.data_type))
-        file_refs = []
         if data_set_meta_info.start_time is None and data_set_meta_info.end_time is None:
             mime_type = DataUtils.get_mime_type(relative_path)
             file_refs.append(FileRef(relative_path, mime_type))
