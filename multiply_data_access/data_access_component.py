@@ -42,7 +42,9 @@ class DataAccessComponent(object):
         """
         query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types)
         urls = []
+        print('Start retrieving urls')
         for data_store in self._data_stores:
+            print('Retrieving url from data store')
             query_results = data_store.query(query_string)
             for query_result in query_results:
                 file_refs = data_store.get(query_result)
