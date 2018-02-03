@@ -23,6 +23,8 @@ class JsonMetaInfoProvider(MetaInfoProvider):
         query_end_time = self.get_end_time_from_query_string(query_string)
         data_types = self.get_data_types_from_query_string(query_string)
         data_set_meta_infos = []
+        print('start examining data sets')
+        print(self.data_set_infos['data_sets'])
         for data_set_info in self.data_set_infos['data_sets']:
             if data_set_info.get('coverage') is not None and roi is not None:
                 data_set_coverage = loads(data_set_info.get('coverage'))
