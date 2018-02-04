@@ -62,7 +62,6 @@ class LocalFileSystem(WritableFileSystem):
 
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
-        print('Retrieving file refs for ' + data_set_meta_info.identifier)
         if os.path.exists(data_set_meta_info.identifier):
             mime_type = DataUtils.get_mime_type(data_set_meta_info.identifier)
             file_refs.append(FileRef(data_set_meta_info.identifier, mime_type))
