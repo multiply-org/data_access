@@ -45,6 +45,7 @@ class DataAccessComponent(object):
         for data_store in self._data_stores:
             query_results = data_store.query(query_string)
             for query_result in query_results:
+                print('Got query result ...')
                 file_refs = data_store.get(query_result)
                 for file_ref in file_refs:
                     urls.append(file_ref.url)
