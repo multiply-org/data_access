@@ -27,14 +27,17 @@ class JsonMetaInfoProvider(MetaInfoProvider):
             if data_set_info.get('coverage') is not None and roi is not None:
                 data_set_coverage = loads(data_set_info.get('coverage'))
                 if not roi.intersects(data_set_coverage):
+                    print('roi does not intersect coverage')
                     continue
             if data_set_info.get('start_time') is not None:
                 data_set_start_time = DataUtils.get_time_from_string(data_set_info.get('start_time'), False)
                 if query_end_time < data_set_start_time:
+                    print('query end time before data set start time')
                     continue
             if data_set_info.get('end_time') is not None:
                 data_set_end_time = DataUtils.get_time_from_string(data_set_info.get('end_time'), True)
                 if data_set_end_time < query_start_time:
+                    print('data set end time before query start time')
                     continue
             if data_set_info.get('data_type') in data_types:
                 data_set_meta_info = DataSetMetaInfo(coverage=data_set_info.get('coverage'),
