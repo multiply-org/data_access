@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/multiply-org/data-access.svg?branch=master)](https://travis-ci.org/multiply-org/data-access)
                 
-# data-access
+# MULTIPLY Data Access
 
 This is the repository containing the Data Access functionality for the MULTIPLY platform.
 In particular it contains code to select data from pre-defined data stores that fulfils pre-defined user queries (on a 
