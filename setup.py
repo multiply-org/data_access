@@ -8,8 +8,12 @@ requirements = [
     'pyyaml'
 ]
 
+__version__ = None
+with open('multiply_data_access/version.py') as f:
+    exec(f.read())
+
 setup(name='multiply-data-access',
-      version='0.1',
+      version=__version__,
       description='MULTIPLY Data Access',
       author='MULTIPLY Team',
       packages=['multiply_data_access'],
