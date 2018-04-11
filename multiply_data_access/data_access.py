@@ -8,6 +8,7 @@ This module contains the MULTIPLY data access API.
 from abc import ABCMeta, abstractmethod
 from typing import List, Sequence
 from datetime import datetime, timedelta
+from multiply_core.util import FileRef
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 import os
@@ -52,26 +53,6 @@ class DataSetMetaInfo:
     def identifier(self) -> str:
         """An identifier so that the data set can be found on the Data Store's File System."""
         return self._identifier
-
-
-class FileRef:
-    """
-    A reference to the physical location of a file.
-    """
-
-    def __init__(self, url: str, mime_type: str):
-        self._url = url
-        self._mime_type = mime_type
-
-    @property
-    def url(self) -> str:
-        """The URL indicating where the file is physically located."""
-        return self._url
-
-    @property
-    def mime_type(self):
-        """The mime type of the file in question."""
-        return self._mime_type
 
 
 class FileSystem(metaclass=ABCMeta):
