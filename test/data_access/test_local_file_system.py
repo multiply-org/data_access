@@ -11,6 +11,8 @@ def test_get_one_file():
     file_refs = local_file_system.get(data_set_meta_info)
     assert 1, len(file_refs)
     assert 'small_product.nc', file_refs[0].url
+    assert '2017-08-21', file_refs[0].start_time
+    assert '2017-08-21', file_refs[0].end_time
     assert 'application/x-netcdf', file_refs[0].mime_type
 
 
@@ -20,8 +22,12 @@ def test_get_two_files():
     file_refs = local_file_system.get(data_set_meta_info)
     assert 2, len(file_refs)
     assert 'small_product.nc', file_refs[0].url
+    assert '2017-08-21', file_refs[0].start_time
+    assert '2017-08-21', file_refs[0].end_time
     assert 'application/x-netcdf', file_refs[0].mime_type
     assert 'other_small_product.nc', file_refs[1].url
+    assert '2017-08-25', file_refs[0].start_time
+    assert '2017-08-25', file_refs[0].end_time
     assert 'application/x-netcdf', file_refs[1].mime_type
 
 
@@ -52,6 +58,8 @@ def test_get_weird_pattern():
     file_refs = local_file_system.get(data_set_meta_info)
     assert 1, len(file_refs)
     assert 'vfbzf.json', file_refs[0].url
+    assert '2017-06-21', file_refs[0].start_time
+    assert '2017-06-21', file_refs[0].end_time
     assert 'application/json', file_refs[0].mime_type
 
 

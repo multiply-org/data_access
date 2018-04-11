@@ -3,6 +3,7 @@
 from setuptools import setup
 
 requirements = [
+    'multiply_core',
     'nose',
     'shapely',
     'pyyaml'

@@ -64,20 +64,21 @@ class LocalFileSystem(WritableFileSystem):
         file_refs = []
         if os.path.exists(data_set_meta_info.identifier):
             mime_type = DataUtils.get_mime_type(data_set_meta_info.identifier)
-            file_refs.append(FileRef(data_set_meta_info.identifier, mime_type))
+            file_refs.append(FileRef(data_set_meta_info.identifier, data_set_meta_info.start_time,
+                                     data_set_meta_info.end_time, mime_type))
             return file_refs
         relative_path = (self.path + self.pattern).replace('//', '/')
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
                                               '/{}/'.format(data_set_meta_info.data_type))
         if data_set_meta_info.start_time is None and data_set_meta_info.end_time is None:
             mime_type = DataUtils.get_mime_type(relative_path)
-            file_refs.append(FileRef(relative_path, mime_type))
+            file_refs.append(FileRef(relative_path, data_set_meta_info.start_time,
+                                     data_set_meta_info.end_time, mime_type))
             return file_refs
-        else:
-            # todo consider (weird) case when a start time but no end time is given
-            start_time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
-            end_time = DataUtils.get_time_from_string(data_set_meta_info.end_time)
 
+        # todo consider (weird) case when a start time but no end time is given
+        start_time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
+        end_time = DataUtils.get_time_from_string(data_set_meta_info.end_time)
         time = start_time
         while time <= end_time:
             relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
@@ -90,7 +91,8 @@ class LocalFileSystem(WritableFileSystem):
             for file_name in file_names:
                 if data_set_meta_info.identifier in file_name:
                     mime_type = DataUtils.get_mime_type(file_name)
-                    file_refs.append(FileRef(relative_path + file_name, mime_type))
+                    file_refs.append(FileRef(relative_path + file_name, data_set_meta_info.start_time,
+                                             data_set_meta_info.end_time, mime_type))
         return file_refs
 
     def _get_next_time_step(self, time: datetime) -> datetime:
