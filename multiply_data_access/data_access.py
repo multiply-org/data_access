@@ -6,7 +6,7 @@ This module contains the MULTIPLY data access API.
 """
 
 from abc import ABCMeta, abstractmethod
-from typing import List, Sequence
+from typing import List, Sequence, Optional
 from datetime import datetime, timedelta
 from multiply_core.util import FileRef
 from shapely.wkt import loads
@@ -89,7 +89,7 @@ class MetaInfoProvider(metaclass=ABCMeta):
         """
 
     @staticmethod
-    def get_roi_from_query_string(query_string: str) -> Polygon:
+    def get_roi_from_query_string(query_string: str) -> Optional[Polygon]:
         roi_as_wkt = query_string.split(';')[0]
         if roi_as_wkt == '':
             return None
