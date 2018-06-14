@@ -119,7 +119,8 @@ class LocalFileSystem(WritableFileSystem):
         relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
         if not os.path.exists(relative_path):
             os.makedirs(relative_path)
-        shutil.copy(from_url, relative_path)
+        if not from_url == relative_path:
+            shutil.copy(from_url, relative_path)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         time = DataUtils.get_time_from_string(data_set_meta_info.start_time)

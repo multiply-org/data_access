@@ -69,6 +69,9 @@ def test_put():
     data_set_meta_info = DataSetMetaInfo('doesn\'t matter', '2016-12-15', '2016-12-16', 'my_data_type',
                                          'doesn\'t matter')
     try:
+        assert not os.path.exists('./test/test_data/my_data_type/2016/12/15/gfhnfd.nc')
+        local_file_system.put(url, data_set_meta_info)
+        assert os.path.exists('./test/test_data/my_data_type/2016/12/15/gfhnfd.nc')
         local_file_system.put(url, data_set_meta_info)
         assert os.path.exists('./test/test_data/my_data_type/2016/12/15/gfhnfd.nc')
     finally:
