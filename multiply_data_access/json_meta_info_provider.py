@@ -1,4 +1,4 @@
-from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProvider, MetaInfoProviderAccessor
+from .data_access import DataSetMetaInfo, DataUtils, UpdateableMetaInfoProvider, MetaInfoProviderAccessor
 from typing import List
 from shapely.wkt import loads
 import json
@@ -8,14 +8,16 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 _NAME = 'JsonMetaInfoProvider'
 
 
-class JsonMetaInfoProvider(MetaInfoProvider):
+class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
     """
     A MetaInfoProvider that retrieves its meta information from a JSON file.
     """
 
     def __init__(self, path_to_json_file: str):
-        json_file = open(path_to_json_file)
-        self.data_set_infos = json.load(json_file)
+        self.path_to_json_file = path_to_json_file
+        with open(path_to_json_file, "r") as json_file:
+        # self.json_file = open(path_to_json_file)
+            self.data_set_infos = json.load(json_file)
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         roi = self.get_roi_from_query_string(query_string)
@@ -44,6 +46,48 @@ class JsonMetaInfoProvider(MetaInfoProvider):
                                                      identifier=data_set_info.get('name'))
                 data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
+
+    def update(self, data_set_meta_info: DataSetMetaInfo):
+        # write update
+        data_set_info = {}
+        if data_set_meta_info.coverage is not None and loads(data_set_meta_info.coverage) is not None:
+            data_set_info['coverage'] = data_set_meta_info.coverage
+        data_set_start_time = None
+        if data_set_meta_info.start_time is not None:
+            data_set_start_time = DataUtils.get_time_from_string(data_set_meta_info.start_time, False)
+        data_set_end_time = None
+        if data_set_meta_info.end_time is not None:
+            data_set_end_time = DataUtils.get_time_from_string(data_set_meta_info.start_time, True)
+        if data_set_start_time is not None and data_set_end_time is not None and data_set_start_time > data_set_end_time:
+            raise ValueError('start time must not be later than end time')
+        if data_set_start_time is not None:
+            data_set_info['start_time'] = data_set_meta_info.start_time
+        if data_set_end_time is not None:
+            data_set_info['end_time'] = data_set_meta_info.end_time
+        if data_set_meta_info.data_type is not None:
+            data_set_info['data_type'] = data_set_meta_info.data_type
+        data_set_info['name'] = data_set_meta_info.identifier
+        self.data_set_infos['data_sets'].append(data_set_info)
+        self._update_json_file()
+
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        for data_set_info in self.data_set_infos['data_sets']:
+            if data_set_info.get('coverage') != data_set_meta_info.coverage:
+                continue
+            if data_set_info.get('start_time') != data_set_meta_info.start_time:
+                continue
+            if data_set_info.get('end_time') != data_set_meta_info.end_time:
+                continue
+            if data_set_info.get('data_type') != data_set_meta_info.data_type:
+                continue
+            if data_set_info.get('name') != data_set_meta_info.identifier:
+                continue
+            self.data_set_infos['data_sets'].remove(data_set_info)
+        self._update_json_file()
+
+    def _update_json_file(self):
+        with open(self.path_to_json_file, "w") as json_file:
+            json.dump(self.data_set_infos, json_file, indent=2)
 
 
 class JsonMetaInfoProviderAccessor(MetaInfoProviderAccessor):

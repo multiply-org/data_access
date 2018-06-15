@@ -1,4 +1,6 @@
 from multiply_data_access import DataSetMetaInfo, JsonMetaInfoProvider
+import os
+import shutil
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
@@ -76,6 +78,53 @@ def test_json_meta_info_provider_query_for_data_type():
     meta_data_infos = provider.query(query_string)
     assert len(meta_data_infos) == 0
 
+
+def test_update():
+    # copy this so we don't mess up the original file
+    path_to_json_file_2 = path_to_json_file + '_2'
+    shutil.copyfile(path_to_json_file, path_to_json_file_2)
+    try:
+        provider = JsonMetaInfoProvider(path_to_json_file_2)
+        data_set_meta_info = DataSetMetaInfo(coverage="POLYGON((10 10, 20 10, 20 20, 10 20, 10 10))",
+                                         start_time="2017-03-21 14:33:00",
+                                         end_time="2017-03-21 14:45:00",
+                                         data_type="TYPE_D",
+                                         identifier="ctfgb")
+        provider.update(data_set_meta_info)
+
+        # use a second provider to ensure the update is saved
+        provider_2 = JsonMetaInfoProvider(path_to_json_file_2)
+
+        query_result = provider_2.query(";2017-03-21;2017-03-21;TYPE_D")
+        assert 1 == len(query_result)
+        assert "POLYGON((10 10, 20 10, 20 20, 10 20, 10 10))" == query_result[0].coverage
+        assert "2017-03-21 14:33:00" == query_result[0].start_time
+        assert "2017-03-21 14:45:00" == query_result[0].end_time
+        assert "TYPE_D" == query_result[0].data_type
+        assert "ctfgb" == query_result[0].identifier
+    finally:
+        os.remove(path_to_json_file_2)
+
+
+def test_remove():
+    # copy this so we don't mess up the original file
+    path_to_json_file_2 = path_to_json_file + '_3'
+    shutil.copyfile(path_to_json_file, path_to_json_file_2)
+    try:
+        provider = JsonMetaInfoProvider(path_to_json_file_2)
+        query_string = "POLYGON((5 5, 35 5, 35 35, 5 35, 5 5));2017-03-10;2017-03-10;TYPE_A, TYPE_B, TYPE_C"
+        meta_data_infos = provider.query(query_string)
+        assert 1 == len(meta_data_infos)
+        ensure_fourth_data_set(meta_data_infos[0])
+        provider.remove(meta_data_infos[0])
+
+        # use a second provider to ensure the update is saved
+        provider_2 = JsonMetaInfoProvider(path_to_json_file_2)
+        meta_data_infos_2 = provider_2.query(query_string)
+
+        assert 0 == len(meta_data_infos_2)
+    finally:
+        os.remove(path_to_json_file_2)
 
 def ensure_first_data_set(data_set:DataSetMetaInfo):
     assert data_set.coverage == 'POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))'

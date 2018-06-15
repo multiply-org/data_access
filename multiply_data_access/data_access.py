@@ -249,6 +249,9 @@ class WritableDataStore(DataStore):
         Puts a data set into the data store.
         :return:
         """
+        # 1. Put the data
+        # 2. Ensure where data has been put
+        # 3. Update meta info provider
         self._writable_file_system.put()
 
 
@@ -265,3 +268,17 @@ class WritableFileSystem(FileSystem):
     @abstractmethod
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         """Removes all data sets from the file system that are described by the data set meta info"""
+
+
+class UpdateableMetaInfoProvider(MetaInfoProvider):
+    """
+    A MetaInfoProvider that can be updated when data is put there.
+    """
+
+    @abstractmethod
+    def update(self, data_set_meta_info: DataSetMetaInfo):
+        """Adds information about the data set to its internal registry."""
+
+    @abstractmethod
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        """Removes information about this data set from its internal registry."""
