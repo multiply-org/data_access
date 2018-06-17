@@ -239,6 +239,14 @@ class DataStore(object):
         """
         return self._meta_info_provider.query(query_string)
 
+    def provides_data_type(self, data_type: str) -> bool:
+        """
+        Whether the data store provides access to data of the queried type
+        :param data_type: A string labelling the data
+        :return: True if data of that type can be requested from the meta infor provider
+        """
+        return self._meta_info_provider.provides_data_type(data_type)
+
 
 class WritableDataStore(DataStore):
     """
