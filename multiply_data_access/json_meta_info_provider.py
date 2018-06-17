@@ -16,8 +16,8 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
     def __init__(self, path_to_json_file: str):
         self.path_to_json_file = path_to_json_file
         with open(path_to_json_file, "r") as json_file:
-        # self.json_file = open(path_to_json_file)
             self.data_set_infos = json.load(json_file)
+            self._update_provided_data_sets()
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         roi = self.get_roi_from_query_string(query_string)
@@ -47,6 +47,9 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
                 data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 
+    def provides_data_type(self, data_type: str):
+        return data_type in self.provided_data_types
+
     def update(self, data_set_meta_info: DataSetMetaInfo):
         # write update
         data_set_info = {}
@@ -69,6 +72,7 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
         data_set_info['name'] = data_set_meta_info.identifier
         self.data_set_infos['data_sets'].append(data_set_info)
         self._update_json_file()
+        self._update_provided_data_sets()
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         for data_set_info in self.data_set_infos['data_sets']:
@@ -84,10 +88,17 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
                 continue
             self.data_set_infos['data_sets'].remove(data_set_info)
         self._update_json_file()
+        self._update_provided_data_sets()
 
     def _update_json_file(self):
         with open(self.path_to_json_file, "w") as json_file:
             json.dump(self.data_set_infos, json_file, indent=2)
+
+    def _update_provided_data_sets(self):
+        self.provided_data_types = []
+        for data_set_info in self.data_set_infos['data_sets']:
+            if data_set_info.get('data_type') not in self.provided_data_types:
+                self.provided_data_types.append(data_set_info.get('data_type'))
 
 
 class JsonMetaInfoProviderAccessor(MetaInfoProviderAccessor):

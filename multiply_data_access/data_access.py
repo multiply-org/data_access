@@ -88,6 +88,14 @@ class MetaInfoProvider(metaclass=ABCMeta):
         :return: A list of meta information about data sets that fulfill the query.
         """
 
+    @abstractmethod
+    def provides_data_type(self, data_type: str) -> bool:
+        """
+        Whether the mete info provider provides access to data of the queried type
+        :param data_type: A string labelling the data
+        :return: True if data of that type can be requested from the meta infor provider
+        """
+
     @staticmethod
     def get_roi_from_query_string(query_string: str) -> Optional[Polygon]:
         roi_as_wkt = query_string.split(';')[0]

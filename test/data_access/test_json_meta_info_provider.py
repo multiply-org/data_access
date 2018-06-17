@@ -126,6 +126,25 @@ def test_remove():
     finally:
         os.remove(path_to_json_file_2)
 
+
+def test_provides_data_type():
+    # copy this so we don't mess up the original file
+    path_to_json_file_2 = path_to_json_file + '_4'
+    shutil.copyfile(path_to_json_file, path_to_json_file_2)
+    try:
+        provider = JsonMetaInfoProvider(path_to_json_file_2)
+        assert True == provider.provides_data_type("TYPE_A")
+        assert True == provider.provides_data_type("TYPE_B")
+        assert True == provider.provides_data_type("TYPE_C")
+        assert False == provider.provides_data_type("TYPE_D")
+        assert False == provider.provides_data_type("ctfsvbzrt")
+        query_results = provider.query(";2010-01-01;2020-01-01;TYPE_B")
+        provider.remove(query_results[0])
+        assert False == provider.provides_data_type("TYPE_B")
+    finally:
+        os.remove(path_to_json_file_2)
+
+
 def ensure_first_data_set(data_set:DataSetMetaInfo):
     assert data_set.coverage == 'POLYGON((0 0, 10 0, 10 10, 0 10, 0 0))'
     assert data_set.start_time == '2017-03-25 12:30:00'
