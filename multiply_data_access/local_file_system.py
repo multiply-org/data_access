@@ -142,19 +142,20 @@ class LocalFileSystem(WritableFileSystem):
             os.rmdir(relative_path)
             relative_path = relative_path[:relative_path[:relative_path.rfind('/')].rfind('/')]
 
-    def scan(self) -> Sequence[str]:
+    def scan(self) -> Sequence[DataSetMetaInfo]:
         relative_path = self.path + self.pattern + "/*"
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN), '/{}/'.format('*'))
         relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{}/'.format('*'))
         relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{}/'.format('*'))
         relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{}/'.format('*'))
         found_files = glob.glob(relative_path)
-        files = []
+        data_set_meta_infos = []
         for found_file in found_files:
             valid_type = data_validation.get_valid_type(found_file)
             if valid_type is not '':
-                files.append(found_file)
-        return files
+                data_set_meta_infos.append(DataSetMetaInfo(coverage='', start_time='', end_time='',
+                                                           data_type=valid_type, identifier=found_file))
+        return data_set_meta_infos
 
 
 class TimeStep(Enum):

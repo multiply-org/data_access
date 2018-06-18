@@ -125,6 +125,10 @@ def test_scan():
 
     local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
     data_validation.add_validator(MyValidator())
-    retrieved_files = local_file_system.scan()
+    retrieved_data_set_meta_infos = local_file_system.scan()
 
-    assert 2 == len(retrieved_files)
+    assert 2 == len(retrieved_data_set_meta_infos)
+    assert 'my_data_type' == retrieved_data_set_meta_infos[0].data_type
+    assert retrieved_data_set_meta_infos[0].identifier.endswith('small_product.nc')
+    assert 'my_data_type' == retrieved_data_set_meta_infos[1].data_type
+    assert retrieved_data_set_meta_infos[1].identifier.endswith('other_small_product.nc')

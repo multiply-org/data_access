@@ -256,8 +256,11 @@ class WritableDataStore(DataStore):
     def __init__(self, file_system: FileSystem, meta_info_provider: MetaInfoProvider, identifier: str):
         if not isinstance(file_system, WritableFileSystem):
             raise TypeError('Writable Data Store cannot be instantiated with a non-writable File System.')
+        if not isinstance(meta_info_provider, UpdateableMetaInfoProvider):
+            raise TypeError('Writable Data Store cannot be instantiated with a non-updateable Meta Info Provider.')
         super().__init__(file_system, meta_info_provider, identifier)
         self._writable_file_system = file_system
+        self._updateable_meta_info_provider = meta_info_provider
 
     @abstractmethod
     def put(self):
@@ -265,8 +268,10 @@ class WritableDataStore(DataStore):
         Puts a data set into the data store.
         :return:
         """
+        # check for data type
         # 1. Put the data
         # 2. Ensure where data has been put
+        # create meta data info
         # 3. Update meta info provider
         self._writable_file_system.put()
 
@@ -276,7 +281,9 @@ class WritableDataStore(DataStore):
         will be removed.
         """
         # 1. Scan writable file system
-        available_files = self._writable_file_system.scan()
+        found_data_set_meta_infos = self._writable_file_system.scan()
+        registered_data_set_meta_infos = self._updateable_meta_info_provider.get_all_data()
+
 
 
 class WritableFileSystem(FileSystem):
@@ -294,8 +301,8 @@ class WritableFileSystem(FileSystem):
         """Removes all data sets from the file system that are described by the data set meta info"""
 
     @abstractmethod
-    def scan(self) -> Sequence[FileRef]:
-        """Retrieves a sequence of all filerefs found in the file system."""
+    def scan(self) -> Sequence[DataSetMetaInfo]:
+        """Retrieves a sequence of data set meta informations of all file refs found in the file system."""
 
 
 class UpdateableMetaInfoProvider(MetaInfoProvider):
@@ -310,3 +317,7 @@ class UpdateableMetaInfoProvider(MetaInfoProvider):
     @abstractmethod
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         """Removes information about this data set from its internal registry."""
+
+    @abstractmethod
+    def get_all_data(self) -> Sequence[DataSetMetaInfo]:
+        """Returns all available data set meta infos."""
