@@ -10,9 +10,11 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 from abc import ABCMeta, abstractmethod
 from multiply_data_access.data_access import DataSetMetaInfo
+from multiply_core.util import reproject
 import gdal
 import osr
 import xml.etree.ElementTree as ET
+
 
 class DataSetMetaInfoProvider(metaclass=ABCMeta):
 
@@ -32,12 +34,9 @@ class AWS_S2_Meta_Info_Provider(DataSetMetaInfoProvider):
         return 'AWS_S2_L1C'
 
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
-        #gdal_file = gdal.Open(path + '/B05.jp2')
-        #projection = gdal_file.GetProjection()
-        #print(projection)
-        #spatial_reference = osr.SpatialReference(wkt=projection)
-        self._extract_coverage_from_metadata_file()
-        return DataSetMetaInfo('', '', '', '', '')
+        coverage = self._extract_coverage(path)
+        time = self._extract_time_from_metadata_file(path)
+        return DataSetMetaInfo(coverage, time, time, self.name(), path)
 
     def _get_xml_root(self, xml_file_name: str):
         tree = ET.parse(xml_file_name)
@@ -48,28 +47,51 @@ class AWS_S2_Meta_Info_Provider(DataSetMetaInfoProvider):
         root = self._get_xml_root(filename + '/metadata.xml')
         for child in root:
             for x in child.findall("SENSING_TIME"):
-                return x.text
+                time = x.text.replace('T', ' ').replace('Z', '')
+                return time
 
-    def _extract_coverage_from_metadata_file(self, filename: str) -> str:
+    def _extract_coverage(self, filename: str) -> str:
         """Parses the XML metadata file to extract the sensing time."""
         root = self._get_xml_root(filename + '/metadata.xml')
+        ulx = 0
+        uly = 0
+        x_dim = 0
+        y_dim = 0
+        n_rows = 0
+        n_cols = 0
         for child in root:
-            for x in child.findall("HORIZONTAL_CS_CODE"):
-                epsg_code = x.text
-            for y in child.findall('Geoposition'):
-                if y.tag == 'ULX':
-                    ulx = int(y.text)
-                if y.tag == 'ULY':
-                    uly = int(y.text)
-                if y.tag == 'XDIM':
-                    xdim = int(y.text)
-                if y.tag == 'YDIM':
-                    ydim = int(y.text)
-                break
-        # lrx = ulx + xdim *
+            tile_geocoding_element = child.find('Tile_Geocoding')
+            if tile_geocoding_element is not None:
+                for element in tile_geocoding_element:
+                    if element.tag == 'Size' and element.attrib['resolution'] == '60':
+                        n_rows = float(element.find('NROWS').text)
+                        n_cols = float(element.find('NCOLS').text)
+                    elif element.tag == 'Geoposition' and element.attrib['resolution'] == '60':
+                        ulx = float(element.find('ULX').text)
+                        uly = float(element.find('ULY').text)
+                        x_dim = float(element.find('XDIM').text)
+                        y_dim = float(element.find('YDIM').text)
+        llx = ulx + n_rows * x_dim
+        lly = uly + n_cols * y_dim
+        gdal_dataset = gdal.Open(filename + '/B01.jp2')
+        source_srs = reproject.get_spatial_reference_system_from_dataset(gdal_dataset)
+        print(source_srs.ExportToWkt())
+        target_srs = osr.SpatialReference()
+        target_srs.SetWellKnownGeogCS('EPSG:4326')
+        coords = [ulx, uly, llx, uly, llx, lly, ulx, lly]
+        transformed_coords = reproject.transform_coordinates(source_srs, target_srs, coords)
+        return 'POLYGON(({0} {1}, {2} {3}, {4} {5}, {6} {7}, {0} {1}))'.format(transformed_coords[0],
+                                                                               transformed_coords[1],
+                                                                               transformed_coords[2],
+                                                                               transformed_coords[3],
+                                                                               transformed_coords[4],
+                                                                               transformed_coords[5],
+                                                                               transformed_coords[6],
+                                                                               transformed_coords[7])
 
+    def _extract_tile_id(self, filename: str) -> str:
+        """Parses the XML metadata file to extract the tile id."""
+        root = self._get_xml_root(filename + '/metadata.xml')
         for child in root:
-            for x in child.findall("Tile_Angles"):
-                for y in x.find("Mean_Sun_Angle"):
-                    if y.tag == "ZENITH_ANGLE":
-                        sza = float(y.text)
+            for x in child.findall("TILE_ID"):
+                return x.text
