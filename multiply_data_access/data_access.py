@@ -270,6 +270,14 @@ class WritableDataStore(DataStore):
         # 3. Update meta info provider
         self._writable_file_system.put()
 
+    def update(self):
+        """
+        Causes the data store to update its registry: Newly found data will be registered, faulty registry entries
+        will be removed.
+        """
+        # 1. Scan writable file system
+        available_files = self._writable_file_system.scan()
+
 
 class WritableFileSystem(FileSystem):
     """
@@ -284,6 +292,10 @@ class WritableFileSystem(FileSystem):
     @abstractmethod
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         """Removes all data sets from the file system that are described by the data set meta info"""
+
+    @abstractmethod
+    def scan(self) -> Sequence[FileRef]:
+        """Retrieves a sequence of all filerefs found in the file system."""
 
 
 class UpdateableMetaInfoProvider(MetaInfoProvider):

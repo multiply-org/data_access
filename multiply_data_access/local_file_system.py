@@ -4,10 +4,13 @@ Description
 
 This module contains an implementation of a file system that allows to get and put data stored on the local hard drive.
 """
-from .data_access import DataSetMetaInfo, DataUtils, FileRef, FileSystemAccessor, WritableFileSystem
+from multiply_core.observations import data_validation
+from multiply_core.util import FileRef
+from .data_access import DataSetMetaInfo, DataUtils, FileSystemAccessor, WritableFileSystem
 from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
 from typing import Sequence
+import glob
 import os.path
 import shutil
 
@@ -138,6 +141,20 @@ class LocalFileSystem(WritableFileSystem):
         while not self.path == relative_path and len(os.listdir(relative_path)) == 0:
             os.rmdir(relative_path)
             relative_path = relative_path[:relative_path[:relative_path.rfind('/')].rfind('/')]
+
+    def scan(self) -> Sequence[str]:
+        relative_path = self.path + self.pattern + "/*"
+        relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN), '/{}/'.format('*'))
+        relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{}/'.format('*'))
+        relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{}/'.format('*'))
+        relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{}/'.format('*'))
+        found_files = glob.glob(relative_path)
+        files = []
+        for found_file in found_files:
+            valid_type = data_validation.get_valid_type(found_file)
+            if valid_type is not '':
+                files.append(found_file)
+        return files
 
 
 class TimeStep(Enum):

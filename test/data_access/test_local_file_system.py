@@ -1,3 +1,4 @@
+from multiply_core.observations import data_validation
 from multiply_data_access import DataSetMetaInfo, LocalFileSystem
 import os
 import shutil
@@ -109,3 +110,21 @@ def test_remove_two_files_in_folder():
     finally:
         if os.path.exists('./test/test_data/my_data_type/2015/'):
             shutil.rmtree('./test/test_data/my_data_type/2015/')
+
+
+def test_scan():
+
+    class MyValidator(data_validation.DataValidator):
+
+        @classmethod
+        def name(cls) -> str:
+            return 'my_data_type'
+
+        def is_valid(self, path: str) -> bool:
+            return path.endswith('.nc')
+
+    local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
+    data_validation.add_validator(MyValidator())
+    retrieved_files = local_file_system.scan()
+
+    assert 2 == len(retrieved_files)
