@@ -1,5 +1,6 @@
-from .data_access import DataSetMetaInfo, DataUtils, UpdateableMetaInfoProvider, MetaInfoProviderAccessor
-from typing import List
+from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProviderAccessor
+from .updateable_data_access import UpdateableMetaInfoProvider
+from typing import List, Sequence
 from shapely.wkt import loads
 import json
 
@@ -100,6 +101,16 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
             if data_set_info.get('data_type') not in self.provided_data_types:
                 self.provided_data_types.append(data_set_info.get('data_type'))
 
+    def get_all_data(self) -> Sequence[DataSetMetaInfo]:
+        data_set_meta_infos = []
+        for data_set_info in self.data_set_infos['data_sets']:
+            data_set_meta_info = DataSetMetaInfo(coverage=data_set_info.get('coverage'),
+                                                 start_time=data_set_info.get('start_time'),
+                                                 end_time=data_set_info.get('end_time'),
+                                                 data_type=data_set_info.get('data_type'),
+                                                 identifier=data_set_info.get('name'))
+            data_set_meta_infos.append(data_set_meta_info)
+        return data_set_meta_infos
 
 class JsonMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 

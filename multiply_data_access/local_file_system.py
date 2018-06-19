@@ -6,7 +6,8 @@ This module contains an implementation of a file system that allows to get and p
 """
 from multiply_core.observations import data_validation
 from multiply_core.util import FileRef
-from .data_access import DataSetMetaInfo, DataUtils, FileSystemAccessor, WritableFileSystem
+from .data_access import DataSetMetaInfo, DataUtils, FileSystemAccessor
+from .updateable_data_access import WritableFileSystem
 from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
 from typing import Sequence

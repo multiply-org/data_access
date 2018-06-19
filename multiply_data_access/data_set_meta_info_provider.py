@@ -11,10 +11,12 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 from abc import ABCMeta, abstractmethod
 from multiply_data_access.data_access import DataSetMetaInfo
 from multiply_core.util import reproject
+from typing import Optional
 import gdal
 import osr
 import xml.etree.ElementTree as ET
 
+DATA_SET_META_INFO_PROVIDERS = []
 
 class DataSetMetaInfoProvider(metaclass=ABCMeta):
 
@@ -95,3 +97,17 @@ class AWS_S2_Meta_Info_Provider(DataSetMetaInfoProvider):
         for child in root:
             for x in child.findall("TILE_ID"):
                 return x.text
+
+
+class DataSetMetaInfoProvision(object):
+
+    def __init__(self):
+        self.add_data_set_meta_info_provider(AWS_S2_Meta_Info_Provider())
+
+    def add_data_set_meta_info_provider(self, data_set_meta_info_provider: DataSetMetaInfoProvider):
+        DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
+
+    def get_data_set_meta_info(self, data_type: str, path:str) -> Optional[DataSetMetaInfo]:
+        for data_set_meta_info_provider in DATA_SET_META_INFO_PROVIDERS:
+            if data_set_meta_info_provider.name == data_type:
+                return data_set_meta_info_provider.extract_meta_info(path)
