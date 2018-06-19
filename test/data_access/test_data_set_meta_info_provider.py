@@ -1,4 +1,5 @@
 from multiply_data_access.data_set_meta_info_provider import DataSetMetaInfoProvider, AWS_S2_Meta_Info_Provider
+from shapely import wkt
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
@@ -13,6 +14,9 @@ def test_aws_s2_meta_info_provider():
     assert path_to_s2_dir == data_set_meta_info.identifier
     assert '2017-09-04 11:18:25.839' == data_set_meta_info.start_time
     assert '2017-09-04 11:18:25.839' == data_set_meta_info.end_time
-    assert 'POLYGON((-6.724926539250627 37.92559054724302, -5.4774490849610435 37.89483865860684, ' \
-           '-5.5234456557459835 36.906971812661624, -6.754676710360797 36.936650397219594, ' \
-           '-6.724926539250627 37.92559054724302))' == data_set_meta_info.coverage
+    geometry_bounds = wkt.loads(data_set_meta_info.coverage).bounds
+    assert 4 == len(geometry_bounds)
+    assert -6.754676710360797 in geometry_bounds
+    assert 36.906971812661624 in geometry_bounds
+    assert -5.4774490849610435 in geometry_bounds
+    assert 37.92559054724302 in geometry_bounds
