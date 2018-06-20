@@ -16,7 +16,6 @@ import gdal
 import osr
 import xml.etree.ElementTree as ET
 
-DATA_SET_META_INFO_PROVIDERS = []
 
 class DataSetMetaInfoProvider(metaclass=ABCMeta):
 
@@ -50,6 +49,7 @@ class AWS_S2_Meta_Info_Provider(DataSetMetaInfoProvider):
         for child in root:
             for x in child.findall("SENSING_TIME"):
                 time = x.text.replace('T', ' ').replace('Z', '')
+                time = time[:time.rfind('.')]
                 return time
 
     def _extract_coverage(self, filename: str) -> str:
@@ -77,7 +77,6 @@ class AWS_S2_Meta_Info_Provider(DataSetMetaInfoProvider):
         lly = uly + n_cols * y_dim
         gdal_dataset = gdal.Open(filename + '/B01.jp2')
         source_srs = reproject.get_spatial_reference_system_from_dataset(gdal_dataset)
-        print(source_srs.ExportToWkt())
         target_srs = osr.SpatialReference()
         target_srs.SetWellKnownGeogCS('EPSG:4326')
         coords = [ulx, uly, llx, uly, llx, lly, ulx, lly]
@@ -102,12 +101,13 @@ class AWS_S2_Meta_Info_Provider(DataSetMetaInfoProvider):
 class DataSetMetaInfoProvision(object):
 
     def __init__(self):
+        self.DATA_SET_META_INFO_PROVIDERS = []
         self.add_data_set_meta_info_provider(AWS_S2_Meta_Info_Provider())
 
     def add_data_set_meta_info_provider(self, data_set_meta_info_provider: DataSetMetaInfoProvider):
-        DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
+        self.DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
 
     def get_data_set_meta_info(self, data_type: str, path:str) -> Optional[DataSetMetaInfo]:
-        for data_set_meta_info_provider in DATA_SET_META_INFO_PROVIDERS:
-            if data_set_meta_info_provider.name == data_type:
+        for data_set_meta_info_provider in self.DATA_SET_META_INFO_PROVIDERS:
+            if data_set_meta_info_provider.name() == data_type:
                 return data_set_meta_info_provider.extract_meta_info(path)
