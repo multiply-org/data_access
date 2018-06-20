@@ -144,18 +144,23 @@ class LocalFileSystem(WritableFileSystem):
             relative_path = relative_path[:relative_path[:relative_path.rfind('/')].rfind('/')]
 
     def scan(self) -> Sequence[DataSetMetaInfo]:
-        relative_path = self.path + self.pattern + "/*"
-        relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN), '/{}/'.format('*'))
+        data_set_meta_infos = []
+        relative_path = self.path + self.pattern
         relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{}/'.format('*'))
         relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{}/'.format('*'))
         relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{}/'.format('*'))
-        found_files = glob.glob(relative_path)
-        data_set_meta_infos = []
-        for found_file in found_files:
-            valid_type = data_validation.get_valid_type(found_file)
-            if valid_type is not '':
-                data_set_meta_infos.append(DataSetMetaInfo(coverage='', start_time='', end_time='',
-                                                           data_type=valid_type, identifier=found_file))
+        if _DATA_TYPE_PATTERN in relative_path:
+            valid_types = data_validation.get_valid_types()
+        else:
+            valid_types = ['placeholder']
+        for valid_type in valid_types:
+            adjusted_relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN), '/{}/'.format(valid_type))
+            found_files = glob.glob(adjusted_relative_path + '/**', recursive=True)
+            for found_file in found_files:
+                type = data_validation.get_valid_type(found_file)
+                if type is not '':
+                    data_set_meta_infos.append(DataSetMetaInfo(coverage='', start_time='', end_time='',
+                                                            data_type=type, identifier=found_file))
         return data_set_meta_infos
 
 

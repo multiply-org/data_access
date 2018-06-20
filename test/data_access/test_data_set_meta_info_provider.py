@@ -12,8 +12,8 @@ def test_aws_s2_meta_info_provider():
     data_set_meta_info = provider.extract_meta_info(path_to_s2_dir)
     assert 'AWS_S2_L1C' == data_set_meta_info.data_type
     assert path_to_s2_dir == data_set_meta_info.identifier
-    assert '2017-09-04 11:18:25.839' == data_set_meta_info.start_time
-    assert '2017-09-04 11:18:25.839' == data_set_meta_info.end_time
+    assert '2017-09-04 11:18:25' == data_set_meta_info.start_time
+    assert '2017-09-04 11:18:25' == data_set_meta_info.end_time
     geometry_bounds = wkt.loads(data_set_meta_info.coverage).bounds
     assert 4 == len(geometry_bounds)
     assert -6.754676710360797 in geometry_bounds

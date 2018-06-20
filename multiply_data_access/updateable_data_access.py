@@ -40,14 +40,16 @@ class WritableDataStore(DataStore):
         """
         found_data_set_meta_infos = self._writable_file_system.scan()
         registered_data_set_meta_infos = self._updateable_meta_info_provider.get_all_data()
+        meta_info_provision = DataSetMetaInfoProvision()
         for found_data_set_meta_info in found_data_set_meta_infos:
             already_registered = False
             for registered_data_set_meta_info in registered_data_set_meta_infos:
                 if found_data_set_meta_info.data_type == registered_data_set_meta_info.data_type and \
                         found_data_set_meta_info.identifier == registered_data_set_meta_info.identifier:
                     already_registered = True
+                    break
             if not already_registered:
-                data_set_meta_info = DataSetMetaInfoProvision.get_data_set_meta_info(
+                data_set_meta_info = meta_info_provision.get_data_set_meta_info(
                     found_data_set_meta_info.data_type, found_data_set_meta_info.identifier)
                 self._updateable_meta_info_provider.update(data_set_meta_info)
         for registered_data_set_meta_info in registered_data_set_meta_infos:

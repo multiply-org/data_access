@@ -1,6 +1,6 @@
 from multiply_data_access import DataStore, FileSystem, MetaInfoProvider
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 import os
 import pkg_resources
 import yaml
@@ -93,6 +93,9 @@ class DataAccessComponent(object):
             data_stores.append(data_store)
         self._data_stores = self._data_stores + data_stores
         return data_stores
+
+    # def create_local_data_store(self, base_dir: str, base_pattern: Optional[str]):
+
 
     def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
         parameters = file_system_as_dict['parameters']
