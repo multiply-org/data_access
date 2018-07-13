@@ -4,6 +4,7 @@ from .local_file_system import LocalFileSystem
 from pathlib import Path
 from typing import List, Optional
 import os
+import json
 import pkg_resources
 import yaml
 
@@ -103,17 +104,24 @@ class DataAccessComponent(object):
 
     def create_local_data_store(self, base_dir: Optional[str], meta_info_file: Optional[str],
                                 base_pattern: Optional[str]='/dt/yy/mm/dd/'):
+        multiply_home_dir = self._get_multiply_home_dir()
         if base_dir is None:
-            multiply_home_dir = self._get_multiply_home_dir()
             base_dir = '{0}/{1}'.format(multiply_home_dir, DATA_FOLDER_NAME)
         if not os.path.exists(base_dir):
             os.mkdir(base_dir)
         if meta_info_file is None:
-            multiply_home_dir = self._get_multiply_home_dir()
-
+            meta_info_file = '{0}/meta_info.json'.format(base_dir)
+            count = 1
+            while os.path.exists(meta_info_file):
+                meta_info_file = '{0}/meta_info_{1}.json'.format(base_dir, count)
+                count += 1
+            with open(meta_info_file, "w") as json_file:
+                empty_dict = dict(data_sets=())
+                json.dump(empty_dict, json_file, indent=2)
         local_file_system = LocalFileSystem(base_dir, base_pattern)
-        JsonMetaInfoProvider()
-        WritableDataStore()
+        json_meta_info_provider = JsonMetaInfoProvider(meta_info_file)
+        writable_data_store = WritableDataStore(local_file_system, json_meta_info_provider)
+        writable_data_store.update()
 
     def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
         parameters = file_system_as_dict['parameters']
