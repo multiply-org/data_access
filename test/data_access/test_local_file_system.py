@@ -123,6 +123,9 @@ def test_scan():
         def is_valid(self, path: str) -> bool:
             return path.endswith('.nc')
 
+        def get_relative_path(self, path: str) -> str:
+            return ''
+
     local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
     data_validation.add_validator(MyValidator())
     retrieved_data_set_meta_infos = local_file_system.scan()

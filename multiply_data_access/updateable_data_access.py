@@ -2,6 +2,7 @@ from abc import abstractmethod
 from typing import Sequence
 from .data_access import DataSetMetaInfo, DataStore, FileSystem, MetaInfoProvider
 from .data_set_meta_info_provider import DataSetMetaInfoProvision
+from multiply_core.observations import get_valid_type
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
@@ -19,19 +20,20 @@ class WritableDataStore(DataStore):
         super().__init__(file_system, meta_info_provider, identifier)
         self._writable_file_system = file_system
         self._updateable_meta_info_provider = meta_info_provider
+        self.meta_info_provision = DataSetMetaInfoProvision()
 
     @abstractmethod
-    def put(self):
+    def put(self, from_url: str):
         """
         Puts a data set into the data store.
         :return:
         """
-        # check for data type
-        # 1. Put the data
-        # 2. Ensure where data has been put
-        # create meta data info
-        # 3. Update meta info provider
-        self._writable_file_system.put()
+        data_type = get_valid_type(from_url)
+        if data_type == '':
+            raise UserWarning('Could not determine data type of {}'.format(from_url))
+        data_set_meta_info = self.meta_info_provision.get_data_set_meta_info(data_type, from_url)
+        updated_data_set_meta_info = self._writable_file_system.put(from_url, data_set_meta_info)
+        self._updateable_meta_info_provider.update(updated_data_set_meta_info)
 
     def update(self):
         """
@@ -40,7 +42,6 @@ class WritableDataStore(DataStore):
         """
         found_data_set_meta_infos = self._writable_file_system.scan()
         registered_data_set_meta_infos = self._updateable_meta_info_provider.get_all_data()
-        meta_info_provision = DataSetMetaInfoProvision()
         for found_data_set_meta_info in found_data_set_meta_infos:
             already_registered = False
             for registered_data_set_meta_info in registered_data_set_meta_infos:
@@ -49,7 +50,7 @@ class WritableDataStore(DataStore):
                     already_registered = True
                     break
             if not already_registered:
-                data_set_meta_info = meta_info_provision.get_data_set_meta_info(
+                data_set_meta_info = self.meta_info_provision.get_data_set_meta_info(
                     found_data_set_meta_info.data_type, found_data_set_meta_info.identifier)
                 self._updateable_meta_info_provider.update(data_set_meta_info)
         for registered_data_set_meta_info in registered_data_set_meta_infos:
@@ -69,9 +70,9 @@ class WritableFileSystem(FileSystem):
     """
 
     @abstractmethod
-    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo):
+    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo) -> DataSetMetaInfo:
         """Adds a data set to the file system by copying it from the given url to the expected location within
-        the file system."""
+        the file system. Returns an updated data set meta info."""
 
     @abstractmethod
     def remove(self, data_set_meta_info: DataSetMetaInfo):

@@ -4,7 +4,7 @@ Description
 
 This module contains an implementation of a file system that allows to get and put data stored on the local hard drive.
 """
-from multiply_core.observations import data_validation
+from multiply_core.observations import data_validation, get_data_type_path
 from multiply_core.util import FileRef
 from .data_access import DataSetMetaInfo, DataUtils, FileSystemAccessor
 from .updateable_data_access import WritableFileSystem
@@ -115,16 +115,23 @@ class LocalFileSystem(WritableFileSystem):
     def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo):
         # we assume here that it suffices to consider the start time for putting a data set correctly
         time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
-        relative_path = self.path + self.pattern
+        data_type_path = get_data_type_path(data_set_meta_info.data_type, from_url)
+        relative_path = self.path + self.pattern + data_type_path
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
                                               '/{}/'.format(data_set_meta_info.data_type))
         relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
         relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
         relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
-        if not os.path.exists(relative_path):
-            os.makedirs(relative_path)
         if not from_url == relative_path:
-            shutil.copy(from_url, relative_path)
+            if os.path.isdir(from_url) and not os.path.exists(relative_path):
+                shutil.copytree(from_url, relative_path)
+            else:
+                if not os.path.exists(relative_path):
+                    os.makedirs(relative_path)
+                shutil.copy(from_url, relative_path)
+
+        return DataSetMetaInfo(data_set_meta_info.coverage, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                               data_set_meta_info.data_type, relative_path)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
@@ -157,6 +164,7 @@ class LocalFileSystem(WritableFileSystem):
             adjusted_relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN), '/{}/'.format(valid_type))
             found_files = glob.glob(adjusted_relative_path + '/**', recursive=True)
             for found_file in found_files:
+                found_file = found_file.replace('\\', '/')
                 type = data_validation.get_valid_type(found_file)
                 if type is not '':
                     data_set_meta_infos.append(DataSetMetaInfo(coverage='', start_time='', end_time='',
