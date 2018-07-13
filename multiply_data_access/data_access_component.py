@@ -1,4 +1,6 @@
-from multiply_data_access import DataStore, FileSystem, MetaInfoProvider
+from multiply_data_access import DataStore, FileSystem, MetaInfoProvider, WritableDataStore
+from .json_meta_info_provider import JsonMetaInfoProvider
+from .local_file_system import LocalFileSystem
 from pathlib import Path
 from typing import List, Optional
 import os
@@ -20,6 +22,7 @@ FILE_SYSTEM_REGISTRY = []
 META_INFO_PROVIDER_REGISTRY = []
 MULTIPLY_DIR_NAME = '.multiply'
 DATA_STORES_FILE_NAME = 'data_stores.yml'
+DATA_FOLDER_NAME = 'data'
 
 
 class DataAccessComponent(object):
@@ -63,14 +66,18 @@ class DataAccessComponent(object):
         return roi + ';' + start_time + ';' + end_time + ';' + data_types
 
     def _read_registered_data_stores(self) -> None:
-        home_dir = str(Path.home())
-        multiply_home_dir = '{0}/{1}'.format(home_dir, MULTIPLY_DIR_NAME)
-        if not os.path.exists(multiply_home_dir):
-            os.mkdir(multiply_home_dir)
+        multiply_home_dir = self._get_multiply_home_dir()
         data_stores_file = '{0}/{1}'.format(multiply_home_dir, DATA_STORES_FILE_NAME)
         if not os.path.exists(data_stores_file):
             open(data_stores_file, 'w+')
         self.read_data_stores(data_stores_file)
+
+    def _get_multiply_home_dir(self) -> str:
+        home_dir = str(Path.home())
+        multiply_home_dir = '{0}/{1}'.format(home_dir, MULTIPLY_DIR_NAME)
+        if not os.path.exists(multiply_home_dir):
+            os.mkdir(multiply_home_dir)
+        return multiply_home_dir
 
     def read_data_stores(self, file: str) -> List[DataStore]:
         data_stores = []
@@ -94,8 +101,19 @@ class DataAccessComponent(object):
         self._data_stores = self._data_stores + data_stores
         return data_stores
 
-    # def create_local_data_store(self, base_dir: str, base_pattern: Optional[str]):
+    def create_local_data_store(self, base_dir: Optional[str], meta_info_file: Optional[str],
+                                base_pattern: Optional[str]='/dt/yy/mm/dd/'):
+        if base_dir is None:
+            multiply_home_dir = self._get_multiply_home_dir()
+            base_dir = '{0}/{1}'.format(multiply_home_dir, DATA_FOLDER_NAME)
+        if not os.path.exists(base_dir):
+            os.mkdir(base_dir)
+        if meta_info_file is None:
+            multiply_home_dir = self._get_multiply_home_dir()
 
+        local_file_system = LocalFileSystem(base_dir, base_pattern)
+        JsonMetaInfoProvider()
+        WritableDataStore()
 
     def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
         parameters = file_system_as_dict['parameters']
