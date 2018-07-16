@@ -26,6 +26,29 @@ DATA_STORES_FILE_NAME = 'data_stores.yml'
 DATA_FOLDER_NAME = 'data'
 
 
+def sequence_indent_four(s):
+    # this will fail on direclty nested lists: {1; [[2, 3], 4]}
+    levels = []
+    ret_val = ''
+    for line in s.splitlines(True):
+        ls = line.lstrip()
+        indent = len(line) - len(ls)
+        if ls.startswith('- '):
+            if not levels or indent > levels[-1]:
+                levels.append(indent)
+            elif levels:
+                if indent < levels[-1]:
+                    levels = levels[:-1]
+            # same -> do nothing
+        else:
+            if levels:
+                if indent <= levels[-1]:
+                    while levels and indent <= levels[-1]:
+                        levels = levels[:-1]
+        ret_val += '  ' * len(levels) + line
+    return ret_val
+
+
 class DataAccessComponent(object):
     """
     The controlling component. The data access component is responsible for communicating with the various data stores
@@ -67,11 +90,15 @@ class DataAccessComponent(object):
         return roi + ';' + start_time + ';' + end_time + ';' + data_types
 
     def _read_registered_data_stores(self) -> None:
+        data_stores_file = self._get_default_data_stores_file()
+        self.read_data_stores(data_stores_file)
+
+    def _get_default_data_stores_file(self) -> str:
         multiply_home_dir = self._get_multiply_home_dir()
         data_stores_file = '{0}/{1}'.format(multiply_home_dir, DATA_STORES_FILE_NAME)
         if not os.path.exists(data_stores_file):
             open(data_stores_file, 'w+')
-        self.read_data_stores(data_stores_file)
+        return data_stores_file
 
     def _get_multiply_home_dir(self) -> str:
         home_dir = str(Path.home())
@@ -83,18 +110,20 @@ class DataAccessComponent(object):
     def read_data_stores(self, file: str) -> List[DataStore]:
         data_stores = []
         stream = open(file, 'r')
-        data_store_lists = yaml.load(stream)
+        data_store_lists = yaml.safe_load(stream)
         if data_store_lists is None:
             return data_stores
-        for index, data_store_entry in enumerate(data_store_lists['DataStores']):
-            if 'FileSystem' not in data_store_entry.keys():
+        for index, data_store_entry in enumerate(data_store_lists):
+            if 'DataStore' not in data_store_entry.keys():
+                raise UserWarning('Cannot read DataStore')
+            if 'FileSystem' not in data_store_entry['DataStore'].keys():
                 raise UserWarning('DataStore is missing FileSystem: Cannot read DataStore')
-            if 'MetaInfoProvider' not in data_store_entry.keys():
+            if 'MetaInfoProvider' not in data_store_entry['DataStore'].keys():
                 raise UserWarning('DataStore is missing MetaInfoProvider: Cannot read DataStore')
-            file_system = self._create_file_system_from_dict(data_store_entry['FileSystem'])
-            meta_info_provider = self._create_meta_info_provider_from_dict(data_store_entry['MetaInfoProvider'])
-            if 'Id' in data_store_entry.keys():
-                id = data_store_entry['Id']
+            file_system = self._create_file_system_from_dict(data_store_entry['DataStore']['FileSystem'])
+            meta_info_provider = self._create_meta_info_provider_from_dict(data_store_entry['DataStore']['MetaInfoProvider'])
+            if 'Id' in data_store_entry['DataStore'].keys():
+                id = data_store_entry['DataStore']['Id']
             else:
                 id = index
             data_store = DataStore(file_system, meta_info_provider, id)
@@ -102,8 +131,25 @@ class DataAccessComponent(object):
         self._data_stores = self._data_stores + data_stores
         return data_stores
 
-    def create_local_data_store(self, base_dir: Optional[str], meta_info_file: Optional[str],
-                                base_pattern: Optional[str]='/dt/yy/mm/dd/'):
+    def _put_data_store(self, data_store: DataStore, file: Optional[str] = None) -> None:
+        if file is None:
+            file = self._get_default_data_stores_file()
+        data_store_as_dict = data_store.get_as_dict()
+        self._write_data_store_as_dict(data_store_as_dict, file)
+
+    def _write_data_store_as_dict(self, data_store_as_dict: dict, file: str) -> None:
+        with open(file, 'r') as infile:
+            data_stores = yaml.safe_load(infile)
+            if data_stores:
+                data_stores.append(data_store_as_dict)
+                with open(file, 'w') as outfile:
+                    yaml.safe_dump(data_stores, outfile, default_flow_style=False)
+
+    # def _remove_data_store(self, data_store: DataStore):
+    #
+
+    def create_local_data_store(self, base_dir: Optional[str], meta_info_file: Optional[str] = None,
+                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None):
         multiply_home_dir = self._get_multiply_home_dir()
         if base_dir is None:
             base_dir = '{0}/{1}'.format(multiply_home_dir, DATA_FOLDER_NAME)
@@ -120,8 +166,20 @@ class DataAccessComponent(object):
                 json.dump(empty_dict, json_file, indent=2)
         local_file_system = LocalFileSystem(base_dir, base_pattern)
         json_meta_info_provider = JsonMetaInfoProvider(meta_info_file)
-        writable_data_store = WritableDataStore(local_file_system, json_meta_info_provider)
+        if id is None:
+            i = 0
+            is_contained = True
+            while is_contained:
+                is_contained = False
+                id = 'data_store_{}'.format(i)
+                for data_store in self._data_stores:
+                    if data_store.id == id:
+                        is_contained = True
+                        i += 1
+                        break
+        writable_data_store = WritableDataStore(local_file_system, json_meta_info_provider, id)
         writable_data_store.update()
+        self._data_stores.append(writable_data_store)
 
     def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
         parameters = file_system_as_dict['parameters']

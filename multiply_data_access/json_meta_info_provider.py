@@ -20,6 +20,11 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
             self.data_set_infos = json.load(json_file)
             self._update_provided_data_sets()
 
+    @classmethod
+    def name(cls) -> str:
+        """The name of the file system implementation."""
+        return _NAME
+
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         roi = self.get_roi_from_query_string(query_string)
         query_start_time = self.get_start_time_from_query_string(query_string)
@@ -111,6 +116,10 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
                                                  identifier=data_set_info.get('name'))
             data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
+
+    def _get_parameters_as_dict(self):
+        return {'path_to_json_file': self.path_to_json_file}
+
 
 class JsonMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 

@@ -60,9 +60,26 @@ class FileSystem(metaclass=ABCMeta):
     An abstraction of a file system on which data sets are physically stored
     """
 
+    @classmethod
+    def name(cls) -> str:
+        """The name of the file system implementation."""
+
     @abstractmethod
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         """Retrieves a sequence of 'FileRef's."""
+
+    def get_as_dict(self) -> dict:
+        """
+        :return: A representation of this file system as dictionary.
+        """
+        return {'type': self.name(),
+                'parameters': self._get_parameters_as_dict()}
+
+    @abstractmethod
+    def _get_parameters_as_dict(self) -> dict:
+        """
+        :return: The parameters of this file system as dict
+        """
 
 
 class FileSystemAccessor(metaclass=ABCMeta):
@@ -80,6 +97,10 @@ class MetaInfoProvider(metaclass=ABCMeta):
     """
     An abstraction of a provider that contains meta information about the files provided by a data store.
     """
+
+    @classmethod
+    def name(cls) -> str:
+        """The name of the file system implementation."""
 
     @abstractmethod
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
@@ -124,6 +145,19 @@ class MetaInfoProvider(metaclass=ABCMeta):
         for i, data_type in enumerate(data_types):
             data_types[i] = data_type.strip()
         return data_types
+
+    def get_as_dict(self) -> dict:
+        """
+        :return: A representation of this file system as dictionary.
+        """
+        return {'type': self.name(),
+                'parameters': self._get_parameters_as_dict()}
+
+    @abstractmethod
+    def _get_parameters_as_dict(self) -> dict:
+        """
+        :return: The parameters of this file system as dict
+        """
 
 
 class MetaInfoProviderAccessor(metaclass=ABCMeta):
@@ -246,3 +280,11 @@ class DataStore(object):
         :return: True if data of that type can be requested from the meta infor provider
         """
         return self._meta_info_provider.provides_data_type(data_type)
+
+    def get_as_dict(self) -> dict:
+        """
+        :return: A representation of this data store in a dictionary format
+        """
+        inner_dict = {'FileSystem': self._file_system.get_as_dict(),
+               'MetaInfoProvider': self._meta_info_provider.get_as_dict(), 'Id': self.id}
+        return {'DataStore': inner_dict}

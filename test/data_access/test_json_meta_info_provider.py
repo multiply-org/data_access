@@ -7,6 +7,13 @@ __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 path_to_json_file = './test/test_data/test_meta_info.json'
 
 
+def test_get_name():
+    provider = JsonMetaInfoProvider(path_to_json_file)
+
+    assert 'JsonMetaInfoProvider' == provider.name()
+    assert 'JsonMetaInfoProvider' == JsonMetaInfoProvider.name()
+
+
 def test_json_meta_info_provider_query_for_region():
     provider = JsonMetaInfoProvider(path_to_json_file)
     query_string = "POLYGON((5 5, 20 5, 20 20, 5 20, 5 5));2017-03-01;2017-03-31;TYPE_A, TYPE_B, TYPE_C"
@@ -77,6 +84,16 @@ def test_json_meta_info_provider_query_for_data_type():
     query_string = "POLYGON((5 5, 35 5, 35 35, 5 35, 5 5));2017-03;2017-03;"
     meta_data_infos = provider.query(query_string)
     assert len(meta_data_infos) == 0
+
+
+def test_get_parameters_as_dict():
+    provider = JsonMetaInfoProvider(path_to_json_file)
+
+    meta_info_providers_dict = provider._get_parameters_as_dict()
+
+    assert 1 == len(meta_info_providers_dict.keys())
+    assert 'path_to_json_file' in meta_info_providers_dict.keys()
+    assert path_to_json_file == meta_info_providers_dict['path_to_json_file']
 
 
 def test_update():

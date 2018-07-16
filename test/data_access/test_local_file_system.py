@@ -6,6 +6,12 @@ import shutil
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
 
+def test_get_name():
+    local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
+    assert 'LocalFilesystem', local_file_system.name()
+    assert 'LocalFilesystem', LocalFileSystem.name()
+
+
 def test_get_one_file():
     local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
     data_set_meta_info = DataSetMetaInfo('doesn\'t matter', '2017-08-21', '2017-08-21', 'my_data_type', '')
@@ -135,3 +141,15 @@ def test_scan():
     assert retrieved_data_set_meta_infos[0].identifier.endswith('small_product.nc')
     assert 'my_data_type' == retrieved_data_set_meta_infos[1].data_type
     assert retrieved_data_set_meta_infos[1].identifier.endswith('other_small_product.nc')
+
+
+def test_get_parameters_as_dict():
+    local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
+
+    parameters_as_dict = local_file_system._get_parameters_as_dict()
+
+    assert 2 == len(parameters_as_dict)
+    assert 'path' in parameters_as_dict.keys()
+    assert './test/test_data/' == parameters_as_dict['path']
+    assert 'pattern' in parameters_as_dict.keys()
+    assert '/dt/yy/mm/dd/' == parameters_as_dict['pattern']

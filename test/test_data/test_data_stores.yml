@@ -1,23 +1,22 @@
-DataStores:
-  - DataStore:
+- DataStore:
     FileSystem:
       type: LocalFileSystem
       parameters:
-        path: './test/test_data/'
-        pattern: '/dt/yy/mm/dd/'
+        path: ./test/test_data/
+        pattern: /dt/yy/mm/dd/
     MetaInfoProvider:
       type: JsonMetaInfoProvider
       parameters:
-        path_to_json_file: './test/test_data/test_meta_info.json'
-    Id: 'Default'
-  - DataStore:
+        path_to_json_file: ./test/test_data/test_meta_info.json
+    Id: Default
+- DataStore:
     FileSystem:
       type: LocalFileSystem
       parameters:
-        path: './test/test_data_2/'
-        pattern: '/yy/mm/dt/'
+        path: ./test/test_data_2/
+        pattern: /yy/mm/dt/
     MetaInfoProvider:
       type: JsonMetaInfoProvider
       parameters:
-        path_to_json_file: './test/test_data/test_meta_info.json'
-    Id: 'Fallback'
+        path_to_json_file: ./test/test_data/test_meta_info.json
+    Id: Fallback

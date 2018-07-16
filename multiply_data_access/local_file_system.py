@@ -36,6 +36,11 @@ class LocalFileSystem(WritableFileSystem):
         self.pattern = pattern
         self._derive_timestep(self.pattern)
 
+    @classmethod
+    def name(cls) -> str:
+        """The name of the file system implementation."""
+        return _NAME
+
     def _derive_timestep(self, pattern: str):
         if '/{}/'.format(_DAY_PATTERN) in pattern:
             self.time_step = TimeStep.DAILY
@@ -171,6 +176,9 @@ class LocalFileSystem(WritableFileSystem):
                                                             data_type=type, identifier=found_file))
         return data_set_meta_infos
 
+    def _get_parameters_as_dict(self) -> dict:
+        return {'path': self.path,
+                'pattern': self.pattern}
 
 class TimeStep(Enum):
     DAILY = 0
