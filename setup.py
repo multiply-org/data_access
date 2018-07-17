@@ -24,6 +24,7 @@ setup(name='multiply-data-access',
           ],
           'meta_info_provider_plugins': [
               'json_meta_info_provider = multiply_data_access:json_meta_info_provider.JsonMetaInfoProviderAccessor',
+              'aws_s2_meta_info_provider = multiply_data_access:aws_s2_meta_info_provider.AwsS2MetaInfoProviderAccessor',
           ],
       },
       install_requires=requirements
