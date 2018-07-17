@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Sequence
 from .data_access import DataSetMetaInfo, DataStore, FileSystem, MetaInfoProvider
-from .data_set_meta_info_provider import DataSetMetaInfoProvision
+from .data_set_meta_info_extraction import DataSetMetaInfoProvision
 from multiply_core.observations import get_valid_type
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'

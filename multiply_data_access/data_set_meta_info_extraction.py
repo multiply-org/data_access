@@ -17,7 +17,7 @@ import osr
 import xml.etree.ElementTree as ET
 
 
-class DataSetMetaInfoProvider(metaclass=ABCMeta):
+class DataSetMetaInfoExtractor(metaclass=ABCMeta):
 
     @classmethod
     def name(cls) -> str:
@@ -28,7 +28,7 @@ class DataSetMetaInfoProvider(metaclass=ABCMeta):
         """Whether the data at the given path is a valid data product for the type."""
 
 
-class AWS_S2_Meta_Info_Provider(DataSetMetaInfoProvider):
+class AWS_S2_Meta_Info_Extractor(DataSetMetaInfoExtractor):
 
     @classmethod
     def name(cls) -> str:
@@ -102,9 +102,9 @@ class DataSetMetaInfoProvision(object):
 
     def __init__(self):
         self.DATA_SET_META_INFO_PROVIDERS = []
-        self.add_data_set_meta_info_provider(AWS_S2_Meta_Info_Provider())
+        self.add_data_set_meta_info_provider(AWS_S2_Meta_Info_Extractor())
 
-    def add_data_set_meta_info_provider(self, data_set_meta_info_provider: DataSetMetaInfoProvider):
+    def add_data_set_meta_info_provider(self, data_set_meta_info_provider: DataSetMetaInfoExtractor):
         self.DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
 
     def get_data_set_meta_info(self, data_type: str, path:str) -> Optional[DataSetMetaInfo]:
