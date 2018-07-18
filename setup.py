@@ -6,7 +6,8 @@ requirements = [
     'multiply_core',
     'nose',
     'shapely',
-    'pyyaml'
+    'pyyaml',
+    'requests'
 ]
 
 __version__ = None
