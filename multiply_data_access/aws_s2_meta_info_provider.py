@@ -1,19 +1,18 @@
-from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProvider, MetaInfoProviderAccessor
+from .data_access import DataSetMetaInfo, MetaInfoProvider, MetaInfoProviderAccessor
+from datetime import datetime, timedelta
 from multiply_core.observations import DataTypeConstants
 from typing import List, Optional
 from shapely.wkt import loads
 from shapely.geometry import Polygon
-import json
 import math
-import numpy as np
 import requests
-import yaml
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
              'José Luis Gómez-Dans (University College London)'
 
 _NAME = 'AwsS2MetaInfoProvider'
-LAND_CONVERTER_BASE_URL = "http://legallandconverter.com/cgi-bin/shopmgrs3.cgi"
+AWS_TILE_INFO_URL = 'http://sentinel-s2-l1c.s3.amazonaws.com/tiles/{0}/{1}/{2}/{3}/{4}/{5}/{6}/tileInfo.json'
+
 TILE_LAT_IDENTIFIERS = \
     ['C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X']
 PATH_TO_TILE_LOOKUP_TABLE = './aux_data/tile_lookup_table.yaml'
@@ -50,10 +49,6 @@ class TileDescription(object):
         return self._coverage
 
 
-#
-# def _get_all_tiles(min_lon: float, min_lat_float, max_lon:float, max_lat: float) -> :
-
-
 class AwsS2MetaInfoProvider(MetaInfoProvider):
 
     def __init__(self):
@@ -64,71 +59,78 @@ class AwsS2MetaInfoProvider(MetaInfoProvider):
         return _NAME
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
+        data_types = self.get_data_types_from_query_string(query_string)
+        if DataTypeConstants.AWS_S2_L1C not in data_types:
+            return []
         roi = self.get_roi_from_query_string(query_string)
-
+        tile_descriptions = self.get_affected_tile_descriptions(roi)
         start_time = self.get_start_time_from_query_string(query_string)
         end_time = self.get_end_time_from_query_string(query_string)
-        data_types = self.get_data_types_from_query_string(query_string)
-
+        data_set_meta_infos = []
+        for tile_description in tile_descriptions:
+            data_set_meta_infos += self.get_data_set_meta_infos_for_tile_description(tile_description, start_time,
+                                                                                     end_time)
         return []
 
-    def get_affected_tile_ids(self, roi: Polygon) -> List[TileDescription]:
+    def get_data_set_meta_infos_for_tile_description(self, tile_description: TileDescription, start_time: datetime,
+                                                     end_time: datetime) -> List[DataSetMetaInfo]:
+        data_set_meta_infos = []
+        current_time = start_time
+        while current_time < end_time:
+            current_time_as_string = datetime.strftime(current_time, '%Y-%m-%d')
+            identifier = 0
+            while identifier >= 0:
+                tile_info_url = AWS_TILE_INFO_URL.format(tile_description.tile_id[0:2], tile_description.tile_id[2:3],
+                                                         tile_description.tile_id[3:5], current_time.year,
+                                                         current_time.month, current_time.day, identifier)
+                request = requests.get(tile_info_url)
+                if request.status_code == 200:
+                    data_set_meta_infos.append(DataSetMetaInfo(tile_description.coverage, current_time_as_string,
+                                                               current_time_as_string, DataTypeConstants.AWS_S2_L1C,
+                                                               str(identifier)))
+                    identifier +=1
+                else:
+                    identifier = -1
+                    current_time += timedelta(days=1)
+        return data_set_meta_infos
+
+    def get_affected_tile_descriptions(self, roi: Polygon) -> List[TileDescription]:
         min_lon, min_lat, max_lon, max_lat = roi.bounds
+
         tile_stripes = _get_tile_stripes(min_lon, max_lon)
         center_tile_identifiers = _get_center_tile_identifiers(min_lat, max_lat)
+        tile_descriptions = []
         for tile_stripe in tile_stripes:
             for center_tile_identifier in center_tile_identifiers:
-                sub_lut = self._read_sub_lut(str(tile_stripe), center_tile_identifier)
-                for lut_entry in sub_lut[tile_stripe][center_tile_identifier]:
-                    pass
-        return []
+                sub_lut = self._get_sub_lut(tile_stripe, center_tile_identifier)
+                for tile_id in sub_lut:
+                    if roi.intersects(loads(sub_lut[tile_id])):
+                        tile_descriptions.append(TileDescription(tile_id, sub_lut[tile_id]))
+        return tile_descriptions
 
-    def _get_sub_lut(self, tile_stripe: str, center_tile_identifier: str):
-        if tile_stripe not in self._lut.keys() and \
-                center_tile_identifier not in self._lut[tile_stripe][center_tile_identifier]:
-            pass
+    def _get_sub_lut(self, tile_stripe: int, center_tile_identifier: str):
+        if tile_stripe not in self._lut.keys() or center_tile_identifier not in self._lut[tile_stripe].keys():
+            if tile_stripe not in self._lut.keys():
+                self._lut[tile_stripe] = {}
+            self._lut[tile_stripe][center_tile_identifier] = self._read_sub_lut(str(tile_stripe),
+                                                                                center_tile_identifier)
         return self._lut[tile_stripe][center_tile_identifier]
-
-    # def _ensure_lut_is_read(self):
-    #     if not self._tile_lut:
-    #         with open(PATH_TO_TILE_LOOKUP_TABLE, 'r') as infile:
-    #             self._tile_lut = yaml.safe_load(infile)
 
     def _read_sub_lut(self, tile_stripe: str, center_tile_identifier: str) -> dict:
         with open(PATH_TO_TILE_LOOKUP_TABLE, 'r') as stream:
-            # tile_strip_as_int = t(tile_stripe)
-            # next_tile_strip = int(tile_stripe)
+            sub_lut = {}
             part_of_sub_lut = 0
-            data = []
             for line in stream:
-                # if line.startswith(next_tile_strip):
-                #     break
                 if line.startswith(tile_stripe):
                     part_of_sub_lut = 1
-                    data.append(line)
                 elif part_of_sub_lut > 0 and line.strip().startswith(center_tile_identifier):
                     part_of_sub_lut = 2
-                    data.append(line)
                 elif part_of_sub_lut == 2:
                     if not line.startswith('    '):
                         break
-                    data.append(line)
-            return yaml.load(''.join(data))
-
-    # def _read_sub_lut(self, tile_id: str) -> dict:
-    #     start = '{}:'.format(tile_id[0:2])
-    #     end = '{}:'.format(int(tile_id[0:2]) + 1)
-    #     with open(PATH_TO_TILE_LOOKUP_TABLE, 'r') as stream:
-    #         part_of_doc = False
-    #         data = []
-    #         for line in stream:
-    #             if line.startswith(end):
-    #                 break
-    #             if line.startswith(start):
-    #                 part_of_doc = True
-    #             if part_of_doc:
-    #                 data.append(line)
-    #         return yaml.load(''.join(data))
+                    split_line = line.split(':')
+                    sub_lut[split_line[0].strip()] = split_line[1].strip()
+            return sub_lut
 
     def _get_tile_coverage_as_wkt(self, tile_id: str) -> Optional[str]:
         start = int(tile_id[0:2])
@@ -140,29 +142,6 @@ class AwsS2MetaInfoProvider(MetaInfoProvider):
         coverage_as_wkt = self._get_tile_coverage_as_wkt(tile_id)
         if coverage_as_wkt is not None:
             return loads(coverage_as_wkt)
-
-    @classmethod
-    def _get_military_grid_reference_system_tile(cls, longitude: float, latitude: float) -> str:
-        """
-        A method that uses a website to infer the Military Grid Reference System tile that is used by the
-        Amazon data buckets from the latitude/longitude
-        :param latitude: The latitude in decimal degrees
-        :param longitude: The longitude in decimal degrees
-        :return: The MGRS tile (e.g. 29TNJ)
-        """
-        response = requests.post(LAND_CONVERTER_BASE_URL, data=dict(latitude=latitude, longitude=longitude,
-                                                                    xcmd="Calc", cmd="gps"))
-        tile = None
-        for response_line in response.text.split("\n"):
-            if response_line.find("<title>") >= 0:
-                tile = response_line.replace("<title>", "").replace("</title>", "")
-                tile = tile.replace(" ", "")
-        if tile is None:
-            raise UserWarning('Could not determine tile id')
-        try:
-            return tile[:5]
-        except NameError:
-            return ''
 
     def provides_data_type(self, data_type: str) -> bool:
         return data_type == DataTypeConstants.AWS_S2_L1C
