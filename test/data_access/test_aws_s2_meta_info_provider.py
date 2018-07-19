@@ -98,18 +98,17 @@ def test_get_data_set_meta_infos_for_tile_description():
     start_time = DataUtils.get_time_from_string('2016-04-01')
     end_time = DataUtils.get_time_from_string('2016-04-30')
     data_set_meta_infos = aws_s2_meta_info_provider.get_data_set_meta_infos_for_tile_description(tile_description,
-                                                                                                 start_time,
-                                                                                                 end_time)
+                                                                                                 start_time, end_time)
     assert 6 == len(data_set_meta_infos)
     assert '2016-04-01' == data_set_meta_infos[0].start_time
-    assert '0' == data_set_meta_infos[0].identifier
+    assert '30/S/WJ/2016/4/1/0' == data_set_meta_infos[0].identifier
     assert '2016-04-04' == data_set_meta_infos[1].start_time
-    assert '0' == data_set_meta_infos[1].identifier
+    assert '30/S/WJ/2016/4/4/0' == data_set_meta_infos[1].identifier
     assert '2016-04-11' == data_set_meta_infos[2].start_time
-    assert '0' == data_set_meta_infos[2].identifier
+    assert '30/S/WJ/2016/4/11/0' == data_set_meta_infos[2].identifier
     assert '2016-04-14' == data_set_meta_infos[3].start_time
-    assert '0' == data_set_meta_infos[3].identifier
+    assert '30/S/WJ/2016/4/14/0' == data_set_meta_infos[3].identifier
     assert '2016-04-21' == data_set_meta_infos[4].start_time
-    assert '0' == data_set_meta_infos[4].identifier
+    assert '30/S/WJ/2016/4/21/0' == data_set_meta_infos[4].identifier
     assert '2016-04-24' == data_set_meta_infos[5].start_time
-    assert '0' == data_set_meta_infos[5].identifier
+    assert '30/S/WJ/2016/4/24/0' == data_set_meta_infos[5].identifier

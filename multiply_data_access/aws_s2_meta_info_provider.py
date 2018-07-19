@@ -11,7 +11,8 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
              'José Luis Gómez-Dans (University College London)'
 
 _NAME = 'AwsS2MetaInfoProvider'
-AWS_TILE_INFO_URL = 'http://sentinel-s2-l1c.s3.amazonaws.com/tiles/{0}/{1}/{2}/{3}/{4}/{5}/{6}/tileInfo.json'
+_AWS_BASE_TILE_INFO_URL = 'http://sentinel-s2-l1c.s3.amazonaws.com/tiles/{}/tileInfo.json'
+_ID_PATTERN = '{0}/{1}/{2}/{3}/{4}/{5}/{6}'
 
 TILE_LAT_IDENTIFIERS = \
     ['C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X']
@@ -78,19 +79,20 @@ class AwsS2MetaInfoProvider(MetaInfoProvider):
         current_time = start_time
         while current_time < end_time:
             current_time_as_string = datetime.strftime(current_time, '%Y-%m-%d')
-            identifier = 0
-            while identifier >= 0:
-                tile_info_url = AWS_TILE_INFO_URL.format(tile_description.tile_id[0:2], tile_description.tile_id[2:3],
-                                                         tile_description.tile_id[3:5], current_time.year,
-                                                         current_time.month, current_time.day, identifier)
+            aws_index = 0
+            while aws_index >= 0:
+                id = _ID_PATTERN.format(tile_description.tile_id[0:2], tile_description.tile_id[2:3],
+                                        tile_description.tile_id[3:5], current_time.year, current_time.month,
+                                        current_time.day, aws_index)
+                tile_info_url = _AWS_BASE_TILE_INFO_URL.format(id)
                 request = requests.get(tile_info_url)
                 if request.status_code == 200:
                     data_set_meta_infos.append(DataSetMetaInfo(tile_description.coverage, current_time_as_string,
                                                                current_time_as_string, DataTypeConstants.AWS_S2_L1C,
-                                                               str(identifier)))
-                    identifier +=1
+                                                               id))
+                    aws_index += 1
                 else:
-                    identifier = -1
+                    aws_index = -1
                     current_time += timedelta(days=1)
         return data_set_meta_infos
 
