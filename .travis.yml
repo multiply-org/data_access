@@ -35,6 +35,7 @@ install:
   # that this is not necessarily the same code as in the current development
   # or master branches
   - conda install pip
+  - pip install sentinelhub
 
   # test installation from pip
   #- pip install rt1
