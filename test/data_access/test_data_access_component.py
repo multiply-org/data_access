@@ -61,3 +61,25 @@ def test_write_data_store_as_dict():
         assert 'for_testing' == data_stores[2].id
     finally:
         os.remove(path_to_yaml_file_2)
+
+
+def test_write_data_store_as_dict_to_empty_file():
+    path_to_empty_yaml_file = './test/test_data/test_data_stores_4.yml'
+    open(path_to_empty_yaml_file, 'w')
+    try:
+        data_access_component = DataAccessComponent()
+        file_system_parameters = {'path': './test/test_data/', 'pattern': '/yy/dt/dd/'}
+        file_system_as_dict = {'type': 'LocalFileSystem', 'parameters': file_system_parameters}
+        meta_info_provider_parameters = {'path_to_json_file': './test/test_data/test_meta_info.json'}
+        meta_info_provider_as_dict = {'type': 'JsonMetaInfoProvider', 'parameters': meta_info_provider_parameters}
+        data_store_as_dict = {'FileSystem': file_system_as_dict, 'MetaInfoProvider': meta_info_provider_as_dict,
+                              'Id': 'for_testing'}
+        data_store = {'DataStore': data_store_as_dict}
+        data_access_component._write_data_store_as_dict(data_store, path_to_empty_yaml_file)
+
+        data_stores = data_access_component.read_data_stores(path_to_empty_yaml_file)
+        assert 1 == len(data_stores)
+
+        assert 'for_testing' == data_stores[0].id
+    finally:
+        os.remove(path_to_empty_yaml_file)

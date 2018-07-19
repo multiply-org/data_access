@@ -1,4 +1,6 @@
 from multiply_data_access import DataStore, FileSystem, MetaInfoProvider, WritableDataStore
+from .aws_s2_file_system import AwsS2FileSystem
+from .aws_s2_meta_info_provider import AwsS2MetaInfoProvider
 from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem
 from pathlib import Path
@@ -75,7 +77,18 @@ class DataAccessComponent(object):
         data_stores_file = '{0}/{1}'.format(multiply_home_dir, DATA_STORES_FILE_NAME)
         if not os.path.exists(data_stores_file):
             open(data_stores_file, 'w+')
+            self._add_default_stores()
         return data_stores_file
+
+    def _add_default_stores(self):
+        """Will add the default stores to the data stores file when it is created."""
+        # todo remove this from here
+        multiply_home_dir = self._get_multiply_home_dir()
+        aws_s2_path = '{}/aws_s2_l1c/'.format(multiply_home_dir)
+        if not os.path.exists(aws_s2_path):
+            os.mkdir(aws_s2_path)
+        aws_s2_data_store = DataStore(AwsS2FileSystem(aws_s2_path), AwsS2MetaInfoProvider(), 'aws_s2')
+        self._put_data_store(aws_s2_data_store)
 
     def _get_multiply_home_dir(self) -> str:
         home_dir = str(Path.home())
@@ -117,10 +130,11 @@ class DataAccessComponent(object):
     def _write_data_store_as_dict(self, data_store_as_dict: dict, file: str) -> None:
         with open(file, 'r') as infile:
             data_stores = yaml.safe_load(infile)
-            if data_stores:
-                data_stores.append(data_store_as_dict)
-                with open(file, 'w') as outfile:
-                    yaml.safe_dump(data_stores, outfile, default_flow_style=False)
+            if data_stores is None:
+                data_stores = []
+            data_stores.append(data_store_as_dict)
+            with open(file, 'w') as outfile:
+                yaml.safe_dump(data_stores, outfile, default_flow_style=False)
 
     # def _remove_data_store(self, data_store: DataStore):
     #
