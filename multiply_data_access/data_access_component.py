@@ -26,29 +26,6 @@ DATA_STORES_FILE_NAME = 'data_stores.yml'
 DATA_FOLDER_NAME = 'data'
 
 
-def sequence_indent_four(s):
-    # this will fail on direclty nested lists: {1; [[2, 3], 4]}
-    levels = []
-    ret_val = ''
-    for line in s.splitlines(True):
-        ls = line.lstrip()
-        indent = len(line) - len(ls)
-        if ls.startswith('- '):
-            if not levels or indent > levels[-1]:
-                levels.append(indent)
-            elif levels:
-                if indent < levels[-1]:
-                    levels = levels[:-1]
-            # same -> do nothing
-        else:
-            if levels:
-                if indent <= levels[-1]:
-                    while levels and indent <= levels[-1]:
-                        levels = levels[:-1]
-        ret_val += '  ' * len(levels) + line
-    return ret_val
-
-
 class DataAccessComponent(object):
     """
     The controlling component. The data access component is responsible for communicating with the various data stores
