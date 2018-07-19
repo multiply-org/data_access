@@ -6,6 +6,7 @@ requirements = [
     'multiply_core',
     'nose',
     'shapely',
+    'pytest',
     'pyyaml',
     'requests'
 ]
@@ -22,6 +23,7 @@ setup(name='multiply-data-access',
       entry_points={
           'file_system_plugins': [
               'local_file_system = multiply_data_access:local_file_system.LocalFileSystemAccessor',
+              'aws_s2_file_system = multiply_data_access:aws_s2_file_system.AwsS2FileSystemAccessor',
           ],
           'meta_info_provider_plugins': [
               'json_meta_info_provider = multiply_data_access:json_meta_info_provider.JsonMetaInfoProviderAccessor',
