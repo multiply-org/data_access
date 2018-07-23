@@ -71,7 +71,7 @@ class AwsS2MetaInfoProvider(MetaInfoProvider):
         for tile_description in tile_descriptions:
             data_set_meta_infos += self.get_data_set_meta_infos_for_tile_description(tile_description, start_time,
                                                                                      end_time)
-        return []
+        return data_set_meta_infos
 
     def get_data_set_meta_infos_for_tile_description(self, tile_description: TileDescription, start_time: datetime,
                                                      end_time: datetime) -> List[DataSetMetaInfo]:
