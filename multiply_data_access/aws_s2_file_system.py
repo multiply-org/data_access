@@ -8,7 +8,7 @@ Services (AWS).
 from multiply_core.util import FileRef, get_mime_type
 from .data_access import DataSetMetaInfo, FileSystemAccessor, FileSystem
 from sentinelhub import AwsTileRequest
-from typing import Sequence
+from typing import Optional, Sequence
 import os
 import re
 
@@ -33,14 +33,16 @@ class AwsS2FileSystem(FileSystem):
 
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
-        file_refs.append(self._get_file_ref(data_set_meta_info))
+        retrieved_file_ref = self._get_file_ref(data_set_meta_info)
+        if retrieved_file_ref is not None:
+            file_refs.append(retrieved_file_ref)
         return file_refs
 
-    def _get_file_ref(self, data_set_meta_info: DataSetMetaInfo, bands=None, metafiles=None) -> FileRef:
+    def _get_file_ref(self, data_set_meta_info: DataSetMetaInfo, bands=None, metafiles=None) -> Optional[FileRef]:
         """auxiliary method to delimit the number of downloaded files for testing"""
         if not self._is_valid_identifier(data_set_meta_info.identifier):
             # consider throwing an exception
-            return []
+            return None
         tile_name = self._get_tile_name(data_set_meta_info.identifier)
         aws_index = self._get_aws_index(data_set_meta_info.identifier)
         start_time = data_set_meta_info.start_time
@@ -60,7 +62,7 @@ class AwsS2FileSystem(FileSystem):
     def _get_aws_index(self, id: str) -> int:
         return int(id.split('/')[-1])
 
-    def _get_parameters_as_dict(self) -> dict:
+    def get_parameters_as_dict(self) -> dict:
         parameters = {'temp_dir': self._temp_dir}
         return parameters
 

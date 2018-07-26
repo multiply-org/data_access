@@ -146,7 +146,7 @@ def test_scan():
 def test_get_parameters_as_dict():
     local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
 
-    parameters_as_dict = local_file_system._get_parameters_as_dict()
+    parameters_as_dict = local_file_system.get_parameters_as_dict()
 
     assert 2 == len(parameters_as_dict)
     assert 'path' in parameters_as_dict.keys()

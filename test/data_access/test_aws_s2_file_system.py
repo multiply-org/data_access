@@ -42,7 +42,7 @@ def test_aws_s2_file_system_get_aws_index():
 
 def test_aws_s2_file_system_get_parameters_as_dict():
     aws_s2_file_system = AwsS2FileSystemAccessor.create_from_parameters({'temp_dir': OUTPUT_DIR})
-    parameters_as_dict = aws_s2_file_system._get_parameters_as_dict()
+    parameters_as_dict = aws_s2_file_system.get_parameters_as_dict()
     assert 1 == len(parameters_as_dict.keys())
     assert 'temp_dir' in parameters_as_dict.keys()
     assert OUTPUT_DIR == parameters_as_dict['temp_dir']

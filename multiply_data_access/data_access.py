@@ -67,6 +67,7 @@ class FileSystem(metaclass=ABCMeta):
     """
 
     @classmethod
+    @abstractmethod
     def name(cls) -> str:
         """The name of the file system implementation."""
 
@@ -79,10 +80,10 @@ class FileSystem(metaclass=ABCMeta):
         :return: A representation of this file system as dictionary.
         """
         return {'type': self.name(),
-                'parameters': self._get_parameters_as_dict()}
+                'parameters': self.get_parameters_as_dict()}
 
     @abstractmethod
-    def _get_parameters_as_dict(self) -> dict:
+    def get_parameters_as_dict(self) -> dict:
         """
         :return: The parameters of this file system as dict
         """
@@ -105,6 +106,7 @@ class MetaInfoProvider(metaclass=ABCMeta):
     """
 
     @classmethod
+    @abstractmethod
     def name(cls) -> str:
         """The name of the file system implementation."""
 

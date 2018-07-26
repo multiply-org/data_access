@@ -56,7 +56,7 @@ class LocalFileSystem(WritableFileSystem):
         if not os.path.exists(path):
             raise ValueError('Could not find path {0}'.format(path))
         if not path.endswith('/'):
-            path = path + '/'
+            path += '/'
         return path
 
     @staticmethod
@@ -170,15 +170,16 @@ class LocalFileSystem(WritableFileSystem):
             found_files = glob.glob(adjusted_relative_path + '/**', recursive=True)
             for found_file in found_files:
                 found_file = found_file.replace('\\', '/')
-                type = data_validation.get_valid_type(found_file)
-                if type is not '':
+                data_type = data_validation.get_valid_type(found_file)
+                if data_type is not '':
                     data_set_meta_infos.append(DataSetMetaInfo(coverage='', start_time='', end_time='',
-                                                            data_type=type, identifier=found_file))
+                                                               data_type=data_type, identifier=found_file))
         return data_set_meta_infos
 
-    def _get_parameters_as_dict(self) -> dict:
+    def get_parameters_as_dict(self) -> dict:
         return {'path': self.path,
                 'pattern': self.pattern}
+
 
 class TimeStep(Enum):
     DAILY = 0
@@ -188,7 +189,6 @@ class TimeStep(Enum):
 
 
 class LocalFileSystemAccessor(FileSystemAccessor):
-
     @classmethod
     def name(cls) -> str:
         """The name of the file system implementation."""
