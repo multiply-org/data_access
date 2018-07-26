@@ -8,14 +8,6 @@ or meta info providers. This is done with the objective to facilitate the handli
 by
 """
 
-# from abc import ABCMeta, abstractmethod
-# from typing import List, Sequence, Optional
-# from datetime import datetime, timedelta
-# from multiply_core.util import FileRef
-# from shapely.wkt import loads
-# from shapely.geometry import Polygon
-# import os
-
 from abc import abstractmethod
 from multiply_core.util import FileRef
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystem, MetaInfoProvider
@@ -29,9 +21,9 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 class LocallyWrappingFileSystem(FileSystem):
 
     def __init__(self, parameters: dict):
-        if not 'path' in parameters.keys():
+        if 'path' not in parameters.keys():
             raise ValueError('Missing parameter \'path\'')
-        if not 'pattern' in parameters.keys():
+        if 'pattern' not in parameters.keys():
             raise ValueError('Missing parameter \'pattern\'')
         self._local_file_system = LocalFileSystem(parameters['path'], parameters['pattern'])
         self._init_wrapped_file_system(parameters)
@@ -44,10 +36,23 @@ class LocallyWrappingFileSystem(FileSystem):
         file_refs = self._local_file_system.get(data_set_meta_info)
         if len(file_refs) > 0:
             return file_refs
-        # if on wrapped file system: access, add to local file system, retrieve it then
+        file_refs_from_wrapped = self._get_from_wrapped(data_set_meta_info)
+        if len(file_refs_from_wrapped) == 0:
+            return []
+        self._local_file_system.put(file_refs_from_wrapped[0].url, data_set_meta_info)
+        self._notify_copied_to_local(data_set_meta_info)
+        return self._local_file_system.get(data_set_meta_info)
 
-    def _get_parameters_as_dict(self) -> dict:
-        local_parameters = self._local_file_system._get_parameters_as_dict()
+    @abstractmethod
+    def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
+        """Retrieves the file ref from the wrapped file system."""
+
+    @abstractmethod
+    def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
+        """Called when the data set has been copied to the local file system."""
+
+    def get_parameters_as_dict(self) -> dict:
+        local_parameters = self._local_file_system.get_parameters_as_dict()
         wrapped_parameters = self._get_wrapped_parameters_as_dict()
         local_parameters.update(wrapped_parameters)
         return local_parameters
@@ -62,7 +67,7 @@ class LocallyWrappingFileSystem(FileSystem):
 class LocallyWrappingMetaInfoProvider(MetaInfoProvider):
 
     def __init__(self, parameters: dict):
-        if not 'path_to_json_file' in parameters.keys():
+        if 'path_to_json_file' not in parameters.keys():
             raise ValueError('Missing path to json file')
         self._json_meta_info_provider = JsonMetaInfoProvider(parameters['path_to_json_file'])
         self._init_wrapped_meta_info_provider(parameters)
@@ -74,7 +79,7 @@ class LocallyWrappingMetaInfoProvider(MetaInfoProvider):
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         local_data_meta_set_infos = self._json_meta_info_provider.query(query_string)
-        wrapped_data_set_meta_infos = self._query_wrapped_file_system(query_string)
+        wrapped_data_set_meta_infos = self._query_wrapped_meta_info_provider(query_string)
         for wrapped_data_set_meta_info in wrapped_data_set_meta_infos:
             for local_data_meta_set_info in local_data_meta_set_infos:
                 if wrapped_data_set_meta_info.equals(local_data_meta_set_info):
@@ -84,12 +89,8 @@ class LocallyWrappingMetaInfoProvider(MetaInfoProvider):
 
 
     @abstractmethod
-    def _query_wrapped_file_system(self, query_string: str) -> List[DataSetMetaInfo]:
+    def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
         """Queries a wrapped file system."""
-
-    # def provides_data_type(self, data_type: str) -> bool:
-        # queries ONLY the wrapped meta info provider
-        # pass
 
     def _get_parameters_as_dict(self) -> dict:
         local_parameters = self._json_meta_info_provider._get_parameters_as_dict()
