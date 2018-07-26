@@ -159,6 +159,10 @@ class MetaInfoProvider(metaclass=ABCMeta):
         :return: The parameters of this file system as dict
         """
 
+    def notify_got(self, data_set_meta_info: DataSetMetaInfo) -> None:
+        """Informs the meta info provider that the data set has been retrieved from the file system."""
+        pass
+
 
 class MetaInfoProviderAccessor(metaclass=ABCMeta):
 
@@ -264,7 +268,9 @@ class DataStore(object):
         Retrieves data
         :return:
         """
-        return self._file_system.get(data_set_meta_info)
+        file_refs = self._file_system.get(data_set_meta_info)
+        self._meta_info_provider.notify_got(data_set_meta_info)
+        return file_refs
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         """
