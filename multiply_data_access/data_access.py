@@ -17,7 +17,7 @@ __author__ = 'Alexander Löw (Ludwig Maximilians-Universität München), ' \
              'Tonio Fincke (Brockmann Consult GmbH)'
 
 
-class DataSetMetaInfo:
+class DataSetMetaInfo(object):
     """
     A representation of meta information about a data set. To be retrieved from a query on a MetaInfProvider.
     """
@@ -53,6 +53,12 @@ class DataSetMetaInfo:
     def identifier(self) -> str:
         """An identifier so that the data set can be found on the Data Store's File System."""
         return self._identifier
+
+    def equals(self, other: object) -> bool:
+        """Checks whether two data set meta infos are equal. Does not check the identifier!"""
+        return type(other) == DataSetMetaInfo and self._coverage == other.coverage and \
+               self._start_time == other.start_time and self._end_time == other.end_time and \
+               self._data_type == other.data_type
 
 
 class FileSystem(metaclass=ABCMeta):
