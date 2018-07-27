@@ -80,11 +80,17 @@ class LocallyWrappingMetaInfoProvider(MetaInfoProvider):
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         local_data_meta_set_infos = self._json_meta_info_provider.query(query_string)
         wrapped_data_set_meta_infos = self._query_wrapped_meta_info_provider(query_string)
+        to_be_appended = []
         for wrapped_data_set_meta_info in wrapped_data_set_meta_infos:
+            already_contained = False
             for local_data_meta_set_info in local_data_meta_set_infos:
                 if wrapped_data_set_meta_info.equals(local_data_meta_set_info):
+                    already_contained = True
                     break
-            local_data_meta_set_infos.append(wrapped_data_set_meta_info)
+            if not already_contained:
+                to_be_appended.append(wrapped_data_set_meta_info)
+        for data_set_meta_info in to_be_appended:
+            local_data_meta_set_infos.append(data_set_meta_info)
         return local_data_meta_set_infos
 
 
