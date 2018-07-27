@@ -90,17 +90,20 @@ class LocalFileSystem(WritableFileSystem):
         end_time = DataUtils.get_time_from_string(data_set_meta_info.end_time)
         time = start_time
         while time <= end_time:
-            relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
-            relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
-            relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
+            path = relative_path
+            path = path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
+            path = path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
+            path = path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
             time = self._get_next_time_step(time)
-            if not os.path.exists(relative_path):
+            if not os.path.exists(path):
                 continue
-            file_names = os.listdir(relative_path)
+            file_names = glob.glob(path + '/**', recursive=True)
             for file_name in file_names:
-                if data_set_meta_info.identifier in file_name:
+                file_name = file_name.replace('\\', '/')
+                if data_set_meta_info.identifier in file_name and \
+                        data_validation.is_valid(file_name, data_set_meta_info.data_type):
                     mime_type = DataUtils.get_mime_type(file_name)
-                    file_refs.append(FileRef(relative_path + file_name, data_set_meta_info.start_time,
+                    file_refs.append(FileRef(file_name, data_set_meta_info.start_time,
                                              data_set_meta_info.end_time, mime_type))
         return file_refs
 
@@ -139,6 +142,7 @@ class LocalFileSystem(WritableFileSystem):
                                data_set_meta_info.data_type, relative_path)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
+        #todo test whether this works with aws s2 data too
         time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
         relative_path = self.path + self.pattern
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
