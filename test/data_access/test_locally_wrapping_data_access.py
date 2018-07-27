@@ -6,6 +6,7 @@ from multiply_data_access.data_access import DataUtils
 from shapely.wkt import loads
 from typing import List, Sequence
 
+import os
 import shutil
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
@@ -182,7 +183,7 @@ class TypeXValidator(DataValidator):
         return 'TYPE_X'
 
     def get_relative_path(self, path: str) -> str:
-        pass
+        return ''
 
     def is_valid(self, path: str) -> bool:
         return path.endswith('some_wrapped_file')
@@ -202,4 +203,5 @@ def test_wrapped_file_system_get():
         assert 'unknown mime type' == file_refs[0].mime_type
         assert './test/test_data/TYPE_X/2017/some_wrapped_file'
     finally:
-        shutil.rmtree('./test/test_data/TYPE_X')
+        if os.path.exists('./test/test_data/TYPE_X'):
+            shutil.rmtree('./test/test_data/TYPE_X')
