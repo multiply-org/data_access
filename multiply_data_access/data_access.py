@@ -56,9 +56,12 @@ class DataSetMetaInfo(object):
 
     def equals(self, other: object) -> bool:
         """Checks whether two data set meta infos are equal. Does not check the identifier!"""
-        return type(other) == DataSetMetaInfo and self._coverage == other.coverage and \
-               self._start_time == other.start_time and self._end_time == other.end_time and \
-               self._data_type == other.data_type
+        if type(other) != DataSetMetaInfo or self._start_time != other.start_time \
+            or self._end_time != other.end_time or self._data_type != other.data_type:
+            return False
+        self_coverage = loads(self.coverage)
+        other_coverage = loads(other.coverage)
+        return self_coverage.almost_equals(other_coverage)
 
 
 class FileSystem(metaclass=ABCMeta):
