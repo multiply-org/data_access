@@ -4,4 +4,5 @@ from .data_access_component import DataAccessComponent
 from .data_set_meta_info_extraction import DataSetMetaInfoExtractor, DataSetMetaInfoProvision
 from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem
+from .locally_wrapping_data_access import LocallyWrappingFileSystem, LocallyWrappingMetaInfoProvider
 from .version import __version__

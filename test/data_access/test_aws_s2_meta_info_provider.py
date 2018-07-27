@@ -11,23 +11,33 @@ BARRAX_POLYGON = "POLYGON((-2.20397502663252 39.09868106889479,-1.91421062233553
 BARRAX_TILE = 'POLYGON((-3.00023345437724 39.7502679265611,-3.00023019602957 38.7608644567253,-1.73659678081167 ' \
               '38.7540360477761,-1.71871965133358 39.7431961916792,-3.00023345437724 39.7502679265611))'
 
+path_to_json_file = './test/test_data/single_store.json'
+SQB_29_COVERAGE = "POLYGON ((-6.72492653925008 37.9255905472328, -6.75467671036015 36.9366503972109, " \
+                  "-5.52344565574506 36.9069718125641, -5.47744908496312 37.8948386584933, " \
+                  "-6.72492653925008 37.9255905472328))"
+STG_30_COVERAGE = "POLYGON ((-6.41197247866992 37.8980997872802, -6.36741300312877 36.9101191610502, " \
+                  "-5.13602504583555 36.9386673110729, -5.16432984132288 37.9276804328811, " \
+                  "-6.41197247866992 37.8980997872802))"
 
 def test_aws_s2_meta_info_provider_accessor_get_name():
     assert 'AwsS2MetaInfoProvider' == AwsS2MetaInfoProviderAccessor.name()
 
 
 def test_aws_s2_meta_info_provider_accessor_create_from_parameters():
-    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters({})
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
     assert type(aws_s2_meta_info_provider) == AwsS2MetaInfoProvider
 
 
 def test_aws_s2_meta_info_provider_get_name():
-    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters({})
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
     assert 'AwsS2MetaInfoProvider' == aws_s2_meta_info_provider.name()
 
 
 def test_aws_s2_meta_info_provider_provides_data_type():
-    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters({})
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert not aws_s2_meta_info_provider.provides_data_type('AWS_S2_L2')
     assert not aws_s2_meta_info_provider.provides_data_type('hdtgbhhj')
@@ -35,10 +45,13 @@ def test_aws_s2_meta_info_provider_provides_data_type():
 
 
 def test_aws_s2_meta_info_provider_get_parameters_as_dict():
-    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters({})
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
     parameters_as_dict = aws_s2_meta_info_provider._get_parameters_as_dict()
 
-    assert 0 == len(parameters_as_dict.keys())
+    assert 1 == len(parameters_as_dict.keys())
+    assert 'path_to_json_file' in parameters_as_dict.keys()
+    assert path_to_json_file == parameters_as_dict['path_to_json_file']
 
 
 def test_get_center_tile_identifiers():
@@ -60,7 +73,8 @@ def test_get_tile_stripes():
 
 
 def test_read_sub_lut():
-    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters({})
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
     sub_lut = aws_s2_meta_info_provider._read_sub_lut('30', 'S')
 
     for key in sub_lut.keys():
@@ -68,7 +82,8 @@ def test_read_sub_lut():
 
 
 def test_get_affected_tile_descriptions():
-    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters({})
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
     barrax_geometry = loads(BARRAX_POLYGON)
     affected_tile_ids = aws_s2_meta_info_provider.get_affected_tile_descriptions(barrax_geometry)
 
@@ -93,12 +108,13 @@ def test_get_affected_tile_descriptions():
 
 
 def test_get_data_set_meta_infos_for_tile_description():
-    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters({})
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
     tile_description = TileDescription('30SWJ', BARRAX_TILE)
     start_time = DataUtils.get_time_from_string('2016-04-01')
     end_time = DataUtils.get_time_from_string('2016-04-30')
-    data_set_meta_infos = aws_s2_meta_info_provider.get_data_set_meta_infos_for_tile_description(tile_description,
-                                                                                                 start_time, end_time)
+    data_set_meta_infos = aws_s2_meta_info_provider._get_data_set_meta_infos_for_tile_description(tile_description,
+                                                                                                  start_time, end_time)
     assert 6 == len(data_set_meta_infos)
     assert '2016-04-01' == data_set_meta_infos[0].start_time
     assert '30/S/WJ/2016/4/1/0' == data_set_meta_infos[0].identifier
@@ -112,3 +128,25 @@ def test_get_data_set_meta_infos_for_tile_description():
     assert '30/S/WJ/2016/4/21/0' == data_set_meta_infos[4].identifier
     assert '2016-04-24' == data_set_meta_infos[5].start_time
     assert '30/S/WJ/2016/4/24/0' == data_set_meta_infos[5].identifier
+
+
+def test_query():
+    parameters = {'path_to_json_file': path_to_json_file}
+    aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
+    query_string = "POLYGON((-6.5 37.7, -5.7 37.6, -5.7 37.1, -6.5 37.1, -6.5 37.7));2017-09-04;2017-09-04;AWS_S2_L1C"
+
+    data_set_meta_infos = aws_s2_meta_info_provider.query(query_string)
+
+    assert 2 == len(data_set_meta_infos)
+    assert './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0/' == data_set_meta_infos[0].identifier
+    assert '30/S/TG/2017/9/4/0' == data_set_meta_infos[1].identifier
+    for data_set_meta_info in data_set_meta_infos:
+        assert data_set_meta_info.start_time == '2017-09-04'
+        assert data_set_meta_info.end_time == '2017-09-04'
+        assert data_set_meta_info.data_type == 'AWS_S2_L1C'
+    data_set_coverage_0 = loads(data_set_meta_infos[0].coverage)
+    sqb_29_polygon = loads(SQB_29_COVERAGE)
+    assert data_set_coverage_0.almost_equals(sqb_29_polygon)
+    data_set_coverage_1 = loads(data_set_meta_infos[1].coverage)
+    stg_30_polygon = loads(STG_30_COVERAGE)
+    assert data_set_coverage_1.almost_equals(stg_30_polygon)

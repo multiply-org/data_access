@@ -1,4 +1,5 @@
-from .data_access import DataSetMetaInfo, MetaInfoProvider, MetaInfoProviderAccessor
+from multiply_data_access.data_access import DataSetMetaInfo, MetaInfoProviderAccessor
+from multiply_data_access.locally_wrapping_data_access import LocallyWrappingMetaInfoProvider
 from datetime import datetime, timedelta
 from multiply_core.observations import DataTypeConstants
 from typing import List, Optional
@@ -50,16 +51,16 @@ class TileDescription(object):
         return self._coverage
 
 
-class AwsS2MetaInfoProvider(MetaInfoProvider):
+class AwsS2MetaInfoProvider(LocallyWrappingMetaInfoProvider):
 
-    def __init__(self):
+    def _init_wrapped_meta_info_provider(self, parameters: dict):
         self._lut = {}
 
     @classmethod
     def name(cls) -> str:
         return _NAME
 
-    def query(self, query_string: str) -> List[DataSetMetaInfo]:
+    def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
         data_types = self.get_data_types_from_query_string(query_string)
         if DataTypeConstants.AWS_S2_L1C not in data_types:
             return []
@@ -69,12 +70,12 @@ class AwsS2MetaInfoProvider(MetaInfoProvider):
         end_time = self.get_end_time_from_query_string(query_string)
         data_set_meta_infos = []
         for tile_description in tile_descriptions:
-            data_set_meta_infos += self.get_data_set_meta_infos_for_tile_description(tile_description, start_time,
-                                                                                     end_time)
+            data_set_meta_infos += self._get_data_set_meta_infos_for_tile_description(tile_description, start_time,
+                                                                                      end_time)
         return data_set_meta_infos
 
-    def get_data_set_meta_infos_for_tile_description(self, tile_description: TileDescription, start_time: datetime,
-                                                     end_time: datetime) -> List[DataSetMetaInfo]:
+    def _get_data_set_meta_infos_for_tile_description(self, tile_description: TileDescription, start_time: datetime,
+                                                      end_time: datetime) -> List[DataSetMetaInfo]:
         data_set_meta_infos = []
         current_time = start_time
         while current_time < end_time:
@@ -148,7 +149,7 @@ class AwsS2MetaInfoProvider(MetaInfoProvider):
     def provides_data_type(self, data_type: str) -> bool:
         return data_type == DataTypeConstants.AWS_S2_L1C
 
-    def _get_parameters_as_dict(self) -> dict:
+    def _get_wrapped_parameters_as_dict(self) -> dict:
         return {}
 
 
@@ -160,4 +161,4 @@ class AwsS2MetaInfoProviderAccessor(MetaInfoProviderAccessor):
 
     @classmethod
     def create_from_parameters(cls, parameters: dict) -> AwsS2MetaInfoProvider:
-        return AwsS2MetaInfoProvider()
+        return AwsS2MetaInfoProvider(parameters)
