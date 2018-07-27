@@ -12,7 +12,7 @@
       "start_time": "2017-09-04 11:18:25",
       "end_time": "2017-09-04 11:18:25",
       "data_type": "AWS_S2_L1C",
-      "name": "./test/test_data/aws_s2_data13/S/YA/2018/2/2/0/"
+      "name": "./test/test_data/aws_s2_data/13/S/YA/2018/2/2/0/"
     }
     ]
 }
