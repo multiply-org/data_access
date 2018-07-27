@@ -57,7 +57,8 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
         return data_type in self.provided_data_types
 
     def update(self, data_set_meta_info: DataSetMetaInfo):
-        # write update
+        if self._contains(data_set_meta_info):
+            return
         data_set_info = {}
         if data_set_meta_info.coverage is not None and loads(data_set_meta_info.coverage) is not None:
             data_set_info['coverage'] = data_set_meta_info.coverage
@@ -79,6 +80,22 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
         self.data_set_infos['data_sets'].append(data_set_info)
         self._update_json_file()
         self._update_provided_data_sets()
+
+    def _contains(self, data_set_meta_info: DataSetMetaInfo):
+        #todo consider making this an interface function
+        for data_set_info in self.data_set_infos['data_sets']:
+            if data_set_info.get('coverage') != data_set_meta_info.coverage:
+                continue
+            if data_set_info.get('start_time') != data_set_meta_info.start_time:
+                continue
+            if data_set_info.get('end_time') != data_set_meta_info.end_time:
+                continue
+            if data_set_info.get('data_type') != data_set_meta_info.data_type:
+                continue
+            if data_set_info.get('name') != data_set_meta_info.identifier:
+                continue
+            return True
+        return False
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         for data_set_info in self.data_set_infos['data_sets']:
