@@ -7,10 +7,12 @@ Services (AWS).
 """
 from multiply_core.util import FileRef, get_mime_type
 from .data_access import DataSetMetaInfo, FileSystemAccessor, FileSystem
+from multiply_data_access.locally_wrapping_data_access import LocallyWrappingFileSystem
 from sentinelhub import AwsTileRequest
 from typing import Optional, Sequence
 import os
 import re
+import shutil
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
@@ -20,18 +22,18 @@ BASIC_AWS_S2_MATCHER = re.compile(BASIC_AWS_S2_PATTERN)
 _NAME = 'AwsS2FileSystem'
 
 
-class AwsS2FileSystem(FileSystem):
+class AwsS2FileSystem(LocallyWrappingFileSystem):
 
-    def __init__(self, temp_dir: str):
-        if temp_dir is None or not os.path.exists(temp_dir):
+    def _init_wrapped_file_system(self, parameters: dict):
+        if 'temp_dir' not in parameters.keys() or not os.path.exists(parameters['temp_dir']):
             raise ValueError('No valid temporal directory provided for AWS S2 File System')
-        self._temp_dir = temp_dir
+        self._temp_dir = parameters['temp_dir']
 
     @classmethod
     def name(cls) -> str:
         return _NAME
 
-    def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
+    def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
         retrieved_file_ref = self._get_file_ref(data_set_meta_info)
         if retrieved_file_ref is not None:
@@ -44,8 +46,8 @@ class AwsS2FileSystem(FileSystem):
             # consider throwing an exception
             return None
         tile_name = self._get_tile_name(data_set_meta_info.identifier)
-        aws_index = self._get_aws_index(data_set_meta_info.identifier)
         start_time = data_set_meta_info.start_time
+        aws_index = self._get_aws_index(data_set_meta_info.identifier)
         request = AwsTileRequest(tile=tile_name, time=start_time, aws_index=aws_index,
                                  bands=bands, metafiles=metafiles, data_folder=self._temp_dir)
         request.save_data()
@@ -62,7 +64,14 @@ class AwsS2FileSystem(FileSystem):
     def _get_aws_index(self, id: str) -> int:
         return int(id.split('/')[-1])
 
-    def get_parameters_as_dict(self) -> dict:
+    def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo):
+        tile_name = self._get_tile_name(data_set_meta_info.identifier)
+        start_time = data_set_meta_info.start_time
+        aws_index = self._get_aws_index(data_set_meta_info.identifier)
+        file_dir = '{0}/{1},{2},{3}/'.format(self._temp_dir, tile_name, start_time, aws_index)
+        shutil.rmtree(file_dir)
+
+    def _get_wrapped_parameters_as_dict(self) -> dict:
         parameters = {'temp_dir': self._temp_dir}
         return parameters
 
@@ -77,4 +86,4 @@ class AwsS2FileSystemAccessor(FileSystemAccessor):
     def create_from_parameters(cls, parameters: dict) -> AwsS2FileSystem:
         if 'temp_dir' not in parameters.keys():
             raise ValueError('No valid temporal directory provided for AWS S2 File System')
-        return AwsS2FileSystem(temp_dir=parameters['temp_dir'])
+        return AwsS2FileSystem(parameters)
