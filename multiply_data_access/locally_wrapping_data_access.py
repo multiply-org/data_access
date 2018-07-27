@@ -109,3 +109,6 @@ class LocallyWrappingMetaInfoProvider(MetaInfoProvider):
         """
         :return: The parameters of this wrapped meta info provider as dict
         """
+
+    def notify_got(self, data_set_meta_info: DataSetMetaInfo):
+        self._json_meta_info_provider.update(data_set_meta_info)
