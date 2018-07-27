@@ -1,3 +1,4 @@
+from multiply_core.observations import add_validator, DataValidator
 from multiply_core.util import get_mime_type, FileRef
 from multiply_data_access import DataSetMetaInfo
 from multiply_data_access.locally_wrapping_data_access import LocallyWrappingFileSystem, LocallyWrappingMetaInfoProvider
@@ -174,10 +175,24 @@ def test_wrapped_file_system_get_as_dict():
     assert '/dt/yy/mm/dd/' == provider_as_dict['parameters']['pattern']
 
 
+class TypeXValidator(DataValidator):
+
+    @classmethod
+    def name(cls) -> str:
+        return 'TYPE_X'
+
+    def get_relative_path(self, path: str) -> str:
+        pass
+
+    def is_valid(self, path: str) -> bool:
+        return path.endswith('some_wrapped_file')
+
+
 def test_wrapped_file_system_get():
     try:
         parameters = {'some_parameter': 'something', 'path': './test/test_data/', 'pattern': '/dt/yy/'}
         wrapped_file_system = TestWrappedFileSystem(parameters)
+        add_validator(TypeXValidator())
 
         data_set_meta_info = DataSetMetaInfo('some_polygon', '2017-01-31', '2017-02-01', 'TYPE_X', 'some_wrapped_file')
         file_refs = wrapped_file_system.get(data_set_meta_info)
