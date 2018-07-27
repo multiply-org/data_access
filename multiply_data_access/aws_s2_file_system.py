@@ -5,7 +5,8 @@ Description
 This module contains an implementation of a file system that allows to access and download S2 L1C data from Amazon Web
 Services (AWS).
 """
-from multiply_core.util import FileRef, get_mime_type
+from distutils.dir_util import copy_tree
+from multiply_core.util import FileRef, get_mime_type, get_time_from_string
 from .data_access import DataSetMetaInfo, FileSystemAccessor, FileSystem
 from multiply_data_access.locally_wrapping_data_access import LocallyWrappingFileSystem
 from sentinelhub import AwsTileRequest
@@ -35,7 +36,8 @@ class AwsS2FileSystem(LocallyWrappingFileSystem):
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
-        retrieved_file_ref = self._get_file_ref(data_set_meta_info)
+        metafiles = 'metadata'
+        retrieved_file_ref = self._get_file_ref(data_set_meta_info, metafiles=metafiles)
         if retrieved_file_ref is not None:
             file_refs.append(retrieved_file_ref)
         return file_refs
@@ -51,8 +53,15 @@ class AwsS2FileSystem(LocallyWrappingFileSystem):
         request = AwsTileRequest(tile=tile_name, time=start_time, aws_index=aws_index,
                                  bands=bands, metafiles=metafiles, data_folder=self._temp_dir)
         request.save_data()
-        saved_dir = '{0}/{1},{2},{3}/'.format(self._temp_dir, tile_name, start_time, aws_index)
-        return FileRef(saved_dir, start_time, data_set_meta_info.end_time, get_mime_type(saved_dir))
+        start_time_as_datetime = get_time_from_string(start_time)
+        year = start_time_as_datetime.year
+        month = start_time_as_datetime.month
+        day = start_time_as_datetime.day
+        saved_dir = '{}/{},{}-{:02d}-{:02d},{}/'.format(self._temp_dir, tile_name, year, month, day, aws_index)
+        new_dir = '{0}{1}/{2}/{3}/{4}/{5}/{6}/{7}/'.format(saved_dir, tile_name[0:2], tile_name[2:3], tile_name[3:5],
+                                                           year, month, day, aws_index)
+        copy_tree(saved_dir, new_dir)
+        return FileRef(new_dir, start_time, data_set_meta_info.end_time, get_mime_type(new_dir))
 
     def _is_valid_identifier(self, path: str) -> bool:
         return BASIC_AWS_S2_MATCHER.match(path) is not None
