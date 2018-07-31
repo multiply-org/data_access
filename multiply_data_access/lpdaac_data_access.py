@@ -124,7 +124,6 @@ class LpDaacMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 
 
 class LpDaacFileSystem(LocallyWrappingFileSystem):
-
     @classmethod
     def name(cls) -> str:
         return _FILE_SYSTEM_NAME
@@ -151,8 +150,8 @@ class LpDaacFileSystem(LocallyWrappingFileSystem):
         file_url = '{}/{}/{}/{}.{:02d}.{:02d}/{}'.format(_BASE_URL, _PLATFORM, DataTypeConstants.MODIS_MCD_43,
                                                          time.year, time.month, time.day, data_set_meta_info.identifier)
         request = urllib2.Request(file_url)
-        authorization = base64.encodestring(str.encode('{}:{}'.format(self._username, self._password))).replace(b'\n',
-                                                                                                        b'').decode()
+        authorization = base64.encodebytes(str.encode('{}:{}'.format(self._username, self._password))). \
+            replace(b'\n', b'').decode()
         request.add_header('Authorization', 'Basic {}'.format(authorization))
         remote_file = self._opener.open(request)
         temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
