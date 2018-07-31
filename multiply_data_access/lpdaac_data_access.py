@@ -128,9 +128,6 @@ class LpDaacFileSystem(LocallyWrappingFileSystem):
     def name(cls) -> str:
         return _FILE_SYSTEM_NAME
 
-    def _get_wrapped_parameters_as_dict(self) -> dict:
-        return {}
-
     def _init_wrapped_file_system(self, parameters: dict) -> None:
         if 'temp_dir' not in parameters.keys() or not os.path.exists(parameters['temp_dir']):
             raise ValueError('No valid temporal directory provided for Lp Daac File System')
@@ -161,8 +158,14 @@ class LpDaacFileSystem(LocallyWrappingFileSystem):
                                  get_mime_type(temp_url)))
         return file_refs
 
-    def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
-        pass
+    def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo):
+        full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
+        if os.path.exists(full_path):
+            os.remove(full_path)
+
+    def _get_wrapped_parameters_as_dict(self) -> dict:
+        parameters = {'temp_dir': self._temp_dir, 'username': self._username, 'password': self._password}
+        return parameters
 
 
 class LpDaacFileSystemAccessor(FileSystemAccessor):

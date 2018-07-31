@@ -1,8 +1,7 @@
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 from multiply_data_access.lpdaac_data_access import DataSetMetaInfo, LpDaacFileSystem, LpDaacFileSystemAccessor
-from shapely.wkt import loads
-
+import os
 
 H17_V05_COVERAGE = 'POLYGON ((-13.05407289035348 39.99999999616804, -11.54700538146705 29.9999999970181, ' \
                 '1.127072786096139e-09 39.99999999616804, 9.96954409223065e-10 29.9999999970181, ' \
@@ -19,6 +18,7 @@ def test_lpdaac_file_system_creation():
 
     assert file_system is not None
 
+
 def test_lpdaac_file_system_name():
     parameters = {'path': './test/test_data/', 'pattern': '', 'temp_dir': './test/test_data/', 'username': 'dummy',
                   'password': 'dummy'}
@@ -27,3 +27,42 @@ def test_lpdaac_file_system_name():
     assert 'LpDaacFileSystem' == file_system.name()
     assert 'LpDaacFileSystem' == LpDaacFileSystem.name()
     assert 'LpDaacFileSystem' == LpDaacFileSystemAccessor.name()
+
+
+def test_get_parameters_as_dict():
+    parameters = {'path': './test/test_data/', 'pattern': '', 'temp_dir': './test/test_data/', 'username': 'dummyuser',
+                  'password': 'dummypass'}
+    file_system = LpDaacFileSystemAccessor.create_from_parameters(parameters)
+
+    parameters = file_system.get_parameters_as_dict()
+
+    assert 5 == len(parameters)
+    assert 'path' in parameters.keys()
+    assert './test/test_data/' == parameters['path']
+    assert 'pattern' in parameters.keys()
+    assert '' == parameters['pattern']
+    assert 'temp_dir' in parameters.keys()
+    assert './test/test_data/' == parameters['temp_dir']
+    assert 'username' in parameters.keys()
+    assert 'dummyuser' == parameters['username']
+    assert 'password' in parameters.keys()
+    assert 'dummypass' == parameters['password']
+
+
+def test_notify_copied_to_local():
+    parameters = {'path': './test/test_data/', 'pattern': '', 'temp_dir': './test/test_data/', 'username': 'dummyuser',
+                  'password': 'dummypass'}
+    file_system = LpDaacFileSystemAccessor.create_from_parameters(parameters)
+
+    path_to_file = './test/test_data/MCD43A1.A2017247.h17v05.006.2017256031007.hdf'
+    try:
+        open(path_to_file, 'w+')
+        data_set_meta_info = DataSetMetaInfo('ctfvgb', '2017-09-04', '2017-09-04', 'MCD43A1.006',
+                                             'MCD43A1.A2017247.h17v05.006.2017256031007.hdf')
+        file_system._notify_copied_to_local(data_set_meta_info)
+
+        assert not os.path.exists(path_to_file)
+    finally:
+        if os.path.exists(path_to_file):
+            os.remove(path_to_file)
+
