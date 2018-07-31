@@ -5,4 +5,5 @@ from .data_set_meta_info_extraction import DataSetMetaInfoExtractor, DataSetMeta
 from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem
 from .locally_wrapping_data_access import LocallyWrappingFileSystem, LocallyWrappingMetaInfoProvider
+from .lpdaac_data_access import LpDaacFileSystem, LpDaacMetaInfoProvider
 from .version import __version__
