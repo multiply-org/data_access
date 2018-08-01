@@ -74,23 +74,25 @@ def test_lpdaac_meta_info_provider__get_tile_coverage():
     assert coverage.almost_equals(tile_polygon)
 
 
-def test_query():
-    parameters = {'path_to_json_file': path_to_json_file}
-    provider = LpDaacMetaInfoProviderAccessor.create_from_parameters(parameters)
-    query_string = "POLYGON((-6.5 42.7, -5.7 42.6, -5.7 37.1, -6.5 37.1, -6.5 42.7));2017-09-04;2017-09-04;MCD43A1.006"
-
-    data_set_meta_infos = provider.query(query_string)
-
-    assert 2 == len(data_set_meta_infos)
-    assert 'MCD43A1.A2017247.h17v04.006.2017256031009.hdf' == data_set_meta_infos[0].identifier
-    assert 'MCD43A1.A2017247.h17v05.006.2017256031007.hdf' == data_set_meta_infos[1].identifier
-    for data_set_meta_info in data_set_meta_infos:
-        assert data_set_meta_info.start_time == '2017-09-04'
-        assert data_set_meta_info.end_time == '2017-09-04'
-        assert data_set_meta_info.data_type == 'MCD43A1.006'
-    data_set_coverage_0 = loads(data_set_meta_infos[0].coverage)
-    h17_v04_polygon = loads(H17_V04_COVERAGE)
-    assert data_set_coverage_0.almost_equals(h17_v04_polygon)
-    data_set_coverage_1 = loads(data_set_meta_infos[1].coverage)
-    h17_v05_polygon = loads(H17_V05_COVERAGE)
-    assert data_set_coverage_1.almost_equals(h17_v05_polygon)
+# commented this test, as lpdaac did not like to be queried frequently
+# def test_query():
+#     parameters = {'path_to_json_file': path_to_json_file}
+#     provider = LpDaacMetaInfoProviderAccessor.create_from_parameters(parameters)
+#     query_string =
+# "POLYGON((-6.5 42.7, -5.7 42.6, -5.7 37.1, -6.5 37.1, -6.5 42.7));2017-09-04;2017-09-04;MCD43A1.006"
+#
+#     data_set_meta_infos = provider.query(query_string)
+#
+#     assert 2 == len(data_set_meta_infos)
+#     assert 'MCD43A1.A2017247.h17v04.006.2017256031009.hdf' == data_set_meta_infos[0].identifier
+#     assert 'MCD43A1.A2017247.h17v05.006.2017256031007.hdf' == data_set_meta_infos[1].identifier
+#     for data_set_meta_info in data_set_meta_infos:
+#         assert data_set_meta_info.start_time == '2017-09-04'
+#         assert data_set_meta_info.end_time == '2017-09-04'
+#         assert data_set_meta_info.data_type == 'MCD43A1.006'
+#     data_set_coverage_0 = loads(data_set_meta_infos[0].coverage)
+#     h17_v04_polygon = loads(H17_V04_COVERAGE)
+#     assert data_set_coverage_0.almost_equals(h17_v04_polygon)
+#     data_set_coverage_1 = loads(data_set_meta_infos[1].coverage)
+#     h17_v05_polygon = loads(H17_V05_COVERAGE)
+#     assert data_set_coverage_1.almost_equals(h17_v05_polygon)
