@@ -139,8 +139,8 @@ class DataAccessComponent(object):
     # def _remove_data_store(self, data_store: DataStore):
     #
 
-    def create_local_data_store(self, base_dir: Optional[str], meta_info_file: Optional[str] = None,
-                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None):
+    def create_local_data_store(self, base_dir: Optional[str] = None, meta_info_file: Optional[str] = None,
+                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None) -> DataStore:
         multiply_home_dir = self._get_multiply_home_dir()
         if base_dir is None:
             base_dir = '{0}/{1}'.format(multiply_home_dir, DATA_FOLDER_NAME)
@@ -171,6 +171,7 @@ class DataAccessComponent(object):
         writable_data_store = WritableDataStore(local_file_system, json_meta_info_provider, id)
         writable_data_store.update()
         self._data_stores.append(writable_data_store)
+        return writable_data_store
 
     def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
         parameters = file_system_as_dict['parameters']
