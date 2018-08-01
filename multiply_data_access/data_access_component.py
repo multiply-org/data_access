@@ -87,7 +87,15 @@ class DataAccessComponent(object):
         aws_s2_path = '{}/aws_s2_l1c/'.format(multiply_home_dir)
         if not os.path.exists(aws_s2_path):
             os.mkdir(aws_s2_path)
-        aws_s2_data_store = DataStore(AwsS2FileSystem(aws_s2_path), AwsS2MetaInfoProvider(), 'aws_s2')
+        file_system_parameters = {'temp_dir': aws_s2_path, 'path': aws_s2_path, 'pattern': '/dt/yy/mm/dd/'}
+        path_to_json_file = '{}/aws_s2_l1c/aws_s2_store.json'.format(multiply_home_dir)
+        if not os.path.exists(path_to_json_file):
+            with open(path_to_json_file, "w") as json_file:
+                json_dict = {'data_sets': []}
+                json.dump(json_dict, json_file, indent=2)
+        meta_info_parameters = {'path_to_json_file': path_to_json_file}
+        aws_s2_data_store = DataStore(AwsS2FileSystem(file_system_parameters),
+                                      AwsS2MetaInfoProvider(meta_info_parameters), 'aws_s2')
         self._put_data_store(aws_s2_data_store)
 
     def _get_multiply_home_dir(self) -> str:

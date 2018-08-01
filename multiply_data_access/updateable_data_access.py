@@ -22,7 +22,6 @@ class WritableDataStore(DataStore):
         self._updateable_meta_info_provider = meta_info_provider
         self.meta_info_provision = DataSetMetaInfoProvision()
 
-    @abstractmethod
     def put(self, from_url: str):
         """
         Puts a data set into the data store.

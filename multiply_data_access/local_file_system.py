@@ -56,7 +56,7 @@ class LocalFileSystem(WritableFileSystem):
         if not os.path.exists(path):
             raise ValueError('Could not find path {0}'.format(path))
         if not path.endswith('/'):
-            path = path + '/'
+            path += '/'
         return path
 
     @staticmethod
@@ -90,17 +90,20 @@ class LocalFileSystem(WritableFileSystem):
         end_time = DataUtils.get_time_from_string(data_set_meta_info.end_time)
         time = start_time
         while time <= end_time:
-            relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
-            relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
-            relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
+            path = relative_path
+            path = path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
+            path = path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
+            path = path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
             time = self._get_next_time_step(time)
-            if not os.path.exists(relative_path):
+            if not os.path.exists(path):
                 continue
-            file_names = os.listdir(relative_path)
+            file_names = glob.glob(path + '/**', recursive=True)
             for file_name in file_names:
-                if data_set_meta_info.identifier in file_name:
+                file_name = file_name.replace('\\', '/')
+                if data_set_meta_info.identifier in file_name and \
+                        data_validation.is_valid(file_name, data_set_meta_info.data_type):
                     mime_type = DataUtils.get_mime_type(file_name)
-                    file_refs.append(FileRef(relative_path + file_name, data_set_meta_info.start_time,
+                    file_refs.append(FileRef(file_name, data_set_meta_info.start_time,
                                              data_set_meta_info.end_time, mime_type))
         return file_refs
 
@@ -139,6 +142,7 @@ class LocalFileSystem(WritableFileSystem):
                                data_set_meta_info.data_type, relative_path)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
+        #todo test whether this works with aws s2 data too
         time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
         relative_path = self.path + self.pattern
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
@@ -170,15 +174,16 @@ class LocalFileSystem(WritableFileSystem):
             found_files = glob.glob(adjusted_relative_path + '/**', recursive=True)
             for found_file in found_files:
                 found_file = found_file.replace('\\', '/')
-                type = data_validation.get_valid_type(found_file)
-                if type is not '':
+                data_type = data_validation.get_valid_type(found_file)
+                if data_type is not '':
                     data_set_meta_infos.append(DataSetMetaInfo(coverage='', start_time='', end_time='',
-                                                            data_type=type, identifier=found_file))
+                                                               data_type=data_type, identifier=found_file))
         return data_set_meta_infos
 
-    def _get_parameters_as_dict(self) -> dict:
+    def get_parameters_as_dict(self) -> dict:
         return {'path': self.path,
                 'pattern': self.pattern}
+
 
 class TimeStep(Enum):
     DAILY = 0
@@ -188,7 +193,6 @@ class TimeStep(Enum):
 
 
 class LocalFileSystemAccessor(FileSystemAccessor):
-
     @classmethod
     def name(cls) -> str:
         """The name of the file system implementation."""

@@ -17,7 +17,7 @@ __author__ = 'Alexander Löw (Ludwig Maximilians-Universität München), ' \
              'Tonio Fincke (Brockmann Consult GmbH)'
 
 
-class DataSetMetaInfo:
+class DataSetMetaInfo(object):
     """
     A representation of meta information about a data set. To be retrieved from a query on a MetaInfProvider.
     """
@@ -54,6 +54,15 @@ class DataSetMetaInfo:
         """An identifier so that the data set can be found on the Data Store's File System."""
         return self._identifier
 
+    def equals(self, other: object) -> bool:
+        """Checks whether two data set meta infos are equal. Does not check the identifier!"""
+        if type(other) != DataSetMetaInfo or self._start_time != other.start_time \
+            or self._end_time != other.end_time or self._data_type != other.data_type:
+            return False
+        self_coverage = loads(self.coverage)
+        other_coverage = loads(other.coverage)
+        return self_coverage.almost_equals(other_coverage)
+
 
 class FileSystem(metaclass=ABCMeta):
     """
@@ -61,6 +70,7 @@ class FileSystem(metaclass=ABCMeta):
     """
 
     @classmethod
+    @abstractmethod
     def name(cls) -> str:
         """The name of the file system implementation."""
 
@@ -73,10 +83,10 @@ class FileSystem(metaclass=ABCMeta):
         :return: A representation of this file system as dictionary.
         """
         return {'type': self.name(),
-                'parameters': self._get_parameters_as_dict()}
+                'parameters': self.get_parameters_as_dict()}
 
     @abstractmethod
-    def _get_parameters_as_dict(self) -> dict:
+    def get_parameters_as_dict(self) -> dict:
         """
         :return: The parameters of this file system as dict
         """
@@ -99,6 +109,7 @@ class MetaInfoProvider(metaclass=ABCMeta):
     """
 
     @classmethod
+    @abstractmethod
     def name(cls) -> str:
         """The name of the file system implementation."""
 
@@ -158,6 +169,10 @@ class MetaInfoProvider(metaclass=ABCMeta):
         """
         :return: The parameters of this file system as dict
         """
+
+    def notify_got(self, data_set_meta_info: DataSetMetaInfo) -> None:
+        """Informs the meta info provider that the data set has been retrieved from the file system."""
+        pass
 
 
 class MetaInfoProviderAccessor(metaclass=ABCMeta):
@@ -264,7 +279,9 @@ class DataStore(object):
         Retrieves data
         :return:
         """
-        return self._file_system.get(data_set_meta_info)
+        file_refs = self._file_system.get(data_set_meta_info)
+        self._meta_info_provider.notify_got(data_set_meta_info)
+        return file_refs
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         """
