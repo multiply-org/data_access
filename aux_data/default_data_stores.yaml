@@ -1,0 +1,9 @@
+- DataStore:
+    FileSystem:
+      type: AwsS2FileSystem
+      parameters:
+        path: ./test/test_data/
+    MetaInfoProvider:
+      type: AwsS2MetaInfoProvider
+      parameters:
+    Id: AwsS2
