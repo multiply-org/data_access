@@ -1,10 +1,14 @@
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
+import os
 from multiply_core.observations import DataTypeConstants
-from multiply_data_access.general_remote_access import HttpMetaInfoProvider, HttpMetaInfoProviderAccessor
+from multiply_data_access.data_access import DataSetMetaInfo
+from multiply_data_access.general_remote_access import HttpFileSystem, HttpFileSystemAccessor, \
+    HttpMetaInfoProvider, HttpMetaInfoProviderAccessor
 from shapely.wkt import loads
 
 PATH_TO_JSON_FILE = './test/test_data/modis_store.json'
+TEMP_DIR = './test/test_data/'
 ELES_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/eles/'
 EMUS_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/emus/'
 CAMS_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/cams/'
@@ -97,3 +101,53 @@ def test_query_wrapped_meta_info_provider_emus():
     assert 'isotropic_MSI_emulators_optimization_xbp_S2B.pkl' == data_set_meta_infos[10].identifier
     assert 'isotropic_MSI_emulators_optimization_xcp_S2B.pkl' == data_set_meta_infos[11].identifier
     assert 'wv_MSI_retrieval_S2A.pkl' == data_set_meta_infos[12].identifier
+
+
+def test_file_system_create():
+    parameters = {'path': TEMP_DIR, 'pattern': '', 'url': EMUS_TEST_URL, 'temp_dir': TEMP_DIR}
+    file_system = HttpFileSystemAccessor.create_from_parameters(parameters)
+
+    assert file_system is not None
+
+
+def test_file_system_name():
+    parameters = {'path': TEMP_DIR, 'pattern': '', 'url': EMUS_TEST_URL, 'temp_dir': TEMP_DIR}
+    file_system = HttpFileSystemAccessor.create_from_parameters(parameters)
+
+    assert 'HttpFileSystem' == file_system.name()
+    assert 'HttpFileSystem' == HttpFileSystem.name()
+    assert 'HttpFileSystem' == HttpFileSystemAccessor.name()
+
+
+def test_file_system_get_parameters_as_dict():
+    parameters = {'path': TEMP_DIR, 'pattern': '', 'url': EMUS_TEST_URL, 'temp_dir': TEMP_DIR}
+    file_system = HttpFileSystemAccessor.create_from_parameters(parameters)
+
+    parameters_as_dict = file_system.get_parameters_as_dict()
+
+    assert 4 == len(parameters_as_dict)
+    assert 'path' in parameters_as_dict.keys()
+    assert TEMP_DIR == parameters_as_dict['path']
+    assert 'url' in parameters_as_dict.keys()
+    assert EMUS_TEST_URL == parameters_as_dict['url']
+    assert 'pattern' in parameters_as_dict.keys()
+    assert '' == parameters_as_dict['pattern']
+    assert 'temp_dir' in parameters_as_dict.keys()
+    assert TEMP_DIR == parameters_as_dict['temp_dir']
+
+
+def test_notify_copied_to_local():
+    parameters = {'path': TEMP_DIR, 'pattern': '', 'url': EMUS_TEST_URL, 'temp_dir': TEMP_DIR}
+    file_system = HttpFileSystemAccessor.create_from_parameters(parameters)
+
+    path_to_file = './test/test_data/some_file'
+    try:
+        open(path_to_file, 'w+')
+        data_set_meta_info = DataSetMetaInfo('ctfvgb', '2017-09-04', '2017-09-04', 'some_format',
+                                             'some_file')
+        file_system._notify_copied_to_local(data_set_meta_info)
+
+        assert not os.path.exists(path_to_file)
+    finally:
+        if os.path.exists(path_to_file):
+            os.remove(path_to_file)
