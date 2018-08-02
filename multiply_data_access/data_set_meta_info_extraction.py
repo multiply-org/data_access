@@ -10,16 +10,20 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 from abc import ABCMeta, abstractmethod
 from multiply_data_access.data_access import DataSetMetaInfo
+from multiply_core.observations import DataTypeConstants
 from multiply_core.util import reproject
+from shapely.geometry import Point, Polygon
 from typing import Optional
 import gdal
 import osr
 import xml.etree.ElementTree as ET
 
+GLOBAL = 'POLYGON((-180.0 90.0, 180.0 90.0, 180.0 -90.0, -180.0 -90.0, -180.0 90.0))'
 
 class DataSetMetaInfoExtractor(metaclass=ABCMeta):
 
     @classmethod
+    @abstractmethod
     def name(cls) -> str:
         """The name of the data type supported by this checker."""
 
@@ -28,7 +32,7 @@ class DataSetMetaInfoExtractor(metaclass=ABCMeta):
         """Whether the data at the given path is a valid data product for the type."""
 
 
-class AWS_S2_Meta_Info_Extractor(DataSetMetaInfoExtractor):
+class AwsS2MetaInfoExtractor(DataSetMetaInfoExtractor):
 
     @classmethod
     def name(cls) -> str:
@@ -98,11 +102,75 @@ class AWS_S2_Meta_Info_Extractor(DataSetMetaInfoExtractor):
                 return x.text
 
 
+class AsterMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.ASTER
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        path_lat_id = path[8:9]
+        path_lat = float(path[9:11])
+        if path_lat_id == 'S':
+            path_lat *= -1
+        path_lon_id = path[11:12]
+        path_lon = float(path[12:15])
+        if path_lon_id == 'W':
+            path_lon *= -1
+        coverage = Polygon([[path_lon, path_lat], [path_lon, path_lat + 1], [path_lon + 1, path_lat + 1],
+                            [path_lon + 1, path_lat]])
+        return DataSetMetaInfo(coverage.wkt, '', '', DataTypeConstants.ASTER, path)
+
+
+class S2aMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.S2A_EMULATOR
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        return DataSetMetaInfo(GLOBAL, '', '', DataTypeConstants.S2A_EMULATOR, path)
+
+
+class S2bMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.S2B_EMULATOR
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        return DataSetMetaInfo(GLOBAL, '', '', DataTypeConstants.S2B_EMULATOR, path)
+
+
+class WvMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.WV_EMULATOR
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        return DataSetMetaInfo(GLOBAL, '', '', DataTypeConstants.WV_EMULATOR, path)
+
+
+class CamsMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.CAMS
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        return DataSetMetaInfo(GLOBAL, path[:-3], path[:-3], DataTypeConstants.CAMS, path)
+
+
 class DataSetMetaInfoProvision(object):
 
     def __init__(self):
         self.DATA_SET_META_INFO_PROVIDERS = []
-        self.add_data_set_meta_info_provider(AWS_S2_Meta_Info_Extractor())
+        self.add_data_set_meta_info_provider(AwsS2MetaInfoExtractor())
+        self.add_data_set_meta_info_provider(AsterMetaInfoExtractor())
+        self.add_data_set_meta_info_provider(S2aMetaInfoExtractor())
+        self.add_data_set_meta_info_provider(S2bMetaInfoExtractor())
+        self.add_data_set_meta_info_provider(WvMetaInfoExtractor())
 
     def add_data_set_meta_info_provider(self, data_set_meta_info_provider: DataSetMetaInfoExtractor):
         self.DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
