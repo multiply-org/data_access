@@ -3,6 +3,8 @@ from multiply_core.util import get_mime_type, FileRef
 from multiply_data_access import DataSetMetaInfo
 from multiply_data_access.locally_wrapping_data_access import LocallyWrappingFileSystem, LocallyWrappingMetaInfoProvider
 from multiply_data_access.data_access import DataUtils
+from datetime import datetime
+from shapely.geometry import Polygon
 from shapely.wkt import loads
 from typing import List, Sequence
 
@@ -187,6 +189,12 @@ class TypeXValidator(DataValidator):
 
     def is_valid(self, path: str) -> bool:
         return path.endswith('some_wrapped_file')
+
+    def get_file_pattern(self) -> str:
+        return ''
+
+    def is_valid_for(self, path: str, roi: Polygon, start_time: datetime, end_time: datetime) -> bool:
+        return self.is_valid(path)
 
 
 def test_wrapped_file_system_get():

@@ -1,5 +1,7 @@
 from multiply_core.observations import data_validation
 from multiply_data_access import DataSetMetaInfo, LocalFileSystem
+from datetime import datetime
+from shapely.geometry import Polygon
 import os
 import shutil
 
@@ -131,6 +133,12 @@ def test_scan():
 
         def get_relative_path(self, path: str) -> str:
             return ''
+
+        def get_file_pattern(self) -> str:
+            return '*.nc'
+
+        def is_valid_for(self, path: str, roi: Polygon, start_time: datetime, end_time: datetime) -> bool:
+            return self.is_valid(path)
 
     local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
     data_validation.add_validator(MyValidator())
