@@ -32,7 +32,7 @@ class LocalFileSystem(WritableFileSystem):
 
     def __init__(self, path: str, pattern: str):
         self.path = self._get_validated_path(path)
-        self._validate_pattern(pattern)
+        pattern = self._validate_pattern(pattern)
         self.pattern = pattern
         self._derive_timestep(self.pattern)
 
@@ -60,14 +60,18 @@ class LocalFileSystem(WritableFileSystem):
         return path
 
     @staticmethod
-    def _validate_pattern(pattern: str):
+    def _validate_pattern(pattern: str) -> str:
         if not pattern:
-            return
-        pattern = pattern[1:-1]
+            raise ValueError('No pattern provided')
+        if pattern.startswith('/'):
+            pattern = pattern[1:]
+        if pattern.endswith('/'):
+            pattern = pattern[:-1]
         split_pattern = pattern.split('/')
         for token in split_pattern:
             if token not in _ALLOWED_PATTERNS:
                 raise ValueError('Invalid pattern: {0} not allowed in {1}'.format(token, pattern))
+        return '/{}/'.format(pattern)
 
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
