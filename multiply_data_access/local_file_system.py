@@ -61,7 +61,9 @@ class LocalFileSystem(WritableFileSystem):
 
     @staticmethod
     def _validate_pattern(pattern: str) -> str:
-        if not pattern:
+        if pattern is '':
+            return pattern
+        if pattern is None:
             raise ValueError('No pattern provided')
         if pattern.startswith('/'):
             pattern = pattern[1:]
