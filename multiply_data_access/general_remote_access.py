@@ -12,7 +12,7 @@ from typing import List, Sequence
 import urllib.request as urllib2
 
 from multiply_core.observations import get_file_pattern, is_valid_for
-from multiply_core.util import FileRef
+from multiply_core.util import FileRef, get_mime_type
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystemAccessor, MetaInfoProviderAccessor
 from multiply_data_access.data_set_meta_info_extraction import DataSetMetaInfoProvision
 
@@ -100,14 +100,16 @@ class HttpFileSystem(LocallyWrappingFileSystem):
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
-        new_url = '{}/{}'.format(self._url, data_set_meta_info.identifier)
-        request = requests.get(new_url, stream=True)
+        download_url = '{}/{}'.format(self._url, data_set_meta_info.identifier)
+        request = requests.get(download_url, stream=True)
         if request.ok:
-            with open(os.path.join(self._temp_dir, data_set_meta_info.identifier), 'wb') as fp:
+            temp_path = os.path.join(self._temp_dir, data_set_meta_info.identifier)
+            with open(temp_path, 'wb') as fp:
                 for chunk in request.iter_content(chunk_size=1024):
                     if chunk:
                         fp.write(chunk)
-            file_refs.append(FileRef())
+            file_refs.append(FileRef(temp_path, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                                     get_mime_type(data_set_meta_info.identifier)))
         return file_refs
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
