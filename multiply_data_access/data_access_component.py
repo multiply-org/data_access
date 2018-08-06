@@ -118,8 +118,8 @@ class DataAccessComponent(object):
                 raise UserWarning('DataStore is missing FileSystem: Cannot read DataStore')
             if 'MetaInfoProvider' not in data_store_entry['DataStore'].keys():
                 raise UserWarning('DataStore is missing MetaInfoProvider: Cannot read DataStore')
-            file_system = self._create_file_system_from_dict(data_store_entry['DataStore']['FileSystem'])
-            meta_info_provider = self._create_meta_info_provider_from_dict(data_store_entry['DataStore']['MetaInfoProvider'])
+            file_system = self.create_file_system_from_dict(data_store_entry['DataStore']['FileSystem'])
+            meta_info_provider = self.create_meta_info_provider_from_dict(data_store_entry['DataStore']['MetaInfoProvider'])
             if 'Id' in data_store_entry['DataStore'].keys():
                 id = data_store_entry['DataStore']['Id']
             else:
@@ -181,14 +181,14 @@ class DataAccessComponent(object):
         self._data_stores.append(writable_data_store)
         return writable_data_store
 
-    def _create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
+    def create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
         parameters = file_system_as_dict['parameters']
         for file_system_accessor in FILE_SYSTEM_REGISTRY:
             if file_system_accessor.name() == file_system_as_dict['type']:
                 return file_system_accessor.create_from_parameters(parameters)
         raise UserWarning('Could not find file system of type {0}'.format(file_system_as_dict['type']))
 
-    def _create_meta_info_provider_from_dict(self, meta_info_provider_as_dict: dict) -> MetaInfoProvider:
+    def create_meta_info_provider_from_dict(self, meta_info_provider_as_dict: dict) -> MetaInfoProvider:
         parameters = meta_info_provider_as_dict['parameters']
         for meta_info_provider_accessor in META_INFO_PROVIDER_REGISTRY:
             if meta_info_provider_accessor.name() == meta_info_provider_as_dict['type']:
