@@ -22,7 +22,7 @@ class DataSetMetaInfo(object):
     A representation of meta information about a data set. To be retrieved from a query on a MetaInfProvider.
     """
 
-    def __init__(self, coverage: str, start_time: str, end_time: str, data_type: str, identifier: str):
+    def __init__(self, coverage: str, start_time: Optional[str], end_time: Optional[str], data_type: str, identifier: str):
         self._coverage = coverage
         self._start_time = start_time
         self._end_time = end_time
@@ -30,12 +30,12 @@ class DataSetMetaInfo(object):
         self._identifier = identifier
 
     @property
-    def start_time(self) -> str:
+    def start_time(self) -> Optional[str]:
         """The dataset's start time."""
         return self._start_time
 
     @property
-    def end_time(self) -> str:
+    def end_time(self) -> Optional[str]:
         """The dataset's end time."""
         return self._end_time
 
