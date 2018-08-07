@@ -105,3 +105,30 @@ def test_vrt_meta_info_provider_query_existing_vrt_file_new_vrt_with_multipolygo
     assert data_set_meta_infos[0].end_time is None
     assert 'VRT' == data_set_meta_infos[0].data_type
     assert PATH_TO_VRT_FILE == data_set_meta_infos[0].identifier
+
+
+def test_vrt_meta_info_provider_provides_data_type():
+    parameters = {'path_to_vrt_file': PATH_TO_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
+                  'accessed_meta_info_provider': 'JsonMetaInfoProvider', 'path_to_json_file': PATH_TO_JSON_FILE}
+    provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    assert provider.provides_data_type('VRT')
+    assert not provider.provides_data_type('dcdvgf')
+
+
+def test_vrt_meta_info_provider_get_parameters_as_dict():
+    parameters = {'path_to_vrt_file': PATH_TO_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
+                  'accessed_meta_info_provider': 'JsonMetaInfoProvider', 'path_to_json_file': PATH_TO_JSON_FILE}
+    provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    dict = provider._get_parameters_as_dict()
+
+    assert 4 == len(dict)
+    assert 'path_to_vrt_file' in dict.keys()
+    assert PATH_TO_VRT_FILE == dict['path_to_vrt_file']
+    assert 'encapsulated_data_type' in dict.keys()
+    assert 'ASTER' == dict['encapsulated_data_type']
+    assert 'accessed_meta_info_provider' in dict.keys()
+    assert 'JsonMetaInfoProvider' == dict['accessed_meta_info_provider']
+    assert 'path_to_json_file' in dict.keys()
+    assert PATH_TO_JSON_FILE == dict['path_to_json_file']

@@ -76,7 +76,10 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         return data_type == 'VRT'
 
     def _get_parameters_as_dict(self) -> dict:
-        parameters = {'vrt_file_name': self._path_to_vrt_file, 'provided_data_type': self._encapsulated_data_type}
+        parameters = {'path_to_vrt_file': self._path_to_vrt_file,
+                      'encapsulated_data_type': self._encapsulated_data_type,
+                      'accessed_meta_info_provider': self._wrapped_meta_info_provider.name()}
+        parameters.update(self._wrapped_meta_info_provider.get_as_dict()['parameters'])
         return parameters
 
 class VrtMetaInfoProviderAccessor(MetaInfoProviderAccessor):
