@@ -22,21 +22,23 @@ class DataSetMetaInfo(object):
     A representation of meta information about a data set. To be retrieved from a query on a MetaInfProvider.
     """
 
-    def __init__(self, coverage: str, start_time: Optional[str], end_time: Optional[str], data_type: str, identifier: str):
+    def __init__(self, coverage: str, start_time: Optional[str], end_time: Optional[str], data_type: str,
+                 identifier: str, referenced_data: Optional[str]=None):
         self._coverage = coverage
         self._start_time = start_time
         self._end_time = end_time
         self._data_type = data_type
         self._identifier = identifier
+        self._referenced_data = referenced_data
 
     @property
     def start_time(self) -> Optional[str]:
-        """The dataset's start time."""
+        """The dataset's start time. Can be none."""
         return self._start_time
 
     @property
     def end_time(self) -> Optional[str]:
-        """The dataset's end time."""
+        """The dataset's end time. Can be none."""
         return self._end_time
 
     @property
@@ -54,8 +56,13 @@ class DataSetMetaInfo(object):
         """An identifier so that the data set can be found on the Data Store's File System."""
         return self._identifier
 
+    @property
+    def referenced_data(self) -> Optional[str]:
+        """A list of additional files that are referenced by this data set. Can be none."""
+        return self._referenced_data
+
     def equals(self, other: object) -> bool:
-        """Checks whether two data set meta infos are equal. Does not check the identifier!"""
+        """Checks whether two data set meta infos are equal. Does not check the identifier or referenced data sets!"""
         if type(other) != DataSetMetaInfo or self._start_time != other.start_time \
             or self._end_time != other.end_time or self._data_type != other.data_type:
             return False
