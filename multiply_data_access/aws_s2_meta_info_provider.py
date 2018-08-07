@@ -12,7 +12,7 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
              'José Luis Gómez-Dans (University College London)'
 
 _NAME = 'AwsS2MetaInfoProvider'
-_AWS_BASE_TILE_INFO_URL = 'http://sentinel-s2-l1c.s3.amazonaws.com/tiles/{}/tileInfo.json'
+_AWS_BASE_TILE_INFO_URL = 'https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/{}/tileInfo.json'
 _ID_PATTERN = '{0}/{1}/{2}/{3}/{4}/{5}/{6}'
 
 TILE_LAT_IDENTIFIERS = \
