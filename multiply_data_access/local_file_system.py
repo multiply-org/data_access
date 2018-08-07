@@ -85,6 +85,17 @@ class LocalFileSystem(WritableFileSystem):
         relative_path = (self.path + self.pattern).replace('//', '/')
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
                                               '/{}/'.format(data_set_meta_info.data_type))
+        if _DAY_PATTERN not in self.pattern and _MONTH_PATTERN not in self.pattern and _YEAR_PATTERN not in self.pattern:
+            if os.path.exists(relative_path):
+                file_names = glob.glob(relative_path + '/**', recursive=True)
+                for file_name in file_names:
+                    file_name = file_name.replace('\\', '/')
+                    if data_set_meta_info.identifier in file_name and \
+                            data_validation.is_valid(file_name, data_set_meta_info.data_type):
+                        mime_type = DataUtils.get_mime_type(file_name)
+                        file_refs.append(FileRef(file_name, data_set_meta_info.start_time,
+                                                 data_set_meta_info.end_time, mime_type))
+            return file_refs
         if data_set_meta_info.start_time is None and data_set_meta_info.end_time is None:
             mime_type = DataUtils.get_mime_type(relative_path)
             file_refs.append(FileRef(relative_path, data_set_meta_info.start_time,
