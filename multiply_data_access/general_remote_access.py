@@ -48,6 +48,9 @@ class HttpMetaInfoProvider(LocallyWrappingMetaInfoProvider):
                 return True
         return False
 
+    def get_provided_data_types(self) -> List[str]:
+        return self._data_types
+
     def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
         data_set_meta_infos = []
         page = urllib2.urlopen(self._url).read().decode('utf-8')

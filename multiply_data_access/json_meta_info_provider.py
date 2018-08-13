@@ -56,6 +56,9 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
     def provides_data_type(self, data_type: str):
         return data_type in self.provided_data_types
 
+    def get_provided_data_types(self) -> List[str]:
+        return self.provided_data_types
+
     def update(self, data_set_meta_info: DataSetMetaInfo):
         if self._contains(data_set_meta_info):
             return

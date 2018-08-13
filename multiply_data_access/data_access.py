@@ -135,6 +135,12 @@ class MetaInfoProvider(metaclass=ABCMeta):
         :return: True if data of that type can be requested from the meta infor provider
         """
 
+    @abstractmethod
+    def get_provided_data_types(self) -> List[str]:
+        """
+        :return: A list of the data types provided by this data store.
+        """
+
     @staticmethod
     def get_roi_from_query_string(query_string: str) -> Optional[Polygon]:
         roi_as_wkt = query_string.split(';')[0]
@@ -301,9 +307,15 @@ class DataStore(object):
         """
         Whether the data store provides access to data of the queried type
         :param data_type: A string labelling the data
-        :return: True if data of that type can be requested from the meta infor provider
+        :return: True if data of that type can be requested from the meta info provider
         """
         return self._meta_info_provider.provides_data_type(data_type)
+
+    def get_provided_data_types(self) -> List[str]:
+        """
+        :return: A list of the data types provided by this data store.
+        """
+        return self._meta_info_provider.get_provided_data_types()
 
     def get_as_dict(self) -> dict:
         """

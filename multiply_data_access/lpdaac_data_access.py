@@ -112,6 +112,9 @@ class LpDaacMetaInfoProvider(LocallyWrappingMetaInfoProvider):
     def provides_data_type(self, data_type: str) -> bool:
         return data_type == DataTypeConstants.MODIS_MCD_43
 
+    def get_provided_data_types(self) -> List[str]:
+        return [DataTypeConstants.MODIS_MCD_43]
+
 
 class LpDaacMetaInfoProviderAccessor(MetaInfoProviderAccessor):
     @classmethod

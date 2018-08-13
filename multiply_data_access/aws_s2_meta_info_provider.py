@@ -150,6 +150,9 @@ class AwsS2MetaInfoProvider(LocallyWrappingMetaInfoProvider):
     def provides_data_type(self, data_type: str) -> bool:
         return data_type == DataTypeConstants.AWS_S2_L1C
 
+    def get_provided_data_types(self) -> List[str]:
+        return [DataTypeConstants.AWS_S2_L1C]
+
     def _get_wrapped_parameters_as_dict(self) -> dict:
         return {}
 

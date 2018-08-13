@@ -47,6 +47,9 @@ class TestWrappedMetaInfoProvider(LocallyWrappingMetaInfoProvider):
     def provides_data_type(self, data_type: str) -> bool:
         return data_type == 'TYPE_C'
 
+    def get_provided_data_types(self):
+        return ['TYPE_C']
+
     def _get_wrapped_parameters_as_dict(self) -> dict:
         wrapped_parameters_as_dict = {'some_parameter': self._some_parameter}
         return wrapped_parameters_as_dict
