@@ -6,6 +6,7 @@ from typing import List, Optional
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 import math
+import pkg_resources
 import requests
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
@@ -17,7 +18,7 @@ _ID_PATTERN = '{0}/{1}/{2}/{3}/{4}/{5}/{6}'
 
 TILE_LAT_IDENTIFIERS = \
     ['C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X']
-PATH_TO_TILE_LOOKUP_TABLE = './aux_data/tile_lookup_table.yaml'
+PATH_TO_TILE_LOOKUP_TABLE = pkg_resources.resource_filename(__name__, 'tile_lookup_table.yaml')
 
 
 def _get_tile_stripes(min_lon: float, max_lon: float) -> List[int]:
