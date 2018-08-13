@@ -1,4 +1,4 @@
-from multiply_data_access import DataStore, FileSystem, MetaInfoProvider, WritableDataStore
+from multiply_data_access import DataSetMetaInfo, DataStore, FileSystem, MetaInfoProvider, WritableDataStore
 from .aws_s2_file_system import AwsS2FileSystem
 from .aws_s2_meta_info_provider import AwsS2MetaInfoProvider
 from .json_meta_info_provider import JsonMetaInfoProvider
@@ -39,6 +39,27 @@ class DataAccessComponent(object):
         self._set_meta_info_provider_registry()
         self._data_stores = []
         self._read_registered_data_stores()
+
+    def show_stores(self):
+        for data_store in self._data_stores:
+            print(data_store.get_as_dict())
+
+    def query(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[DataSetMetaInfo]:
+        query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types)
+        meta_data_infos = []
+        for data_store in self._data_stores:
+            query_results = data_store.query(query_string)
+            meta_data_infos.extend(query_results)
+        return meta_data_infos
+
+    def get_provided_data_types(self) -> List[str]:
+        provided_types = []
+        for data_store in self._data_stores:
+            provided_data_types = data_store.get_provided_data_types()
+            for provided_data_type in provided_data_types:
+                if provided_data_type not in provided_types:
+                    provided_types.append(provided_data_type)
+        return provided_types
 
     def get_data_urls(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[str]:
         """
