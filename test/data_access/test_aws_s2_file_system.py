@@ -64,6 +64,7 @@ def test_aws_s2_file_system_is_valid_identifier():
     assert not aws_s2_file_system._is_valid_identifier('dvghg')
 
 
+@pytest.mark.skip(reason='Test actually performs downloading and needs authorization')
 def test_aws_s2_file_system_get_file_ref():
     try:
         parameters = {'temp_dir': OUTPUT_DIR, 'path': './test/test_data/aws_s2_data/', 'pattern': ''}
@@ -78,6 +79,7 @@ def test_aws_s2_file_system_get_file_ref():
         assert 'application/x-directory' == file_ref.mime_type
     finally:
         shutil.rmtree('{}/30SWJ,2016-04-01,0/'.format(OUTPUT_DIR))
+
 
 def test_notify_copied_to_local():
     dir_to_be_deleted = '{}/24CBS,2017-10-16,1/'.format(OUTPUT_DIR)
