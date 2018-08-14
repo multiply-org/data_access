@@ -31,6 +31,14 @@ class DataSetMetaInfo(object):
         self._identifier = identifier
         self._referenced_data = referenced_data
 
+    def __repr__(self):
+        return 'Data Set:\n' \
+               '  Id: {}, \n' \
+               '  Type: {}, \n' \
+               '  Start Time: {}, \n' \
+               '  End Time: {}, \n' \
+               '  Coverage: {}\n'.format(self.identifier, self.data_type, self.start_time, self.end_time, self.coverage)
+
     @property
     def start_time(self) -> Optional[str]:
         """The dataset's start time. Can be none."""
