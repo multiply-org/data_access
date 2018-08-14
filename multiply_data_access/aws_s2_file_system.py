@@ -7,10 +7,11 @@ Services (AWS).
 """
 from distutils.dir_util import copy_tree
 from multiply_core.util import FileRef, get_mime_type, get_time_from_string
-from .data_access import DataSetMetaInfo, FileSystemAccessor, FileSystem
+from .data_access import DataSetMetaInfo, FileSystemAccessor
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem
 from sentinelhub import AwsTileRequest
 from typing import Optional, Sequence
+import logging
 import os
 import re
 import shutil
@@ -60,7 +61,9 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
         saved_dir = '{}/{},{}-{:02d}-{:02d},{}/'.format(self._temp_dir, tile_name, year, month, day, aws_index)
         new_dir = '{0}{1}/{2}/{3}/{4}/{5}/{6}/{7}/'.format(saved_dir, tile_name[0:2], tile_name[2:3], tile_name[3:5],
                                                            year, month, day, aws_index)
+        logging.info('Downloading S2 Data from {}-{}-[}'.format(month, day, year))
         copy_tree(saved_dir, new_dir)
+        logging.info('Downloaded S2 Data from {}-{}-[}'.format(month, day, year))
         return FileRef(new_dir, start_time, data_set_meta_info.end_time, get_mime_type(new_dir))
 
     def _is_valid_identifier(self, path: str) -> bool:
