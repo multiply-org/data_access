@@ -1,3 +1,4 @@
+# AWS S2
 - DataStore:
     FileSystem:
       type: AwsS2FileSystem
@@ -7,3 +8,146 @@
       type: AwsS2MetaInfoProvider
       parameters:
     Id: AwsS2
+# MODIS
+#- DataStore:
+#    FileSystem:
+#      type: LpDaacFileSystem
+#      parameters:
+#        path:
+#        pattern: dt/yy/mm/dd
+#        temp_dir:
+#        username:
+#        password:
+#    MetaInfoProvider:
+#      type: LpDaacMetaInfoProvider
+#      parameters:
+#        path_to_json_file:
+# CAMS
+- DataStore:
+    FileSystem:
+      type: HttpFileSystem
+      parameters:
+        path:
+        pattern:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
+        temp_dir:
+    MetaInfoProvider:
+      type: HttpMetaInfoProvider
+      parameters:
+        path_to_json_file:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
+        data_types: CAMS
+# Emulators
+- DataStore:
+    FileSystem:
+      type: HttpFileSystem
+      parameters:
+        path:
+        pattern:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
+        temp_dir:
+    MetaInfoProvider:
+      type: HttpMetaInfoProvider
+      parameters:
+        path_to_json_file:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
+        data_types: ISO_MSI_A_EMU,ISO_MSI_B_EMU,WV_EMU
+# DEM
+- DataStore:
+    FileSystem:
+      type: VrtFileSystem
+      parameters:
+        path_to_vrt_file:
+        encapsulated_data_type: ASTER
+        accessed_file_system: HttpFileSystem
+        path:
+        pattern:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/eles/
+        temp_dir:
+    MetaInfoProvider:
+      type: VrtMetaInfoProvider
+      parameters:
+        path_to_vrt_file:
+        encapsulated_data_type: ASTER
+        accessed_meta_info_provider: HttpMetaInfoProvider
+        path_to_json_file:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/eles/
+        data_types: ASTER
+- DataStore:
+    FileSystem:
+      parameters:
+        path:
+        pattern: /dt/yy/mm/dd/
+        temp_dir:
+      type: AwsS2FileSystem
+    Id: aws_s2
+    MetaInfoProvider:
+      parameters:
+        path_to_json_file:
+      type: AwsS2MetaInfoProvider
+- DataStore:
+    FileSystem:
+      type: HttpFileSystem
+      parameters:
+        path:
+        pattern: /dt/yy/
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
+        temp_dir:
+    Id: cams
+    MetaInfoProvider:
+      type: HttpMetaInfoProvider
+      parameters:
+        path_to_json_file:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
+        data_types: CAMS
+- DataStore:
+    FileSystem:
+      type: HttpFileSystem
+      parameters:
+        path:
+        pattern: /dt/
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
+        temp_dir:
+    Id: emulators
+    MetaInfoProvider:
+      type: HttpMetaInfoProvider
+      parameters:
+        path_to_json_file:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
+        data_types: ISO_MSI_A_EMU,ISO_MSI_B_EMU,WV_EMU
+- DataStore:
+    FileSystem:
+      type: VrtFileSystem
+      parameters:
+        path_to_vrt_file:
+        encapsulated_data_type: ASTER
+        accessed_file_system: HttpFileSystem
+        path:
+        pattern: /dt/
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/eles/
+        temp_dir:
+    Id: Aster DEM
+    MetaInfoProvider:
+      type: VrtMetaInfoProvider
+      parameters:
+        path_to_vrt_file:
+        encapsulated_data_type: ASTER
+        provided_data_type: Aster DEM
+        accessed_meta_info_provider: HttpMetaInfoProvider
+        path_to_json_file:
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/eles/
+        data_types: ASTER
+- DataStore:
+    FileSystem:
+      type: LpDaacFileSystem
+      parameters:
+        temp_dir:
+        username:
+        password:
+        path:
+        pattern: /dt/yy/mm/dd/
+    Id: MODIS Data
+    MetaInfoProvider:
+      type: LpDaacMetaInfoProvider
+      parameters:
+        path_to_json_file:
