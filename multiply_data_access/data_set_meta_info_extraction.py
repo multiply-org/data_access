@@ -119,7 +119,7 @@ class AsterMetaInfoExtractor(DataSetMetaInfoExtractor):
             path_lon *= -1
         coverage = Polygon([[path_lon, path_lat], [path_lon, path_lat + 1], [path_lon + 1, path_lat + 1],
                             [path_lon + 1, path_lat]])
-        return DataSetMetaInfo(coverage.wkt, '', '', DataTypeConstants.ASTER, path)
+        return DataSetMetaInfo(coverage.wkt, None, None, DataTypeConstants.ASTER, path)
 
 
 class S2aMetaInfoExtractor(DataSetMetaInfoExtractor):
@@ -129,7 +129,7 @@ class S2aMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataTypeConstants.S2A_EMULATOR
 
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
-        return DataSetMetaInfo(GLOBAL, '', '', DataTypeConstants.S2A_EMULATOR, path)
+        return DataSetMetaInfo(GLOBAL, None, None, DataTypeConstants.S2A_EMULATOR, path)
 
 
 class S2bMetaInfoExtractor(DataSetMetaInfoExtractor):
@@ -139,7 +139,7 @@ class S2bMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataTypeConstants.S2B_EMULATOR
 
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
-        return DataSetMetaInfo(GLOBAL, '', '', DataTypeConstants.S2B_EMULATOR, path)
+        return DataSetMetaInfo(GLOBAL, None, None, DataTypeConstants.S2B_EMULATOR, path)
 
 
 class WvMetaInfoExtractor(DataSetMetaInfoExtractor):
@@ -149,7 +149,7 @@ class WvMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataTypeConstants.WV_EMULATOR
 
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
-        return DataSetMetaInfo(GLOBAL, '', '', DataTypeConstants.WV_EMULATOR, path)
+        return DataSetMetaInfo(GLOBAL, None, None, DataTypeConstants.WV_EMULATOR, path)
 
 
 class CamsMetaInfoExtractor(DataSetMetaInfoExtractor):
