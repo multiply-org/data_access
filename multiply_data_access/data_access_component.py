@@ -5,6 +5,7 @@ from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem
 from pathlib import Path
 from typing import List, Optional
+import logging
 import os
 import json
 import pkg_resources
@@ -27,6 +28,7 @@ MULTIPLY_DIR_NAME = '.multiply'
 DATA_STORES_FILE_NAME = 'data_stores.yml'
 DATA_FOLDER_NAME = 'data'
 
+logging.getLogger().setLevel(logging.INFO)
 
 class DataAccessComponent(object):
     """
@@ -147,6 +149,7 @@ class DataAccessComponent(object):
                 id = index
             data_store = DataStore(file_system, meta_info_provider, id)
             data_stores.append(data_store)
+            logging.info('Read data store {}'.format(data_store.id))
         self._data_stores = self._data_stores + data_stores
         return data_stores
 
