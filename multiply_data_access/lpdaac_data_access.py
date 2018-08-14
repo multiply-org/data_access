@@ -1,5 +1,6 @@
 import base64
 import datetime
+import logging
 import os
 import osr
 import re
@@ -132,8 +133,10 @@ class LpDaacFileSystem(LocallyWrappedFileSystem):
         return _FILE_SYSTEM_NAME
 
     def _init_wrapped_file_system(self, parameters: dict) -> None:
-        if 'temp_dir' not in parameters.keys() or not os.path.exists(parameters['temp_dir']):
+        if 'temp_dir' not in parameters.keys():
             raise ValueError('No valid temporal directory provided for Lp Daac File System')
+        if not os.path.exists(parameters['temp_dir']):
+            os.makedirs(parameters['temp_dir'])
         self._temp_dir = parameters['temp_dir']
         if 'username' not in parameters.keys():
             raise ValueError('No username provided for Lp Daac File System')
@@ -155,8 +158,10 @@ class LpDaacFileSystem(LocallyWrappedFileSystem):
         request.add_header('Authorization', 'Basic {}'.format(authorization))
         remote_file = self._opener.open(request)
         temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
+        logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
         with open(temp_url, 'wb') as temp_file:
             shutil.copyfileobj(remote_file, temp_file)
+        logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
         file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
                                  get_mime_type(temp_url)))
         return file_refs
