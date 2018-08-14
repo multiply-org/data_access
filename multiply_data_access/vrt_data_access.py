@@ -35,10 +35,9 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         self._encapsulated_data_type = parameters['encapsulated_data_type']
         if 'accessed_meta_info_provider' not in parameters:
             raise ValueError('Vrt meta info provider must access other meta info provider')
-        data_access_component = DataAccessComponent()
         meta_info_provider_as_dict = {'type': parameters['accessed_meta_info_provider'], 'parameters': parameters}
         self._wrapped_meta_info_provider = \
-            data_access_component.create_meta_info_provider_from_dict(meta_info_provider_as_dict)
+            DataAccessComponent.create_meta_info_provider_from_dict(meta_info_provider_as_dict)
 
     @classmethod
     def name(cls) -> str:
@@ -125,9 +124,8 @@ class VrtFileSystem(FileSystem):
         if 'encapsulated_data_type' not in parameters:
             raise ValueError('Vrt meta info provider must know encapsulated data type')
         self._encapsulated_data_type = parameters['encapsulated_data_type']
-        data_access_component = DataAccessComponent()
         file_system_as_dict = {'type': parameters['accessed_file_system'], 'parameters': parameters}
-        self._file_system = data_access_component.create_file_system_from_dict(file_system_as_dict)
+        self._file_system = DataAccessComponent.create_file_system_from_dict(file_system_as_dict)
 
     @classmethod
     def name(cls) -> str:

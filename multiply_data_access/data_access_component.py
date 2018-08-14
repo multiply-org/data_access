@@ -202,14 +202,16 @@ class DataAccessComponent(object):
         self._data_stores.append(writable_data_store)
         return writable_data_store
 
-    def create_file_system_from_dict(self, file_system_as_dict: dict) -> FileSystem:
+    @staticmethod
+    def create_file_system_from_dict(file_system_as_dict: dict) -> FileSystem:
         parameters = file_system_as_dict['parameters']
         for file_system_accessor in FILE_SYSTEM_REGISTRY:
             if file_system_accessor.name() == file_system_as_dict['type']:
                 return file_system_accessor.create_from_parameters(parameters)
         raise UserWarning('Could not find file system of type {0}'.format(file_system_as_dict['type']))
 
-    def create_meta_info_provider_from_dict(self, meta_info_provider_as_dict: dict) -> MetaInfoProvider:
+    @staticmethod
+    def create_meta_info_provider_from_dict(meta_info_provider_as_dict: dict) -> MetaInfoProvider:
         parameters = meta_info_provider_as_dict['parameters']
         for meta_info_provider_accessor in META_INFO_PROVIDER_REGISTRY:
             if meta_info_provider_accessor.name() == meta_info_provider_as_dict['type']:
