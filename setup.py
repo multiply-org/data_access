@@ -25,12 +25,17 @@ setup(name='multiply-data-access',
               'local_file_system = multiply_data_access:local_file_system.LocalFileSystemAccessor',
               'aws_s2_file_system = multiply_data_access:aws_s2_file_system.AwsS2FileSystemAccessor',
               'lpdaac_file_system = multiply_data_access:lpdaac_data_access.LpDaacFileSystemAccessor',
+              'http_file_system = multiply_data_access:general_remote_access.HttpFileSystemAccessor',
+              'vrt_file_system = multiply_data_access:vrt_data_access.VrtFileSystemAccessor'
           ],
           'meta_info_provider_plugins': [
               'json_meta_info_provider = multiply_data_access:json_meta_info_provider.JsonMetaInfoProviderAccessor',
-              'aws_s2_meta_info_provider = multiply_data_access:aws_s2_meta_info_provider.AwsS2MetaInfoProviderAccessor',
+              'aws_s2_meta_info_provider = '
+              'multiply_data_access:aws_s2_meta_info_provider.AwsS2MetaInfoProviderAccessor',
               'lpdaac_meta_info_provider = '
               'multiply_data_access:lpdaac_data_access.LpDaacMetaInfoProviderAccessor',
+              'http_meta_info_provider = multiply_data_access:general_remote_access.HttpMetaInfoProviderAccessor',
+              'vrt_meta_info_provider = multiply_data_access:vrt_data_access.VrtMetaInfoProviderAccessor'
           ],
       },
       install_requires=requirements
