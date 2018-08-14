@@ -171,6 +171,7 @@ class DataSetMetaInfoProvision(object):
         self.add_data_set_meta_info_provider(S2aMetaInfoExtractor())
         self.add_data_set_meta_info_provider(S2bMetaInfoExtractor())
         self.add_data_set_meta_info_provider(WvMetaInfoExtractor())
+        self.add_data_set_meta_info_provider(CamsMetaInfoExtractor())
 
     def add_data_set_meta_info_provider(self, data_set_meta_info_provider: DataSetMetaInfoExtractor):
         self.DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
