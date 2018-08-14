@@ -1,7 +1,7 @@
 from multiply_core.observations import add_validator, DataValidator
 from multiply_core.util import get_mime_type, FileRef
 from multiply_data_access import DataSetMetaInfo
-from multiply_data_access.locally_wrapping_data_access import LocallyWrappingFileSystem, LocallyWrappingMetaInfoProvider
+from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
 from multiply_data_access.data_access import DataUtils
 from datetime import datetime
 from shapely.geometry import Polygon
@@ -17,7 +17,7 @@ path_to_json_file = './test/test_data/test_meta_info.json'
 path_to_wrapped_file = './test/test_data/a_wrapped_directory/some_wrapped_file'
 
 
-class TestWrappedMetaInfoProvider(LocallyWrappingMetaInfoProvider):
+class TestWrappedMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
     @classmethod
     def name(cls) -> str:
@@ -119,7 +119,7 @@ def test_query():
     assert other_data_set_meta_infos[1].identifier == 'dterftge'
 
 
-class TestWrappedFileSystem(LocallyWrappingFileSystem):
+class TestWrappedFileSystem(LocallyWrappedFileSystem):
 
     @classmethod
     def name(cls) -> str:

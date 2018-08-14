@@ -19,13 +19,13 @@ from multiply_data_access.data_set_meta_info_extraction import DataSetMetaInfoPr
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
              'José Luis Gómez-Dans (University College London)'
 
-from multiply_data_access.locally_wrapping_data_access import LocallyWrappingFileSystem, LocallyWrappingMetaInfoProvider
+from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
 
 _FILE_SYSTEM_NAME = 'HttpFileSystem'
 _META_INFO_PROVIDER_NAME = 'HttpMetaInfoProvider'
 
 
-class HttpMetaInfoProvider(LocallyWrappingMetaInfoProvider):
+class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
     @classmethod
     def name(cls) -> str:
@@ -85,7 +85,7 @@ class HttpMetaInfoProviderAccessor(MetaInfoProviderAccessor):
         return HttpMetaInfoProvider(parameters)
 
 
-class HttpFileSystem(LocallyWrappingFileSystem):
+class HttpFileSystem(LocallyWrappedFileSystem):
 
     @classmethod
     def name(cls) -> str:

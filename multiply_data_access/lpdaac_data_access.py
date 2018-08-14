@@ -10,7 +10,7 @@ from http.cookiejar import CookieJar
 from multiply_core.util import FileRef, get_mime_type, get_time_from_string
 from multiply_core.observations import DataTypeConstants
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystemAccessor, MetaInfoProviderAccessor
-from multiply_data_access.locally_wrapping_data_access import LocallyWrappingFileSystem, LocallyWrappingMetaInfoProvider
+from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
 from shapely.geometry import Point, Polygon
 from typing import List, Sequence
 
@@ -27,7 +27,7 @@ _M_Y0 = -20015109.354
 _M_X0 = 10007554.677
 
 
-class LpDaacMetaInfoProvider(LocallyWrappingMetaInfoProvider):
+class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
     @classmethod
     def name(cls) -> str:
         return _META_INFO_PROVIDER_NAME
@@ -126,7 +126,7 @@ class LpDaacMetaInfoProviderAccessor(MetaInfoProviderAccessor):
         return LpDaacMetaInfoProvider(parameters)
 
 
-class LpDaacFileSystem(LocallyWrappingFileSystem):
+class LpDaacFileSystem(LocallyWrappedFileSystem):
     @classmethod
     def name(cls) -> str:
         return _FILE_SYSTEM_NAME

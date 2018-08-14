@@ -18,7 +18,7 @@ from typing import List, Sequence
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 
-class LocallyWrappingFileSystem(FileSystem):
+class LocallyWrappedFileSystem(FileSystem):
 
     def __init__(self, parameters: dict):
         if 'path' not in parameters.keys():
@@ -64,7 +64,7 @@ class LocallyWrappingFileSystem(FileSystem):
         """
 
 
-class LocallyWrappingMetaInfoProvider(MetaInfoProvider):
+class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
 
     def __init__(self, parameters: dict):
         if 'path_to_json_file' not in parameters.keys():

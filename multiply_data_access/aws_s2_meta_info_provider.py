@@ -1,5 +1,5 @@
 from multiply_data_access.data_access import DataSetMetaInfo, MetaInfoProviderAccessor
-from multiply_data_access.locally_wrapping_data_access import LocallyWrappingMetaInfoProvider
+from multiply_data_access.locally_wrapped_data_access import LocallyWrappedMetaInfoProvider
 from datetime import datetime, timedelta
 from multiply_core.observations import DataTypeConstants
 from typing import List, Optional
@@ -52,7 +52,7 @@ class TileDescription(object):
         return self._coverage
 
 
-class AwsS2MetaInfoProvider(LocallyWrappingMetaInfoProvider):
+class AwsS2MetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
     def _init_wrapped_meta_info_provider(self, parameters: dict):
         self._lut = {}
