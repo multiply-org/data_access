@@ -44,6 +44,8 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         return _META_INFO_PROVIDER_NAME
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
+        if 'VRT' not in self.get_data_types_from_query_string(query_string):
+            return []
         roi = self.get_roi_from_query_string(query_string)
         if not os.path.exists(self._path_to_vrt_file):
             coverages, referenced_data = self._get_coverages_from_wrapped_meta_info_provider(query_string)
