@@ -97,8 +97,10 @@ class HttpFileSystem(LocallyWrappedFileSystem):
         if requests.get(parameters['url']).status_code != 200:
             raise ValueError('Invalid url provided for HttpFileSystem')
         self._url = parameters['url']
-        if 'temp_dir' not in parameters.keys() or not os.path.exists(parameters['temp_dir']):
+        if 'temp_dir' not in parameters.keys():
             raise ValueError('No valid temporal directory provided Http File System')
+        if not os.path.exists(parameters['temp_dir']):
+            os.makedirs(parameters['temp_dir'])
         self._temp_dir = parameters['temp_dir']
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:

@@ -54,7 +54,7 @@ class LocalFileSystem(WritableFileSystem):
     @staticmethod
     def _get_validated_path(path: str) -> str:
         if not os.path.exists(path):
-            raise ValueError('Could not find path {0}'.format(path))
+            os.makedirs(path)
         if not path.endswith('/'):
             path += '/'
         return path
