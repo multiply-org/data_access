@@ -4,10 +4,12 @@ Description
 
 This module contains the functionality to access data from a remote directory accessible via http.
 """
+import logging
 import os
 import re
 import requests
 
+from sys import stdout
 from typing import List, Sequence
 import urllib.request as urllib2
 
@@ -34,8 +36,6 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
     def _init_wrapped_meta_info_provider(self, parameters: dict) -> None:
         if 'url' not in parameters.keys():
             raise ValueError('No url provided for Http MetaInfoProvider')
-        if requests.get(parameters['url']).status_code != 200:
-            raise ValueError('Invalid url provided for Http MetaInfoProvider')
         self._url = parameters['url']
         if 'data_types' not in parameters.keys():
             raise ValueError('HttpMetaInfoProvider must receive data types as parameter')
@@ -101,8 +101,6 @@ class HttpFileSystem(LocallyWrappedFileSystem):
     def _init_wrapped_file_system(self, parameters: dict) -> None:
         if 'url' not in parameters.keys():
             raise ValueError('No url provided for HttpFileSystem')
-        if requests.get(parameters['url']).status_code != 200:
-            raise ValueError('Invalid url provided for HttpFileSystem')
         self._url = parameters['url']
         if 'temp_dir' not in parameters.keys():
             raise ValueError('No valid temporal directory provided Http File System')
@@ -116,12 +114,23 @@ class HttpFileSystem(LocallyWrappedFileSystem):
         request = requests.get(download_url, stream=True)
         if request.ok:
             temp_path = os.path.join(self._temp_dir, data_set_meta_info.identifier)
+            logging.info('Downloading {}'.format(data_set_meta_info.identifier))
+            total_size_in_bytes = int(urllib2.urlopen(download_url).info()['Content-Length'])
+            one_percent = total_size_in_bytes / 100
+            downloaded_bytes = 0
+            next_threshold = one_percent
             with open(temp_path, 'wb') as fp:
                 for chunk in request.iter_content(chunk_size=1024):
                     if chunk:
                         fp.write(chunk)
+                        downloaded_bytes += 1024
+                        if downloaded_bytes > next_threshold:
+                            stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
+                            stdout.flush()
+                            next_threshold += one_percent
             file_refs.append(FileRef(temp_path, data_set_meta_info.start_time, data_set_meta_info.end_time,
                                      get_mime_type(data_set_meta_info.identifier)))
+            logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
         return file_refs
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
