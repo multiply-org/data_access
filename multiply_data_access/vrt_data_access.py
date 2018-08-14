@@ -38,13 +38,16 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         meta_info_provider_as_dict = {'type': parameters['accessed_meta_info_provider'], 'parameters': parameters}
         self._wrapped_meta_info_provider = \
             DataAccessComponent.create_meta_info_provider_from_dict(meta_info_provider_as_dict)
+        if 'provided_data_type' not in parameters:
+            raise ValueError('Vrt meta info provider must know provided data type')
+        self._provided_data_type = parameters['provided_data_type']
 
     @classmethod
     def name(cls) -> str:
         return _META_INFO_PROVIDER_NAME
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
-        if 'VRT' not in self.get_data_types_from_query_string(query_string):
+        if self._provided_data_type not in self.get_data_types_from_query_string(query_string):
             return []
         roi = self.get_roi_from_query_string(query_string)
         if not os.path.exists(self._path_to_vrt_file):
@@ -65,7 +68,8 @@ class VrtMetaInfoProvider(MetaInfoProvider):
                 coverage = cascaded_union(coverages)
         if referenced_data is not None:
             referenced_data = ';'.join(referenced_data)
-        data_set_meta_info = DataSetMetaInfo(coverage.wkt, None, None, 'VRT', self._path_to_vrt_file, referenced_data)
+        data_set_meta_info = DataSetMetaInfo(coverage.wkt, None, None, self._provided_data_type,
+                                             self._path_to_vrt_file, referenced_data)
         return [data_set_meta_info]
 
     def _get_referenced_data_sets_from_vrt(self) -> List[str]:
@@ -93,10 +97,10 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         return coverages, names
 
     def provides_data_type(self, data_type: str) -> bool:
-        return data_type == 'VRT'
+        return data_type == self._provided_data_type
 
     def get_provided_data_types(self) -> List[str]:
-        return ['VRT']
+        return [self._provided_data_type]
 
     def _get_parameters_as_dict(self) -> dict:
         parameters = {'path_to_vrt_file': self._path_to_vrt_file,
