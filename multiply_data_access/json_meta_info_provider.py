@@ -3,6 +3,7 @@ from .updateable_data_access import UpdateableMetaInfoProvider
 from typing import List, Sequence
 from shapely.wkt import loads
 import json
+import os
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
@@ -16,6 +17,12 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
 
     def __init__(self, path_to_json_file: str):
         self.path_to_json_file = path_to_json_file
+        if not os.path.exists(path_to_json_file):
+            relative_path = '/'.join(path_to_json_file.split('/')[:-1])
+            if not os.path.exists(relative_path):
+                os.makedirs(relative_path)
+            with open(path_to_json_file, 'w') as json_file:
+                json.dump({'data_sets': []}, json_file, indent=2)
         with open(path_to_json_file, "r") as json_file:
             self.data_set_infos = json.load(json_file)
             self._update_provided_data_sets()
