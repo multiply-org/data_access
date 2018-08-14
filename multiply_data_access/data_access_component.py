@@ -79,6 +79,20 @@ class DataAccessComponent(object):
                     urls.append(file_ref.url)
         return urls
 
+    def get_data_urls_from_data_set_meta_infos(self, data_set_meta_infos: List[DataSetMetaInfo]) -> List[str]:
+        """
+        Builds a query from the given parameters and asks all data stores whether they contain data that match the
+        query. If datasets are found, url's to their positions are returned.
+        :return: a list of url's to locally stored files that match the conditions given by the query in the parameter.
+        """
+        urls = []
+        for data_store in self._data_stores:
+            for data_set_meta_info in data_set_meta_infos:
+                file_refs = data_store.get(data_set_meta_info)
+                for file_ref in file_refs:
+                    urls.append(file_ref.url)
+        return urls
+
     @staticmethod
     def _build_query_string(roi: str, start_time: str, end_time: str, data_types: str) -> str:
         """
