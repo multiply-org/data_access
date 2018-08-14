@@ -53,11 +53,18 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
     def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
         data_set_meta_infos = []
+        queried_data_types = self.get_data_types_from_query_string(query_string)
+        may_continue = False
+        for data_type in queried_data_types:
+            if data_type in self._data_types:
+                may_continue = True
+                break
+        if not may_continue:
+            return data_set_meta_infos
         page = urllib2.urlopen(self._url).read().decode('utf-8')
         roi = self.get_roi_from_query_string(query_string)
         start_time = self.get_start_time_from_query_string(query_string)
         end_time = self.get_end_time_from_query_string(query_string)
-        queried_data_types = self.get_data_types_from_query_string(query_string)
         for data_type in queried_data_types:
             if data_type not in self._data_types:
                 continue
