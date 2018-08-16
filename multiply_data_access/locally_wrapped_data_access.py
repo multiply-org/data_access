@@ -68,13 +68,9 @@ class LocallyWrappedFileSystem(FileSystem):
         return False
 
     def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo) -> DataSetMetaInfo:
-        # logging.info('Adding data to local data store, not remote')
-        # return self._local_file_system.put(from_url, data_set_meta_info)
         raise UserWarning('Method not supported')
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
-        # logging.info('Removing data from local data store, not remote')
-        # return self._local_file_system.remove(data_set_meta_info)
         raise UserWarning('Method not supported')
 
     def scan(self) -> Sequence[DataSetMetaInfo]:
@@ -141,9 +137,7 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
         self._json_meta_info_provider.update(data_set_meta_info)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
-        logging.info('Removing data entry from local meta info provider, not remote')
         self._json_meta_info_provider.remove(data_set_meta_info)
 
     def get_all_data(self) -> Sequence[DataSetMetaInfo]:
-        logging.info('Retrieving data entries from local meta info provider, not remote')
         return self._json_meta_info_provider.get_all_data()
