@@ -30,7 +30,8 @@ class DataStore(object):
         :return:
         """
         file_refs = self._file_system.get(data_set_meta_info)
-        self._meta_info_provider.notify_got(data_set_meta_info)
+        if len(file_refs) > 0:
+            self._meta_info_provider.notify_got(data_set_meta_info)
         return file_refs
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
