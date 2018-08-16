@@ -16,7 +16,7 @@ from shapely.geometry import Point, Polygon
 from typing import Optional
 import gdal
 import osr
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree
 
 GLOBAL = 'POLYGON((-180.0 90.0, 180.0 90.0, 180.0 -90.0, -180.0 -90.0, -180.0 90.0))'
 
@@ -44,8 +44,9 @@ class AwsS2MetaInfoExtractor(DataSetMetaInfoExtractor):
         time = self._extract_time_from_metadata_file(path)
         return DataSetMetaInfo(coverage, time, time, self.name(), path)
 
-    def _get_xml_root(self, xml_file_name: str):
-        tree = ET.parse(xml_file_name)
+    @staticmethod
+    def _get_xml_root(xml_file_name: str):
+        tree = ElementTree.parse(xml_file_name)
         return tree.getroot()
 
     def _extract_time_from_metadata_file(self, filename: str) -> str:
@@ -146,11 +147,11 @@ class MODISMCD43MetaInfoExtractor(DataSetMetaInfoExtractor):
         h = int(path[-27:-25])
         v = int(path[-24:-22])
         tile_coverage = self._get_tile_coverage(h, v).wkt
-        year = int(path[-17:-13])
-        doy = int(path[-13:-10])
+        year = int(path[-36:-32])
+        doy = int(path[-32:-29])
         date = get_time_from_year_and_day_of_year(year, doy)
         return DataSetMetaInfo(tile_coverage, date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'),
-                               DataTypeConstants.MODIS_MCD_43, path[-37:])
+                               DataTypeConstants.MODIS_MCD_43, path[-45:])
 
     def _get_tile_coverage(self, h: int, v: int) -> Polygon:
         sinu_min_lat = h * self._Y_STEP + self._M_Y0
