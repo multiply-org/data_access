@@ -7,6 +7,7 @@ This module contains an implementation of a file system that allows to get and p
 from multiply_core.observations import data_validation, get_data_type_path
 from multiply_core.util import FileRef
 from .data_access import DataSetMetaInfo, DataUtils, FileSystem, FileSystemAccessor
+from .data_set_meta_info_extraction import DataSetMetaInfoProvision
 from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
 from typing import Sequence
@@ -34,6 +35,7 @@ class LocalFileSystem(FileSystem):
         pattern = self._validate_pattern(pattern)
         self.pattern = pattern
         self._derive_timestep(self.pattern)
+        self._data_set_meta_info_provision = DataSetMetaInfoProvision()
 
     @classmethod
     def name(cls) -> str:
@@ -198,8 +200,9 @@ class LocalFileSystem(FileSystem):
                 found_file = found_file.replace('\\', '/')
                 data_type = data_validation.get_valid_type(found_file)
                 if data_type is not '':
-                    data_set_meta_infos.append(DataSetMetaInfo(coverage='', start_time='', end_time='',
-                                                               data_type=data_type, identifier=found_file))
+                    data_set_meta_info = self._data_set_meta_info_provision.\
+                        get_data_set_meta_info(data_type, found_file)
+                    data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 
     def get_parameters_as_dict(self) -> dict:
