@@ -29,6 +29,8 @@ class DataStore(object):
         Retrieves data
         :return:
         """
+        if not self._meta_info_provider.provides_data_type(data_set_meta_info.data_type):
+            return []
         file_refs = self._file_system.get(data_set_meta_info)
         if len(file_refs) > 0:
             self._meta_info_provider.notify_got(data_set_meta_info)
