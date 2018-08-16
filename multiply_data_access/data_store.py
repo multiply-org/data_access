@@ -86,19 +86,15 @@ class DataStore(object):
         for found_data_set_meta_info in found_data_set_meta_infos:
             already_registered = False
             for registered_data_set_meta_info in registered_data_set_meta_infos:
-                if found_data_set_meta_info.data_type == registered_data_set_meta_info.data_type and \
-                        found_data_set_meta_info.identifier == registered_data_set_meta_info.identifier:
+                if found_data_set_meta_info.equals(registered_data_set_meta_info):
                     already_registered = True
                     break
             if not already_registered:
-                data_set_meta_info = self.meta_info_provision.get_data_set_meta_info(
-                    found_data_set_meta_info.data_type, found_data_set_meta_info.identifier)
-                self._meta_info_provider.update(data_set_meta_info)
+                self._meta_info_provider.update(found_data_set_meta_info)
         for registered_data_set_meta_info in registered_data_set_meta_infos:
             found = False
             for found_data_set_meta_info in found_data_set_meta_infos:
-                if found_data_set_meta_info.data_type == registered_data_set_meta_info.data_type and \
-                        found_data_set_meta_info.identifier == registered_data_set_meta_info.identifier:
+                if found_data_set_meta_info.equals(registered_data_set_meta_info):
                     found = True
                     break
             if not found:
