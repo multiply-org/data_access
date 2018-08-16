@@ -4,7 +4,7 @@ import logging
 import os
 import osr
 import re
-import shutil
+from sys import stdout
 import urllib.request as urllib2
 
 from http.cookiejar import CookieJar
@@ -158,9 +158,22 @@ class LpDaacFileSystem(LocallyWrappedFileSystem):
         request.add_header('Authorization', 'Basic {}'.format(authorization))
         remote_file = self._opener.open(request)
         temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
-        logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
+        logging.info('Downloading {}'.format(data_set_meta_info.identifier))
         with open(temp_url, 'wb') as temp_file:
-            shutil.copyfileobj(remote_file, temp_file)
+            total_size_in_bytes = int(remote_file.info()['Content-Length'])
+            one_percent = total_size_in_bytes / 100
+            downloaded_bytes = 0
+            next_threshold = one_percent
+            length = 1024
+            buf = remote_file.read(length)
+            while buf:
+                temp_file.write(buf)
+                buf = remote_file.read(length)
+                downloaded_bytes += 1024
+                if downloaded_bytes > next_threshold:
+                    stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
+                    stdout.flush()
+                    next_threshold += one_percent
         logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
         file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
                                  get_mime_type(temp_url)))
