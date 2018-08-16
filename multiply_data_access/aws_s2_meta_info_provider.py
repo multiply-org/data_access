@@ -5,6 +5,7 @@ from multiply_core.observations import DataTypeConstants
 from typing import List, Optional
 from shapely.wkt import loads
 from shapely.geometry import Polygon
+import json
 import math
 import pkg_resources
 import requests
@@ -89,9 +90,9 @@ class AwsS2MetaInfoProvider(LocallyWrappedMetaInfoProvider):
                 tile_info_url = _AWS_BASE_TILE_INFO_URL.format(id)
                 request = requests.get(tile_info_url)
                 if request.status_code == 200:
-                    data_set_meta_infos.append(DataSetMetaInfo(tile_description.coverage, current_time_as_string,
-                                                               current_time_as_string, DataTypeConstants.AWS_S2_L1C,
-                                                               id))
+                    time = json.loads(request.text)['timestamp'][:-5]
+                    data_set_meta_infos.append(DataSetMetaInfo(tile_description.coverage, time, time,
+                                                               DataTypeConstants.AWS_S2_L1C, id))
                     aws_index += 1
                 else:
                     aws_index = -1
