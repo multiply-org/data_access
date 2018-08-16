@@ -76,9 +76,10 @@ class DataAccessComponent(object):
         urls = []
         for data_store in self._data_stores:
             for data_set_meta_info in data_set_meta_infos:
-                file_refs = data_store.get(data_set_meta_info)
-                for file_ref in file_refs:
-                    urls.append(file_ref.url)
+                if data_store.provides_data_type(data_set_meta_info.data_type):
+                    file_refs = data_store.get(data_set_meta_info)
+                    for file_ref in file_refs:
+                        urls.append(file_ref.url)
         return urls
 
     @staticmethod
