@@ -1,4 +1,5 @@
-from multiply_data_access import DataSetMetaInfo, DataStore, FileSystem, MetaInfoProvider, WritableDataStore
+from multiply_data_access import DataSetMetaInfo, DataStore, create_file_system_from_dict, \
+    create_meta_info_provider_from_dict
 from .aws_s2_file_system import AwsS2FileSystem
 from .aws_s2_meta_info_provider import AwsS2MetaInfoProvider
 from .json_meta_info_provider import JsonMetaInfoProvider
@@ -8,27 +9,14 @@ from typing import List, Optional
 import logging
 import os
 import json
-import pkg_resources
 import yaml
 
-__author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
-
-
-#: List of FileSystem implementations supported by the CLI.
-# Entries are classes derived from :py:class:`FileSystem` class.
-#: MULTIPLY plugins may extend this list by their implementations during plugin initialisation.
-FILE_SYSTEM_REGISTRY = []
-
-
-#: List of MetaInfoProvider implementations supported by the CLI.
-# Entries are classes derived from :py:class:`MetaInfoProvider` class.
-#: MULTIPLY plugins may extend this list by their implementations during plugin initialisation.
-META_INFO_PROVIDER_REGISTRY = []
 MULTIPLY_DIR_NAME = '.multiply'
 DATA_STORES_FILE_NAME = 'data_stores.yml'
 DATA_FOLDER_NAME = 'data'
 
 logging.getLogger().setLevel(logging.INFO)
+
 
 class DataAccessComponent(object):
     """
@@ -37,10 +25,10 @@ class DataAccessComponent(object):
     """
 
     def __init__(self):
-        self._set_file_system_registry()
-        self._set_meta_info_provider_registry()
         self._data_stores = []
         self._read_registered_data_stores()
+        for data_store in self._data_stores:
+            data_store.update()
 
     def show_stores(self):
         for data_store in self._data_stores:
@@ -155,8 +143,8 @@ class DataAccessComponent(object):
                 raise UserWarning('DataStore is missing FileSystem: Cannot read DataStore')
             if 'MetaInfoProvider' not in data_store_entry['DataStore'].keys():
                 raise UserWarning('DataStore is missing MetaInfoProvider: Cannot read DataStore')
-            file_system = self.create_file_system_from_dict(data_store_entry['DataStore']['FileSystem'])
-            meta_info_provider = self.create_meta_info_provider_from_dict(data_store_entry['DataStore']['MetaInfoProvider'])
+            file_system = create_file_system_from_dict(data_store_entry['DataStore']['FileSystem'])
+            meta_info_provider = create_meta_info_provider_from_dict(data_store_entry['DataStore']['MetaInfoProvider'])
             if 'Id' in data_store_entry['DataStore'].keys():
                 id = data_store_entry['DataStore']['Id']
             else:
@@ -214,35 +202,8 @@ class DataAccessComponent(object):
                         is_contained = True
                         i += 1
                         break
-        writable_data_store = WritableDataStore(local_file_system, json_meta_info_provider, id)
+        writable_data_store = DataStore(local_file_system, json_meta_info_provider, id)
         writable_data_store.update()
         self._data_stores.append(writable_data_store)
         return writable_data_store
 
-    @staticmethod
-    def create_file_system_from_dict(file_system_as_dict: dict) -> FileSystem:
-        parameters = file_system_as_dict['parameters']
-        for file_system_accessor in FILE_SYSTEM_REGISTRY:
-            if file_system_accessor.name() == file_system_as_dict['type']:
-                return file_system_accessor.create_from_parameters(parameters)
-        raise UserWarning('Could not find file system of type {0}'.format(file_system_as_dict['type']))
-
-    @staticmethod
-    def create_meta_info_provider_from_dict(meta_info_provider_as_dict: dict) -> MetaInfoProvider:
-        parameters = meta_info_provider_as_dict['parameters']
-        for meta_info_provider_accessor in META_INFO_PROVIDER_REGISTRY:
-            if meta_info_provider_accessor.name() == meta_info_provider_as_dict['type']:
-                return meta_info_provider_accessor.create_from_parameters(parameters)
-        raise UserWarning('Could not find meta infor provider of type {0}'.format(meta_info_provider_as_dict['type']))
-
-    @staticmethod
-    def _set_file_system_registry():
-        registered_file_systems = pkg_resources.iter_entry_points('file_system_plugins')
-        for registered_file_system in registered_file_systems:
-            FILE_SYSTEM_REGISTRY.append(registered_file_system.load())
-
-    @staticmethod
-    def _set_meta_info_provider_registry():
-        registered_meta_info_providers = pkg_resources.iter_entry_points('meta_info_provider_plugins')
-        for registered_meta_info_provider in registered_meta_info_providers:
-            META_INFO_PROVIDER_REGISTRY.append(registered_meta_info_provider.load())

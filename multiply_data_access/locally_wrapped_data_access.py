@@ -9,6 +9,7 @@ by
 """
 
 from abc import abstractmethod
+import logging
 from multiply_core.util import FileRef
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystem, MetaInfoProvider
 from multiply_data_access.local_file_system import LocalFileSystem
@@ -63,6 +64,23 @@ class LocallyWrappedFileSystem(FileSystem):
         :return: The parameters of this wrapped file system as dict
         """
 
+    def can_put(self) -> bool:
+        return False
+
+    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo) -> DataSetMetaInfo:
+        # logging.info('Adding data to local data store, not remote')
+        # return self._local_file_system.put(from_url, data_set_meta_info)
+        raise UserWarning('Method not supported')
+
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        # logging.info('Removing data from local data store, not remote')
+        # return self._local_file_system.remove(data_set_meta_info)
+        raise UserWarning('Method not supported')
+
+    def scan(self) -> Sequence[DataSetMetaInfo]:
+        logging.info('Scanning local file system, not remote')
+        return self._local_file_system.scan()
+
 
 class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
 
@@ -112,3 +130,20 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
 
     def notify_got(self, data_set_meta_info: DataSetMetaInfo):
         self._json_meta_info_provider.update(data_set_meta_info)
+
+    def can_update(self) -> bool:
+        return True
+
+    def update(self, data_set_meta_info: DataSetMetaInfo):
+        logging.info('Updating local meta info provider, not remote')
+        if not self.provides_data_type(data_set_meta_info.data_type):
+            raise ValueError('This data store is not appropriate for data type {}'.format(data_set_meta_info.data_type))
+        self._json_meta_info_provider.update(data_set_meta_info)
+
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        logging.info('Removing data entry from local meta info provider, not remote')
+        self._json_meta_info_provider.remove(data_set_meta_info)
+
+    def get_all_data(self) -> Sequence[DataSetMetaInfo]:
+        logging.info('Retrieving data entries from local meta info provider, not remote')
+        return self._json_meta_info_provider.get_all_data()

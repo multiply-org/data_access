@@ -3,9 +3,9 @@ import pytest
 from shapely.wkt import loads
 import shutil
 
+from multiply_data_access.data_store import DataStore
 from multiply_data_access.local_file_system import LocalFileSystem
 from multiply_data_access.json_meta_info_provider import JsonMetaInfoProvider
-from multiply_data_access.updateable_data_access import WritableDataStore
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
@@ -24,7 +24,7 @@ def test_put():
     try:
         local_file_system = LocalFileSystem(EMPTY_PATH, '')
         meta_info_provider = JsonMetaInfoProvider(path_to_incorrect_json_file)
-        writable_data_store = WritableDataStore(local_file_system, meta_info_provider, 'put_test')
+        writable_data_store = DataStore(local_file_system, meta_info_provider, 'put_test')
 
         writable_data_store.put(PATH_TO_S2_FILE)
 
@@ -58,7 +58,7 @@ def test_update():
     try:
         local_file_system = LocalFileSystem(AWS_S2_DATA_PATH, '')
         meta_info_provider = JsonMetaInfoProvider(path_to_incorrect_json_file)
-        writable_data_store = WritableDataStore(local_file_system, meta_info_provider, 'test')
+        writable_data_store = DataStore(local_file_system, meta_info_provider, 'test')
 
         writable_data_store.update()
 

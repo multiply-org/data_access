@@ -18,7 +18,7 @@ from typing import List, Sequence
 from multiply_core.util import FileRef, get_mime_type
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystem, FileSystemAccessor, MetaInfoProvider, \
     MetaInfoProviderAccessor
-from multiply_data_access.data_access_component import DataAccessComponent
+from multiply_data_access.registrations import create_meta_info_provider_from_dict, create_file_system_from_dict
 
 _META_INFO_PROVIDER_NAME = 'VrtMetaInfoProvider'
 _FILE_SYSTEM_NAME = 'VrtFileSystem'
@@ -36,8 +36,7 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         if 'accessed_meta_info_provider' not in parameters:
             raise ValueError('Vrt meta info provider must access other meta info provider')
         meta_info_provider_as_dict = {'type': parameters['accessed_meta_info_provider'], 'parameters': parameters}
-        self._wrapped_meta_info_provider = \
-            DataAccessComponent.create_meta_info_provider_from_dict(meta_info_provider_as_dict)
+        self._wrapped_meta_info_provider = create_meta_info_provider_from_dict(meta_info_provider_as_dict)
         if 'provided_data_type' not in parameters:
             raise ValueError('Vrt meta info provider must know provided data type')
         self._provided_data_type = parameters['provided_data_type']
@@ -105,9 +104,22 @@ class VrtMetaInfoProvider(MetaInfoProvider):
     def _get_parameters_as_dict(self) -> dict:
         parameters = {'path_to_vrt_file': self._path_to_vrt_file,
                       'encapsulated_data_type': self._encapsulated_data_type,
+                      'provided_data_type': self._provided_data_type,
                       'accessed_meta_info_provider': self._wrapped_meta_info_provider.name()}
         parameters.update(self._wrapped_meta_info_provider.get_as_dict()['parameters'])
         return parameters
+
+    def can_update(self) -> bool:
+        return self._wrapped_meta_info_provider.can_update()
+
+    def update(self, data_set_meta_info: DataSetMetaInfo):
+        self._wrapped_meta_info_provider.update(data_set_meta_info)
+
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        self._wrapped_meta_info_provider.remove(data_set_meta_info)
+
+    def get_all_data(self) -> Sequence[DataSetMetaInfo]:
+        return self._wrapped_meta_info_provider.get_all_data()
 
 
 class VrtMetaInfoProviderAccessor(MetaInfoProviderAccessor):
@@ -131,7 +143,7 @@ class VrtFileSystem(FileSystem):
             raise ValueError('Vrt meta info provider must know encapsulated data type')
         self._encapsulated_data_type = parameters['encapsulated_data_type']
         file_system_as_dict = {'type': parameters['accessed_file_system'], 'parameters': parameters}
-        self._file_system = DataAccessComponent.create_file_system_from_dict(file_system_as_dict)
+        self._file_system = create_file_system_from_dict(file_system_as_dict)
 
     @classmethod
     def name(cls) -> str:
@@ -178,6 +190,18 @@ class VrtFileSystem(FileSystem):
                       'accessed_file_system': self._file_system.name()}
         parameters.update(self._file_system.get_as_dict()['parameters'])
         return parameters
+
+    def can_put(self):
+        return False
+
+    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo):
+        raise UserWarning('Method not supported')
+
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        raise UserWarning('Method not supported')
+
+    def scan(self) -> Sequence[DataSetMetaInfo]:
+        return self._file_system.scan()
 
 
 class VrtFileSystemAccessor(FileSystemAccessor):

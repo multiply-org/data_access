@@ -1,5 +1,4 @@
-from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProviderAccessor
-from .updateable_data_access import UpdateableMetaInfoProvider
+from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProvider, MetaInfoProviderAccessor
 from typing import List, Sequence
 from shapely.wkt import loads
 import json
@@ -10,7 +9,7 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 _NAME = 'JsonMetaInfoProvider'
 
 
-class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
+class JsonMetaInfoProvider(MetaInfoProvider):
     """
     A MetaInfoProvider that retrieves its meta information from a JSON file.
     """
@@ -65,6 +64,9 @@ class JsonMetaInfoProvider(UpdateableMetaInfoProvider):
 
     def get_provided_data_types(self) -> List[str]:
         return self.provided_data_types
+
+    def can_update(self) -> bool:
+        return True
 
     def update(self, data_set_meta_info: DataSetMetaInfo):
         if self._contains(data_set_meta_info):

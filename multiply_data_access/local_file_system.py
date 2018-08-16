@@ -6,8 +6,7 @@ This module contains an implementation of a file system that allows to get and p
 """
 from multiply_core.observations import data_validation, get_data_type_path
 from multiply_core.util import FileRef
-from .data_access import DataSetMetaInfo, DataUtils, FileSystemAccessor
-from .updateable_data_access import WritableFileSystem
+from .data_access import DataSetMetaInfo, DataUtils, FileSystem, FileSystemAccessor
 from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
 from typing import Sequence
@@ -25,7 +24,7 @@ _ALLOWED_PATTERNS = [_DATA_TYPE_PATTERN, _YEAR_PATTERN, _MONTH_PATTERN, _DAY_PAT
 _NAME = 'LocalFileSystem'
 
 
-class LocalFileSystem(WritableFileSystem):
+class LocalFileSystem(FileSystem):
     """
     A representation of a file system on the local disk.
     """
@@ -136,6 +135,9 @@ class LocalFileSystem(WritableFileSystem):
             else:
                 return time + timedelta(days=365)
         return datetime(year=MAXYEAR, month=12, day=31)
+
+    def can_put(self) -> bool:
+        return True
 
     def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo):
         # we assume here that it suffices to consider the start time for putting a data set correctly

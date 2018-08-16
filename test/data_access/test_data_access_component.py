@@ -1,7 +1,7 @@
 from multiply_data_access.data_access_component import DataAccessComponent
 from multiply_data_access.json_meta_info_provider import JsonMetaInfoProvider
 from multiply_data_access.local_file_system import LocalFileSystem
-from multiply_data_access.data_access import DataStore
+from multiply_data_access.data_store import DataStore
 
 import os
 import shutil

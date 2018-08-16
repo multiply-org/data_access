@@ -106,6 +106,25 @@ class FileSystem(metaclass=ABCMeta):
         :return: The parameters of this file system as dict
         """
 
+    @abstractmethod
+    def can_put(self) -> bool:
+        """
+        :return: True, if data can be put into this file system.
+        """
+
+    @abstractmethod
+    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo) -> DataSetMetaInfo:
+        """Adds a data set to the file system by copying it from the given url to the expected location within
+        the file system. Returns an updated data set meta info."""
+
+    @abstractmethod
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        """Removes all data sets from the file system that are described by the data set meta info"""
+
+    @abstractmethod
+    def scan(self) -> Sequence[DataSetMetaInfo]:
+        """Retrieves a sequence of data set meta informations of all file refs found in the file system."""
+
 
 class FileSystemAccessor(metaclass=ABCMeta):
 
@@ -195,6 +214,24 @@ class MetaInfoProvider(metaclass=ABCMeta):
         """Informs the meta info provider that the data set has been retrieved from the file system."""
         pass
 
+    @abstractmethod
+    def can_update(self) -> bool:
+        """
+        :return: true if this meta info provider can be updated.
+        """
+
+    @abstractmethod
+    def update(self, data_set_meta_info: DataSetMetaInfo):
+        """Adds information about the data set to its internal registry."""
+
+    @abstractmethod
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        """Removes information about this data set from its internal registry."""
+
+    @abstractmethod
+    def get_all_data(self) -> Sequence[DataSetMetaInfo]:
+        """Returns all available data set meta infos."""
+
 
 class MetaInfoProviderAccessor(metaclass=ABCMeta):
 
@@ -280,58 +317,3 @@ class DataUtils:
         return 'unknown mime type'
 
 
-class DataStore(object):
-    """
-    A store which provides access to data sets and information about these.
-    """
-
-    def __init__(self, file_system: FileSystem, meta_info_provider: MetaInfoProvider, identifier: str):
-        self._file_system = file_system
-        self._meta_info_provider = meta_info_provider
-        self._id = identifier
-
-    def __repr__(self):
-        return 'Data store {}'.format(self._id)
-
-    @property
-    def id(self):
-        """The identifier of the data store."""
-        return self._id
-
-    def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
-        """
-        Retrieves data
-        :return:
-        """
-        file_refs = self._file_system.get(data_set_meta_info)
-        self._meta_info_provider.notify_got(data_set_meta_info)
-        return file_refs
-
-    def query(self, query_string: str) -> List[DataSetMetaInfo]:
-        """
-        Evaluates a query and retrieves a result set for it.
-        :return:
-        """
-        return self._meta_info_provider.query(query_string)
-
-    def provides_data_type(self, data_type: str) -> bool:
-        """
-        Whether the data store provides access to data of the queried type
-        :param data_type: A string labelling the data
-        :return: True if data of that type can be requested from the meta info provider
-        """
-        return self._meta_info_provider.provides_data_type(data_type)
-
-    def get_provided_data_types(self) -> List[str]:
-        """
-        :return: A list of the data types provided by this data store.
-        """
-        return self._meta_info_provider.get_provided_data_types()
-
-    def get_as_dict(self) -> dict:
-        """
-        :return: A representation of this data store in a dictionary format
-        """
-        inner_dict = {'FileSystem': self._file_system.get_as_dict(),
-               'MetaInfoProvider': self._meta_info_provider.get_as_dict(), 'Id': self.id}
-        return {'DataStore': inner_dict}
