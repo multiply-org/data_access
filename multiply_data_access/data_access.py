@@ -8,7 +8,7 @@ This module contains the MULTIPLY data access API.
 from abc import ABCMeta, abstractmethod
 from typing import List, Sequence, Optional
 from datetime import datetime, timedelta
-from multiply_core.util import FileRef
+from multiply_core.util import FileRef, are_times_equal, are_polygons_almost_equal
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 import os
@@ -23,7 +23,7 @@ class DataSetMetaInfo(object):
     """
 
     def __init__(self, coverage: str, start_time: Optional[str], end_time: Optional[str], data_type: str,
-                 identifier: str, referenced_data: Optional[str]=None):
+                 identifier: str, referenced_data: Optional[str] = None):
         self._coverage = coverage
         self._start_time = start_time
         self._end_time = end_time
@@ -71,12 +71,10 @@ class DataSetMetaInfo(object):
 
     def equals(self, other: object) -> bool:
         """Checks whether two data set meta infos are equal. Does not check the identifier or referenced data sets!"""
-        if type(other) != DataSetMetaInfo or self._start_time != other.start_time \
-            or self._end_time != other.end_time or self._data_type != other.data_type:
-            return False
-        self_coverage = loads(self.coverage)
-        other_coverage = loads(other.coverage)
-        return self_coverage.almost_equals(other_coverage)
+        return type(other) != DataSetMetaInfo or self._data_type != other.data_type or \
+            not are_times_equal(self._start_time, other.start_time) or \
+            not are_times_equal(self._end_time, other.end_time) or \
+            not are_polygons_almost_equal(self.coverage, other.coverage)
 
 
 class FileSystem(metaclass=ABCMeta):
@@ -315,5 +313,3 @@ class DataUtils:
         elif os.path.isdir(file_name):
             return 'application/x-directory'
         return 'unknown mime type'
-
-
