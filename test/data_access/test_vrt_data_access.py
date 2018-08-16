@@ -141,19 +141,19 @@ def test_vrt_meta_info_provider_get_parameters_as_dict():
                   'accessed_meta_info_provider': 'JsonMetaInfoProvider', 'path_to_json_file': PATH_TO_JSON_FILE}
     provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
 
-    dict = provider._get_parameters_as_dict()
+    parameters_as_dict = provider._get_parameters_as_dict()
 
-    assert 5 == len(dict)
-    assert 'path_to_vrt_file' in dict.keys()
-    assert PATH_TO_VRT_FILE == dict['path_to_vrt_file']
-    assert 'encapsulated_data_type' in dict.keys()
-    assert 'ASTER' == dict['encapsulated_data_type']
-    assert 'provided_data_type' in dict.keys()
-    assert 'Aster DEM' == dict['provided_data_type']
-    assert 'accessed_meta_info_provider' in dict.keys()
-    assert 'JsonMetaInfoProvider' == dict['accessed_meta_info_provider']
-    assert 'path_to_json_file' in dict.keys()
-    assert PATH_TO_JSON_FILE == dict['path_to_json_file']
+    assert 5 == len(parameters_as_dict)
+    assert 'path_to_vrt_file' in parameters_as_dict.keys()
+    assert PATH_TO_VRT_FILE == parameters_as_dict['path_to_vrt_file']
+    assert 'encapsulated_data_type' in parameters_as_dict.keys()
+    assert 'ASTER' == parameters_as_dict['encapsulated_data_type']
+    assert 'provided_data_type' in parameters_as_dict.keys()
+    assert 'Aster DEM' == parameters_as_dict['provided_data_type']
+    assert 'accessed_meta_info_provider' in parameters_as_dict.keys()
+    assert 'JsonMetaInfoProvider' == parameters_as_dict['accessed_meta_info_provider']
+    assert 'path_to_json_file' in parameters_as_dict.keys()
+    assert PATH_TO_JSON_FILE == parameters_as_dict['path_to_json_file']
 
 
 def test_vrt_meta_info_provider_get_referenced_data_sets_from_vrt():
@@ -191,19 +191,19 @@ def test_vrt_file_system_get_parameters_as_dict():
                   'accessed_file_system': 'LocalFileSystem', 'path': './test/test_data/', 'pattern': '/dt/'}
     file_system = VrtFileSystemAccessor.create_from_parameters(parameters)
 
-    dict = file_system.get_parameters_as_dict()
+    parameters_as_dict = file_system.get_parameters_as_dict()
 
-    assert 5 == len(dict)
-    assert 'path_to_vrt_file' in dict.keys()
-    assert PATH_TO_VRT_FILE == dict['path_to_vrt_file']
-    assert 'encapsulated_data_type' in dict.keys()
-    assert 'ASTER' == dict['encapsulated_data_type']
-    assert 'accessed_file_system' in dict.keys()
-    assert 'LocalFileSystem' == dict['accessed_file_system']
-    assert 'path' in dict.keys()
-    assert './test/test_data/' == dict['path']
-    assert 'pattern' in dict.keys()
-    assert '/dt/' == dict['pattern']
+    assert 5 == len(parameters_as_dict)
+    assert 'path_to_vrt_file' in parameters_as_dict.keys()
+    assert PATH_TO_VRT_FILE == parameters_as_dict['path_to_vrt_file']
+    assert 'encapsulated_data_type' in parameters_as_dict.keys()
+    assert 'ASTER' == parameters_as_dict['encapsulated_data_type']
+    assert 'accessed_file_system' in parameters_as_dict.keys()
+    assert 'LocalFileSystem' == parameters_as_dict['accessed_file_system']
+    assert 'path' in parameters_as_dict.keys()
+    assert './test/test_data/' == parameters_as_dict['path']
+    assert 'pattern' in parameters_as_dict.keys()
+    assert '/dt/' == parameters_as_dict['pattern']
 
 
 def test_vrt_file_system_get():
@@ -217,8 +217,8 @@ def test_vrt_file_system_get():
         file_refs = file_system.get(data_set_meta_info)
         assert 1 == len(file_refs)
         assert PATH_TO_NON_EXISTENT_VRT_FILE == file_refs[0].url
-        assert None == file_refs[0].start_time
-        assert None == file_refs[0].end_time
+        assert file_refs[0].start_time is None
+        assert file_refs[0].end_time is None
         assert 'x-world/x-vrt' == file_refs[0].mime_type
 
         assert os.path.exists(PATH_TO_NON_EXISTENT_VRT_FILE)

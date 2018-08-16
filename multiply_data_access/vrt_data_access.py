@@ -84,7 +84,7 @@ class VrtMetaInfoProvider(MetaInfoProvider):
             referenced_data_sets.append(referenced_data_set.split('/')[-1])
         return referenced_data_sets
 
-    def _get_coverages_from_wrapped_meta_info_provider(self, query_string:str) -> (List[Polygon], List[str]):
+    def _get_coverages_from_wrapped_meta_info_provider(self, query_string: str) -> (List[Polygon], List[str]):
         split_string = query_string.split(';')
         split_string[-1] = self._encapsulated_data_type
         new_query_string = ';'.join(split_string)
