@@ -290,6 +290,9 @@ class DataStore(object):
         self._meta_info_provider = meta_info_provider
         self._id = identifier
 
+    def __repr__(self):
+        return 'Data store {}'.format(self._id)
+
     @property
     def id(self):
         """The identifier of the data store."""

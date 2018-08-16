@@ -44,7 +44,7 @@ class DataAccessComponent(object):
 
     def show_stores(self):
         for data_store in self._data_stores:
-            print(data_store.get_as_dict())
+            print(data_store)
 
     def query(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[DataSetMetaInfo]:
         query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types)

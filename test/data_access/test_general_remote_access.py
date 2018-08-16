@@ -80,8 +80,8 @@ def test_query_wrapped_meta_info_provider_emus():
     for i, data_set_meta_info in enumerate(data_set_meta_infos):
         assert 'POLYGON((-180.0 90.0, 180.0 90.0, 180.0 -90.0, -180.0 -90.0, -180.0 90.0))' == \
                data_set_meta_info.coverage
-        assert '' == data_set_meta_info.start_time
-        assert '' == data_set_meta_info.end_time
+        assert None == data_set_meta_info.start_time
+        assert None == data_set_meta_info.end_time
         if i < 6:
             assert 'ISO_MSI_A_EMU' == data_set_meta_info.data_type
         elif i < 12:
