@@ -1,5 +1,6 @@
 from .data_access import DataSetMetaInfo, DataUtils, FileSystem, MetaInfoProvider
-from .data_set_meta_info_extraction import DataSetMetaInfoExtractor, DataSetMetaInfoProvision
+from .data_set_meta_info_extraction import DataSetMetaInfoExtractor, add_data_set_meta_info_extractor, \
+    get_data_set_meta_info
 from .data_store import DataStore
 from .general_remote_access import HttpFileSystem, HttpFileSystemAccessor, HttpMetaInfoProvider, \
     HttpMetaInfoProviderAccessor

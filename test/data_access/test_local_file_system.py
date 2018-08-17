@@ -1,5 +1,6 @@
 from multiply_core.observations import data_validation
-from multiply_data_access import DataSetMetaInfo, LocalFileSystem
+from multiply_data_access import DataSetMetaInfo, LocalFileSystem, add_data_set_meta_info_extractor, \
+    DataSetMetaInfoExtractor
 from datetime import datetime
 from shapely.geometry import Polygon
 import os
@@ -142,6 +143,18 @@ def test_scan():
 
     local_file_system = LocalFileSystem('./test/test_data/', '/dt/yy/mm/dd/')
     data_validation.add_validator(MyValidator())
+
+    class MyDataSetMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+        @classmethod
+        def name(cls) -> str:
+            return 'my_data_type'
+
+        def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+            return DataSetMetaInfo('', None, None, 'my_data_type', path)
+
+    add_data_set_meta_info_extractor(MyDataSetMetaInfoExtractor())
+
     retrieved_data_set_meta_infos = local_file_system.scan()
 
     assert 2 == len(retrieved_data_set_meta_infos)

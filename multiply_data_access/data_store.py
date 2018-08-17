@@ -1,4 +1,4 @@
-from .data_set_meta_info_extraction import DataSetMetaInfoProvision
+from .data_set_meta_info_extraction import get_data_set_meta_info
 from multiply_core.observations import get_valid_type
 from multiply_core.util import FileRef
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystem, MetaInfoProvider
@@ -13,7 +13,6 @@ class DataStore(object):
     def __init__(self, file_system: FileSystem, meta_info_provider: MetaInfoProvider, identifier: str):
         self._file_system = file_system
         self._meta_info_provider = meta_info_provider
-        self.meta_info_provision = DataSetMetaInfoProvision()
         self._id = identifier
 
     def __repr__(self):
@@ -75,7 +74,7 @@ class DataStore(object):
         data_type = get_valid_type(from_url)
         if data_type == '':
             raise UserWarning('Could not determine data type of {}'.format(from_url))
-        data_set_meta_info = self.meta_info_provision.get_data_set_meta_info(data_type, from_url)
+        data_set_meta_info = get_data_set_meta_info(data_type, from_url)
         updated_data_set_meta_info = self._file_system.put(from_url, data_set_meta_info)
         self._meta_info_provider.update(updated_data_set_meta_info)
 

@@ -7,7 +7,7 @@ This module contains an implementation of a file system that allows to get and p
 from multiply_core.observations import data_validation, get_data_type_path
 from multiply_core.util import FileRef
 from .data_access import DataSetMetaInfo, DataUtils, FileSystem, FileSystemAccessor
-from .data_set_meta_info_extraction import DataSetMetaInfoProvision
+from .data_set_meta_info_extraction import get_data_set_meta_info
 from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
 from typing import Sequence
@@ -35,7 +35,6 @@ class LocalFileSystem(FileSystem):
         pattern = self._validate_pattern(pattern)
         self.pattern = pattern
         self._derive_timestep(self.pattern)
-        self._data_set_meta_info_provision = DataSetMetaInfoProvision()
 
     @classmethod
     def name(cls) -> str:
@@ -86,7 +85,8 @@ class LocalFileSystem(FileSystem):
         relative_path = (self.path + self.pattern).replace('//', '/')
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
                                               '/{}/'.format(data_set_meta_info.data_type))
-        if _DAY_PATTERN not in self.pattern and _MONTH_PATTERN not in self.pattern and _YEAR_PATTERN not in self.pattern:
+        if _DAY_PATTERN not in self.pattern and _MONTH_PATTERN not in self.pattern and \
+                _YEAR_PATTERN not in self.pattern:
             if os.path.exists(relative_path):
                 file_names = glob.glob(relative_path + '/**', recursive=True)
                 for file_name in file_names:
@@ -166,7 +166,7 @@ class LocalFileSystem(FileSystem):
                                data_set_meta_info.data_type, relative_path)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
-        #todo test whether this works with aws s2 data too
+        # todo test whether this works with aws s2 data too
         time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
         relative_path = self.path + self.pattern
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
@@ -200,9 +200,9 @@ class LocalFileSystem(FileSystem):
                 found_file = found_file.replace('\\', '/')
                 data_type = data_validation.get_valid_type(found_file)
                 if data_type is not '':
-                    data_set_meta_info = self._data_set_meta_info_provision.\
-                        get_data_set_meta_info(data_type, found_file)
-                    data_set_meta_infos.append(data_set_meta_info)
+                    data_set_meta_info = get_data_set_meta_info(data_type, found_file)
+                    if data_set_meta_info is not None:
+                        data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 
     def get_parameters_as_dict(self) -> dict:

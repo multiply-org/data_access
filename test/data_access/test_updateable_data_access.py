@@ -65,22 +65,21 @@ def test_update():
         all_available_files = local_file_system.scan()
         assert 2 == len(all_available_files)
         assert 'AWS_S2_L1C' == all_available_files[0].data_type
-        assert './test/test_data/aws_s2_data/15/F/ZX/2016/12/31/1' == all_available_files[0].identifier
+        assert './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0' == all_available_files[0].identifier
         assert 'AWS_S2_L1C' == all_available_files[1].data_type
-        assert './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0' == all_available_files[1].identifier
+        assert './test/test_data/aws_s2_data/34/V/CL/2016/11/22/0' == all_available_files[1].identifier
 
         all_registered_files = meta_info_provider.get_all_data()
         assert 2 == len(all_registered_files)
         assert 'AWS_S2_L1C' == all_registered_files[0].data_type
-        assert './test/test_data/aws_s2_data/15/F/ZX/2016/12/31/1' == all_registered_files[0].identifier
-        assert '2017-09-04 11:18:25' == all_registered_files[0].start_time
-        assert '2017-09-04 11:18:25' == all_registered_files[0].end_time
+        assert './test/test_data/aws_s2_data/34/V/CL/2016/11/22/0/' == all_registered_files[0].identifier
+        assert '2016-11-22 10:03:36' == all_registered_files[0].start_time
+        assert '2016-11-22 10:03:36' == all_registered_files[0].end_time
         covered_geometry_bounds = loads(all_registered_files[0].coverage).bounds
-        assert covered_geometry_bounds[0] == pytest.approx(-6.754676710360797)
-        assert covered_geometry_bounds[1] == pytest.approx(36.906971812661624)
-        assert covered_geometry_bounds[2] == pytest.approx(-5.4774490849610435)
-        assert covered_geometry_bounds[3] == pytest.approx(37.92559054724302)
-
+        assert covered_geometry_bounds[0] == pytest.approx(17.467397959438937)
+        assert covered_geometry_bounds[1] == pytest.approx(58.50637201225454)
+        assert covered_geometry_bounds[2] == pytest.approx(19.45040137223655)
+        assert covered_geometry_bounds[3] == pytest.approx(59.52863352307349)
         assert 'AWS_S2_L1C' == all_registered_files[1].data_type
         assert './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0' == all_registered_files[1].identifier
         assert '2017-09-04 11:18:25' == all_registered_files[1].start_time

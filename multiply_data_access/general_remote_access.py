@@ -16,7 +16,7 @@ import urllib.request as urllib2
 from multiply_core.observations import get_file_pattern, is_valid_for
 from multiply_core.util import FileRef, get_mime_type
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystemAccessor, MetaInfoProviderAccessor
-from multiply_data_access.data_set_meta_info_extraction import DataSetMetaInfoProvision
+from multiply_data_access.data_set_meta_info_extraction import get_data_set_meta_info
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
              'José Luis Gómez-Dans (University College London)'
@@ -40,7 +40,6 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         if 'data_types' not in parameters.keys():
             raise ValueError('HttpMetaInfoProvider must receive data types as parameter')
         self._data_types = parameters['data_types'].replace(' ', '').split(',')
-        self._data_set_meta_info_provision = DataSetMetaInfoProvision()
 
     def provides_data_type(self, data_type: str) -> bool:
         for provided_data_type in self._data_types:
@@ -72,7 +71,7 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
             available_files = re.findall('>{}<'.format(file_pattern), page)
             for file in available_files:
                 if is_valid_for(file[1:-1], data_type, roi, start_time, end_time):
-                    data_set_meta_info = self._data_set_meta_info_provision.get_data_set_meta_info(data_type, file[1:-1])
+                    data_set_meta_info = get_data_set_meta_info(data_type, file[1:-1])
                     data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 

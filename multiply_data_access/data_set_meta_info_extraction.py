@@ -211,22 +211,23 @@ class CamsMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataSetMetaInfo(GLOBAL, path[-13:-3], path[-13:-3], DataTypeConstants.CAMS, path)
 
 
-class DataSetMetaInfoProvision(object):
+DATA_SET_META_INFO_PROVIDERS = []
 
-    def __init__(self):
-        self.DATA_SET_META_INFO_PROVIDERS = []
-        self.add_data_set_meta_info_provider(AwsS2MetaInfoExtractor())
-        self.add_data_set_meta_info_provider(AsterMetaInfoExtractor())
-        self.add_data_set_meta_info_provider(S2aMetaInfoExtractor())
-        self.add_data_set_meta_info_provider(S2bMetaInfoExtractor())
-        self.add_data_set_meta_info_provider(WvMetaInfoExtractor())
-        self.add_data_set_meta_info_provider(CamsMetaInfoExtractor())
-        self.add_data_set_meta_info_provider(MODISMCD43MetaInfoExtractor())
 
-    def add_data_set_meta_info_provider(self, data_set_meta_info_provider: DataSetMetaInfoExtractor):
-        self.DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
+def add_data_set_meta_info_extractor(data_set_meta_info_provider: DataSetMetaInfoExtractor):
+    DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
 
-    def get_data_set_meta_info(self, data_type: str, path: str) -> Optional[DataSetMetaInfo]:
-        for data_set_meta_info_provider in self.DATA_SET_META_INFO_PROVIDERS:
-            if data_set_meta_info_provider.name() == data_type:
-                return data_set_meta_info_provider.extract_meta_info(path)
+
+add_data_set_meta_info_extractor(AwsS2MetaInfoExtractor())
+add_data_set_meta_info_extractor(AsterMetaInfoExtractor())
+add_data_set_meta_info_extractor(S2aMetaInfoExtractor())
+add_data_set_meta_info_extractor(S2bMetaInfoExtractor())
+add_data_set_meta_info_extractor(WvMetaInfoExtractor())
+add_data_set_meta_info_extractor(CamsMetaInfoExtractor())
+add_data_set_meta_info_extractor(MODISMCD43MetaInfoExtractor())
+
+
+def get_data_set_meta_info(data_type: str, path: str) -> Optional[DataSetMetaInfo]:
+    for data_set_meta_info_provider in DATA_SET_META_INFO_PROVIDERS:
+        if data_set_meta_info_provider.name() == data_type:
+            return data_set_meta_info_provider.extract_meta_info(path)

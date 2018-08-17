@@ -116,17 +116,17 @@ def test_get_data_set_meta_infos_for_tile_description():
     data_set_meta_infos = aws_s2_meta_info_provider._get_data_set_meta_infos_for_tile_description(tile_description,
                                                                                                   start_time, end_time)
     assert 6 == len(data_set_meta_infos)
-    assert '2016-04-01' == data_set_meta_infos[0].start_time
+    assert '2016-04-01T10:57:59' == data_set_meta_infos[0].start_time
     assert '30/S/WJ/2016/4/1/0' == data_set_meta_infos[0].identifier
-    assert '2016-04-04' == data_set_meta_infos[1].start_time
+    assert '2016-04-04T11:03:11' == data_set_meta_infos[1].start_time
     assert '30/S/WJ/2016/4/4/0' == data_set_meta_infos[1].identifier
-    assert '2016-04-11' == data_set_meta_infos[2].start_time
+    assert '2016-04-11T10:57:56' == data_set_meta_infos[2].start_time
     assert '30/S/WJ/2016/4/11/0' == data_set_meta_infos[2].identifier
-    assert '2016-04-14' == data_set_meta_infos[3].start_time
+    assert '2016-04-14T11:09:07' == data_set_meta_infos[3].start_time
     assert '30/S/WJ/2016/4/14/0' == data_set_meta_infos[3].identifier
-    assert '2016-04-21' == data_set_meta_infos[4].start_time
+    assert '2016-04-21T10:59:16' == data_set_meta_infos[4].start_time
     assert '30/S/WJ/2016/4/21/0' == data_set_meta_infos[4].identifier
-    assert '2016-04-24' == data_set_meta_infos[5].start_time
+    assert '2016-04-24T11:09:39' == data_set_meta_infos[5].start_time
     assert '30/S/WJ/2016/4/24/0' == data_set_meta_infos[5].identifier
 
 
@@ -141,8 +141,8 @@ def test_query():
     assert './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0/' == data_set_meta_infos[0].identifier
     assert '30/S/TG/2017/9/4/0' == data_set_meta_infos[1].identifier
     for data_set_meta_info in data_set_meta_infos:
-        assert data_set_meta_info.start_time == '2017-09-04'
-        assert data_set_meta_info.end_time == '2017-09-04'
+        assert data_set_meta_info.start_time == '2017-09-04T11:18:25'
+        assert data_set_meta_info.end_time == '2017-09-04T11:18:25'
         assert data_set_meta_info.data_type == 'AWS_S2_L1C'
     data_set_coverage_0 = loads(data_set_meta_infos[0].coverage)
     sqb_29_polygon = loads(SQB_29_COVERAGE)
