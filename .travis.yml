@@ -36,7 +36,6 @@ install:
   # or master branches
   - conda install pip
   - pip install sentinelhub
-  - sentinelhub.config --aws_base_url "https://roda.sentinel-hub.com/sentinel-s2-l1c/"
   # test installation from pip
   #- pip install rt1
   #- yes | pip uninstall rt1
