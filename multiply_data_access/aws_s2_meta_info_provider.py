@@ -81,7 +81,6 @@ class AwsS2MetaInfoProvider(LocallyWrappedMetaInfoProvider):
         data_set_meta_infos = []
         current_time = start_time
         while current_time < end_time:
-            current_time_as_string = datetime.strftime(current_time, '%Y-%m-%d')
             aws_index = 0
             while aws_index >= 0:
                 id = _ID_PATTERN.format(tile_description.tile_id[0:2], tile_description.tile_id[2:3],
