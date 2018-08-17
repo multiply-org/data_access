@@ -49,12 +49,12 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
             # consider throwing an exception
             return None
         tile_name = self._get_tile_name(data_set_meta_info.identifier)
-        start_time = data_set_meta_info.start_time
+        start_time_as_datetime = get_time_from_string(data_set_meta_info.start_time)
+        time = start_time_as_datetime.strftime('%Y-%m-%d')
         aws_index = self._get_aws_index(data_set_meta_info.identifier)
-        request = AwsTileRequest(tile=tile_name, time=start_time, aws_index=aws_index,
+        request = AwsTileRequest(tile=tile_name, time=time, aws_index=aws_index,
                                  bands=bands, metafiles=metafiles, data_folder=self._temp_dir)
         request.save_data()
-        start_time_as_datetime = get_time_from_string(start_time)
         year = start_time_as_datetime.year
         month = start_time_as_datetime.month
         day = start_time_as_datetime.day
@@ -64,7 +64,7 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
         logging.info('Downloading S2 Data from {}-{}-{}'.format(month, day, year))
         copy_tree(saved_dir, new_dir)
         logging.info('Downloaded S2 Data from {}-{}-{}'.format(month, day, year))
-        return FileRef(new_dir, start_time, data_set_meta_info.end_time, get_mime_type(new_dir))
+        return FileRef(new_dir, data_set_meta_info.start_time, data_set_meta_info.end_time, get_mime_type(new_dir))
 
     def _is_valid_identifier(self, path: str) -> bool:
         return BASIC_AWS_S2_MATCHER.match(path) is not None
@@ -80,7 +80,8 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
         tile_name = self._get_tile_name(data_set_meta_info.identifier)
         start_time = data_set_meta_info.start_time
         aws_index = self._get_aws_index(data_set_meta_info.identifier)
-        file_dir = '{0}/{1},{2},{3}/'.format(self._temp_dir, tile_name, start_time, aws_index)
+        time = get_time_from_string(start_time).strftime('%Y-%m-%d')
+        file_dir = '{0}/{1},{2},{3}/'.format(self._temp_dir, tile_name, time, aws_index)
         shutil.rmtree(file_dir)
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
