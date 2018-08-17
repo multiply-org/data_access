@@ -132,9 +132,8 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
 
     def update(self, data_set_meta_info: DataSetMetaInfo):
         logging.info('Updating local meta info provider, not remote')
-        if not self.provides_data_type(data_set_meta_info.data_type):
-            raise ValueError('This data store is not appropriate for data type {}'.format(data_set_meta_info.data_type))
-        self._json_meta_info_provider.update(data_set_meta_info)
+        if self.provides_data_type(data_set_meta_info.data_type):
+            self._json_meta_info_provider.update(data_set_meta_info)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         self._json_meta_info_provider.remove(data_set_meta_info)

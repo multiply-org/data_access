@@ -208,7 +208,7 @@ class CamsMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataTypeConstants.CAMS
 
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
-        return DataSetMetaInfo(GLOBAL, path[:-3], path[:-3], DataTypeConstants.CAMS, path)
+        return DataSetMetaInfo(GLOBAL, path[-13:-3], path[-13:-3], DataTypeConstants.CAMS, path)
 
 
 class DataSetMetaInfoProvision(object):

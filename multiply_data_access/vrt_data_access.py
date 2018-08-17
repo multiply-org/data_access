@@ -113,7 +113,8 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         return self._wrapped_meta_info_provider.can_update()
 
     def update(self, data_set_meta_info: DataSetMetaInfo):
-        self._wrapped_meta_info_provider.update(data_set_meta_info)
+        if data_set_meta_info.data_type == self._encapsulated_data_type:
+            self._wrapped_meta_info_provider.update(data_set_meta_info)
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         self._wrapped_meta_info_provider.remove(data_set_meta_info)
