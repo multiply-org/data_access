@@ -65,9 +65,11 @@ def test_update():
         all_available_files = local_file_system.scan()
         assert 2 == len(all_available_files)
         assert 'AWS_S2_L1C' == all_available_files[0].data_type
-        assert './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0' == all_available_files[0].identifier
         assert 'AWS_S2_L1C' == all_available_files[1].data_type
-        assert './test/test_data/aws_s2_data/34/V/CL/2016/11/22/0' == all_available_files[1].identifier
+        assert ('./test/test_data/aws_s2_data/29/S/QB/2017/9/4/0' == all_available_files[0].identifier and \
+               './test/test_data/aws_s2_data/34/V/CL/2016/11/22/0' == all_available_files[1].identifier) or \
+               ('./test/test_data/aws_s2_data/29/S/QB/2017/9/4/0' == all_available_files[1].identifier and \
+               './test/test_data/aws_s2_data/34/V/CL/2016/11/22/0' == all_available_files[0].identifier)
 
         all_registered_files = meta_info_provider.get_all_data()
         assert 2 == len(all_registered_files)
