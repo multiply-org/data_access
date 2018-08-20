@@ -11,6 +11,7 @@ from .data_access import DataSetMetaInfo, FileSystemAccessor
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem
 from sentinelhub import AwsTileRequest
 from typing import Optional, Sequence
+import itertools
 import logging
 import os
 import re
@@ -20,6 +21,8 @@ __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
 BASIC_AWS_S2_PATTERN = '[0-9]{1,2}/[A-Z]/[A-Z]{2}/20[0-9][0-9]/[0-9]{1,2}/[0-9]{1,2}/[0-9]{1,2}'
 BASIC_AWS_S2_MATCHER = re.compile(BASIC_AWS_S2_PATTERN)
+_QI_LIST = ['DEFECT', 'DETFOO', 'NODATA', 'SATURA', 'TECQUA']
+_S2_L1C_BANDS = ['B01', 'B02', 'B03', 'B04', 'B05', 'B06', 'B07', 'B08', 'B8A', 'B09', 'B10', 'B11', 'B12']
 
 _NAME = 'AwsS2FileSystem'
 
@@ -37,7 +40,9 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
-        metafiles = 'metadata'
+        metafiles = ['qi/MSK_{}_{}'.format(qi, band) for qi, band in itertools.product(_QI_LIST, _S2_L1C_BANDS)]
+        metafiles.append('metadata')
+        metafiles.append('tileInfo')
         retrieved_file_ref = self._get_file_ref(data_set_meta_info, metafiles=metafiles)
         if retrieved_file_ref is not None:
             file_refs.append(retrieved_file_ref)
