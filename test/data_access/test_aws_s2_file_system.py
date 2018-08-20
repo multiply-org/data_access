@@ -72,13 +72,16 @@ def test_aws_s2_file_system_get_file_ref():
         data_set_meta_info = DataSetMetaInfo('doesnt matter here', '2016-04-01', '2016-04-01',
                                              DataTypeConstants.AWS_S2_L1C,
                                              '30/S/WJ/2016/4/1/0')
-        file_ref = aws_s2_file_system._get_file_ref(data_set_meta_info, bands=[], metafiles=['tileInfo'])
+        metafiles = ['metadata', 'tileInfo']
+        file_ref = aws_s2_file_system._get_file_ref(data_set_meta_info, bands=[], metafiles=metafiles)
         assert '{}/30SWJ,2016-04-01,0/30/S/WJ/2016/4/1/0/'.format(OUTPUT_DIR) == file_ref.url
         assert '2016-04-01' == file_ref.start_time
         assert '2016-04-01' == file_ref.end_time
         assert 'application/x-directory' == file_ref.mime_type
     finally:
-        shutil.rmtree('{}/30SWJ,2016-04-01,0/'.format(OUTPUT_DIR))
+        path = '{}/30SWJ,2016-04-01,0/'.format(OUTPUT_DIR)
+        if os.path.exists(path):
+            shutil.rmtree(path)
 
 
 def test_notify_copied_to_local():
