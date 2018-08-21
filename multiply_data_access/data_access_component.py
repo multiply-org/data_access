@@ -1,3 +1,4 @@
+from multiply_core.observations import get_valid_type
 from multiply_data_access import DataSetMetaInfo, DataStore, create_file_system_from_dict, \
     create_meta_info_provider_from_dict
 from .aws_s2_file_system import AwsS2FileSystem
@@ -41,6 +42,42 @@ class DataAccessComponent(object):
             query_results = data_store.query(query_string)
             meta_data_infos.extend(query_results)
         return meta_data_infos
+
+    def put(self, path: str, data_store_id: Optional[str]=None):
+        """
+        Puts data into the data access component. If the id to a data store is provided, the data access component
+        will attempt to put the data into the store. If data cannot be added to that particular store, it will not be
+        attempted to put it into another one. If no store id is provided, the data access component will on its own
+        try to determine an apt data store. A data store is considered apt if it already holds data of the same type.
+        :param path: A path to the data that shall be added to the Data Access Component.
+        :param data_store_id: The id of a data store. Can be None.
+        :return:
+        """
+        data_type = get_valid_type(path)
+        if data_type is '':
+            logging.info('Could not determine data type of data at {}. Will not add it to Data Access Component.'
+                         .format(path))
+            return
+        for data_store in self._data_stores:
+            if data_store_id is not None and data_store.id == data_store_id:
+                if not data_store.provides_data_type(data_type):
+                    logging.info(
+                        'Data Store {} is not apt for data of type {}. Will not add it to Data Access Component.'
+                            .format(data_store_id, data_type))
+                    return
+                elif not data_store.can_put():
+                    logging.info('Cannot put data into data store {}. Will not add it to Data Access Component.'.
+                                 format(data_store.id))
+                data_store.put(path)
+                return
+            elif data_store_id is None:
+                if data_store.provides_data_type(data_type) and data_store.can_put():
+                    data_store.put(path)
+                    logging.info('Added data to data store {}.'.format(data_store.id))
+                    return
+        # TODO consider to create local data store for these cases
+        logging.info('Could not determine apt data store for data at {}. Did not add to Data Access Component.'.
+                     format(path))
 
     def get_provided_data_types(self) -> List[str]:
         provided_types = []
