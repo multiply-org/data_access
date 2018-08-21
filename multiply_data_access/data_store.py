@@ -64,6 +64,12 @@ class DataStore(object):
                       'MetaInfoProvider': self._meta_info_provider.get_as_dict(), 'Id': self.id}
         return {'DataStore': inner_dict}
 
+    def can_put(self):
+        """
+        :return: True, if data can be added to this store.
+        """
+        return self._file_system.can_put()
+
     def put(self, from_url: str):
         """
         Puts a data set into the data store.
