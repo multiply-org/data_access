@@ -60,7 +60,7 @@ class JsonMetaInfoProvider(MetaInfoProvider):
         return data_set_meta_infos
 
     def provides_data_type(self, data_type: str):
-        return data_type in self.provided_data_types or data_type == 'AWS_S2_L2'
+        return data_type in self.provided_data_types
 
     def get_provided_data_types(self) -> List[str]:
         return self.provided_data_types
