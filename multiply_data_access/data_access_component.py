@@ -7,6 +7,7 @@ from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem
 from pathlib import Path
 from typing import List, Optional
+import click
 import logging
 import os
 import json
@@ -17,6 +18,24 @@ DATA_STORES_FILE_NAME = 'data_stores.yml'
 DATA_FOLDER_NAME = 'data'
 
 logging.getLogger().setLevel(logging.INFO)
+
+@click.command()
+@click.option('-p', '--path', help='A path to data that shall be put')
+@click.option('-id', '--data_store_id', help='The id of a data store to which the data shall be put. Optional.')
+def put(path: str, data_store_id: Optional[str] = None):
+    dac = DataAccessComponent()
+    dac.put(path, data_store_id)
+
+
+@click.command()
+@click.option('-r', '--roi', help='A region of interest, given as polygon in well known text format')
+@click.option('-a', '--start_time', help='The beginning of the time period in which the data shall be.')
+@click.option('-e', '--end_time', help='The end of the time period in which the data shall be.')
+@click.option('-d', '--data_types', help='A list of the requested data types. '
+                                         'Expected as single string with comma-separated values')
+def get(roi: str, start_time: str, end_time: str, data_types: str) -> List[str]:
+    dac = DataAccessComponent()
+    return dac.get_data_urls(roi, start_time, end_time, data_types)
 
 
 class DataAccessComponent(object):
@@ -43,7 +62,7 @@ class DataAccessComponent(object):
             meta_data_infos.extend(query_results)
         return meta_data_infos
 
-    def put(self, path: str, data_store_id: Optional[str]=None):
+    def put(self, path: str, data_store_id: Optional[str] = None):
         """
         Puts data into the data access component. If the id to a data store is provided, the data access component
         will attempt to put the data into the store. If data cannot be added to that particular store, it will not be
@@ -212,7 +231,7 @@ class DataAccessComponent(object):
     #
 
     def create_local_data_store(self, base_dir: Optional[str] = None, meta_info_file: Optional[str] = None,
-                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None) -> DataStore:
+                                base_pattern: Optional[str] = '/dt/yy/mm/dd/', id: Optional[str] = None) -> DataStore:
         multiply_home_dir = self._get_multiply_home_dir()
         if base_dir is None:
             base_dir = '{0}/{1}'.format(multiply_home_dir, DATA_FOLDER_NAME)
@@ -244,4 +263,3 @@ class DataAccessComponent(object):
         writable_data_store.update()
         self._data_stores.append(writable_data_store)
         return writable_data_store
-

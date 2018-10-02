@@ -3,6 +3,7 @@
 from setuptools import setup
 
 requirements = [
+    'Click',
     'multiply_core',
     'nose',
     'shapely',
@@ -20,6 +21,7 @@ setup(name='multiply-data-access',
       description='MULTIPLY Data Access',
       author='MULTIPLY Team',
       packages=['multiply_data_access'],
+      include_package_data=True,
       entry_points={
           'file_system_plugins': [
               'local_file_system = multiply_data_access:local_file_system.LocalFileSystemAccessor',
@@ -37,6 +39,10 @@ setup(name='multiply-data-access',
               'http_meta_info_provider = multiply_data_access:general_remote_access.HttpMetaInfoProviderAccessor',
               'vrt_meta_info_provider = multiply_data_access:vrt_data_access.VrtMetaInfoProviderAccessor'
           ],
+          'console_scripts': [
+              'multiply_get=multiply_data_access:data_access_component.get',
+              'multiply_put=multiply_data_access:data_access_component.put'
+          ]
       },
       install_requires=requirements
       )
