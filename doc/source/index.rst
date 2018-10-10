@@ -30,7 +30,7 @@ This help is organized into the following sections:
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   function : What is the structure of the Data Access Component and how does it work
+   basic_concepts : What is the structure of the Data Access Component and how does it work
    installation : Explains how the Data Access Component can be installed
    user_guide : How the Data Access Component can be used
    examples : Providing some examples
