@@ -11,6 +11,7 @@ PATH_TO_JSON_FILE = './test/test_data/modis_store.json'
 TEMP_DIR = './test/test_data/'
 ELES_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/eles/'
 EMUS_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/emus/'
+WV_EMU_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/emus/old_emus/'
 CAMS_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/cams/'
 
 
@@ -68,15 +69,14 @@ def test_meta_info_provider_get_parameters_as_dict():
 
 def test_query_wrapped_meta_info_provider_emus():
     parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': EMUS_TEST_URL,
-                  'data_types': '{}, {}, {}'.format(DataTypeConstants.S2A_EMULATOR, DataTypeConstants.S2B_EMULATOR,
-                                                    DataTypeConstants.WV_EMULATOR)}
+                  'data_types': '{}, {}'.format(DataTypeConstants.S2A_EMULATOR, DataTypeConstants.S2B_EMULATOR)}
     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = 'POLYGON((-6. 42.7, -6.7 42.6, -6.7 42.1, -6. 42.1, -6. 42.7));2017-09-04;2017-09-04;' \
-                   'ISO_MSI_A_EMU, ISO_MSI_B_EMU, WV_EMU'
+                   'ISO_MSI_A_EMU, ISO_MSI_B_EMU'
     data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string)
 
-    assert 13 == len(data_set_meta_infos)
+    assert 12 == len(data_set_meta_infos)
     for i, data_set_meta_info in enumerate(data_set_meta_infos):
         assert 'POLYGON((-180.0 90.0, 180.0 90.0, 180.0 -90.0, -180.0 -90.0, -180.0 90.0))' == \
                data_set_meta_info.coverage
@@ -84,10 +84,8 @@ def test_query_wrapped_meta_info_provider_emus():
         assert None == data_set_meta_info.end_time
         if i < 6:
             assert 'ISO_MSI_A_EMU' == data_set_meta_info.data_type
-        elif i < 12:
-            assert 'ISO_MSI_B_EMU' == data_set_meta_info.data_type
         else:
-            assert 'WV_EMU' == data_set_meta_info.data_type
+            assert 'ISO_MSI_B_EMU' == data_set_meta_info.data_type
     assert 'isotropic_MSI_emulators_correction_xap_S2A.pkl' == data_set_meta_infos[0].identifier
     assert 'isotropic_MSI_emulators_correction_xbp_S2A.pkl' == data_set_meta_infos[1].identifier
     assert 'isotropic_MSI_emulators_correction_xcp_S2A.pkl' == data_set_meta_infos[2].identifier
@@ -100,7 +98,23 @@ def test_query_wrapped_meta_info_provider_emus():
     assert 'isotropic_MSI_emulators_optimization_xap_S2B.pkl' == data_set_meta_infos[9].identifier
     assert 'isotropic_MSI_emulators_optimization_xbp_S2B.pkl' == data_set_meta_infos[10].identifier
     assert 'isotropic_MSI_emulators_optimization_xcp_S2B.pkl' == data_set_meta_infos[11].identifier
-    assert 'wv_MSI_retrieval_S2A.pkl' == data_set_meta_infos[12].identifier
+
+
+def test_query_wrapped_meta_info_provider_wv_emu():
+    parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': WV_EMU_TEST_URL,
+                  'data_types': '{}'.format(DataTypeConstants.WV_EMULATOR)}
+    provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = 'POLYGON((-6. 42.7, -6.7 42.6, -6.7 42.1, -6. 42.1, -6. 42.7));2017-09-04;2017-09-04;WV_EMU'
+    data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string)
+
+    assert 1 == len(data_set_meta_infos)
+    assert 'POLYGON((-180.0 90.0, 180.0 90.0, 180.0 -90.0, -180.0 -90.0, -180.0 90.0))' == \
+           data_set_meta_infos[0].coverage
+    assert None == data_set_meta_infos[0].start_time
+    assert None == data_set_meta_infos[0].end_time
+    assert 'WV_EMU' == data_set_meta_infos[0].data_type
+    assert 'wv_MSI_retrieval_S2A.pkl' == data_set_meta_infos[0].identifier
 
 
 def test_file_system_create():

@@ -39,7 +39,22 @@
       parameters:
         path_to_json_file: user_dir/emus/emus_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
-        data_types: ISO_MSI_A_EMU,ISO_MSI_B_EMU,WV_EMU
+        data_types: ISO_MSI_A_EMU,ISO_MSI_B_EMU
+- DataStore:
+    FileSystem:
+      type: HttpFileSystem
+      parameters:
+        path: user_dir/emus/
+        pattern: /dt/
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
+        temp_dir: user_dir/emus/temp/
+    Id: wv_emulator
+    MetaInfoProvider:
+      type: HttpMetaInfoProvider
+      parameters:
+        path_to_json_file: user_dir/emus/wv_emu_store.json
+        url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/old_emus/
+        data_types: WV_EMU
 - DataStore:
     FileSystem:
       type: VrtFileSystem
