@@ -25,25 +25,17 @@ Such a store might provide access to locally stored data or encapsulate access t
 Users may register new data stores and, if they find that the provided implementations are not sufficient,
 implement their own data store realizations.
 
-This help is organized into the following sections:
+This help is organized into the following sections.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-   basic_concepts : What is the structure of the Data Access Component and how does it work
-   installation : Explains how the Data Access Component can be installed
-   user_guide : How the Data Access Component can be used
-   examples : Providing some examples
+   :maxdepth: 1
 
-.. Which explains the aim of the module, provides a general overview what the module does,
-which version of the module it is.
-It also specifies how to use the module by provide a reference to the Python API.
-Finally it also specifies the structure for the next parts.
+   basic_concepts
+   installation
+   user_guide
+   examples
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+:doc:`basic_concepts` explains the structure of the Data Access Component and how it works.
+:doc:`installation` guides through the installation and configuration process,
+:doc:`user_guide` shows how the Data Access Component can be used and extended,
+and :doc:`examples` gives a few practical examples.
