@@ -10,11 +10,13 @@ from typing import List, Optional
 import logging
 import os
 import json
+import pkg_resources
 import yaml
 
 MULTIPLY_DIR_NAME = '.multiply'
 DATA_STORES_FILE_NAME = 'data_stores.yml'
 DATA_FOLDER_NAME = 'data'
+PATH_TO_DEFAULT_DATA_STORES_FILE = pkg_resources.resource_filename(__name__, 'default_data_stores.yaml')
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -145,21 +147,34 @@ class DataAccessComponent(object):
 
     def _add_default_stores(self):
         """Will add the default stores to the data stores file when it is created."""
-        # todo remove this from here
         multiply_home_dir = self._get_multiply_home_dir()
-        aws_s2_path = '{}/aws_s2_l1c/'.format(multiply_home_dir)
-        if not os.path.exists(aws_s2_path):
-            os.mkdir(aws_s2_path)
-        file_system_parameters = {'temp_dir': aws_s2_path, 'path': aws_s2_path, 'pattern': '/dt/yy/mm/dd/'}
-        path_to_json_file = '{}/aws_s2_l1c/aws_s2_store.json'.format(multiply_home_dir)
-        if not os.path.exists(path_to_json_file):
-            with open(path_to_json_file, "w") as json_file:
-                json_dict = {'data_sets': []}
-                json.dump(json_dict, json_file, indent=2)
-        meta_info_parameters = {'path_to_json_file': path_to_json_file}
-        aws_s2_data_store = DataStore(AwsS2FileSystem(file_system_parameters),
-                                      AwsS2MetaInfoProvider(meta_info_parameters), 'aws_s2')
-        self._put_data_store(aws_s2_data_store)
+        with open(PATH_TO_DEFAULT_DATA_STORES_FILE, 'r') as stream:
+            default_data_store_lists = yaml.safe_load(stream)
+            if default_data_store_lists is None:
+                return
+            for index, data_store_entry in enumerate(default_data_store_lists):
+                if 'DataStore' not in data_store_entry.keys() or \
+                        'FileSystem' not in data_store_entry['DataStore'].keys() or \
+                        'MetaInfoProvider' not in data_store_entry['DataStore'].keys():
+                    continue
+                for key, value in data_store_entry['DataStore']['FileSystem']['parameters'].items():
+                    if value is not None and 'user_dir' in value:
+                        file = value.replace('user_dir', multiply_home_dir)
+                        if not os.path.exists(file):
+                            os.makedirs(file)
+                        data_store_entry['DataStore']['FileSystem']['parameters'][key] = file
+                file_system = create_file_system_from_dict(data_store_entry['DataStore']['FileSystem'])
+                for key, value in data_store_entry['DataStore']['MetaInfoProvider']['parameters'].items():
+                    data_store_entry['DataStore']['MetaInfoProvider']['parameters'][key] = \
+                        value.replace('user_dir', multiply_home_dir)
+                meta_info_provider = create_meta_info_provider_from_dict(
+                    data_store_entry['DataStore']['MetaInfoProvider'])
+                if 'Id' in data_store_entry['DataStore'].keys():
+                    id = data_store_entry['DataStore']['Id']
+                else:
+                    id = index
+                data_store = DataStore(file_system, meta_info_provider, id)
+                self._put_data_store(data_store)
 
     def _get_multiply_home_dir(self) -> str:
         home_dir = str(Path.home())

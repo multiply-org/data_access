@@ -1,78 +1,78 @@
 - DataStore:
     FileSystem:
       parameters:
-        path:
+        path: user_dir/aws_s2/
         pattern: /dt/yy/mm/dd/
-        temp_dir:
+        temp_dir: user_dir/aws_s2/temp/
       type: AwsS2FileSystem
     Id: aws_s2
     MetaInfoProvider:
       parameters:
-        path_to_json_file:
+        path_to_json_file: user_dir/aws_s2/aws_s2_store.json
       type: AwsS2MetaInfoProvider
 - DataStore:
     FileSystem:
       type: HttpFileSystem
       parameters:
-        path:
+        path: user_dir/cams/
         pattern: /dt/yy/
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
-        temp_dir:
+        temp_dir: user_dir/cams/temp/
     Id: cams
     MetaInfoProvider:
       type: HttpMetaInfoProvider
       parameters:
-        path_to_json_file:
+        path_to_json_file: user_dir/cams/cams_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
         data_types: CAMS
 - DataStore:
     FileSystem:
       type: HttpFileSystem
       parameters:
-        path:
+        path: user_dir/emus/
         pattern: /dt/
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
-        temp_dir:
+        temp_dir: user_dir/emus/temp/
     Id: emulators
     MetaInfoProvider:
       type: HttpMetaInfoProvider
       parameters:
-        path_to_json_file:
+        path_to_json_file: user_dir/emus/emus_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
         data_types: ISO_MSI_A_EMU,ISO_MSI_B_EMU,WV_EMU
 - DataStore:
     FileSystem:
       type: VrtFileSystem
       parameters:
-        path_to_vrt_file:
+        path_to_vrt_file: user_dir/dem/aster_dem.vrt
         encapsulated_data_type: ASTER
         accessed_file_system: HttpFileSystem
-        path:
+        path: user_dir/dem/aster/
         pattern: /dt/
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/eles/
-        temp_dir:
-    Id: Aster DEM
+        temp_dir: user_dir/dem/aster/temp/
+    Id: aster_dem
     MetaInfoProvider:
       type: VrtMetaInfoProvider
       parameters:
-        path_to_vrt_file:
+        path_to_vrt_file: user_dir/dem/aster_dem.vrt
         encapsulated_data_type: ASTER
         provided_data_type: Aster DEM
         accessed_meta_info_provider: HttpMetaInfoProvider
-        path_to_json_file:
+        path_to_json_file: user_dir/dem/eles_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/eles/
         data_types: ASTER
 - DataStore:
     FileSystem:
       type: LpDaacFileSystem
       parameters:
-        temp_dir:
+        temp_dir: user_dir/modis_mcd43a1/
         username:
         password:
-        path:
+        path: user_dir/modis_mcd43a1/temp/
         pattern: /dt/yy/mm/dd/
-    Id: MODIS Data
+    Id: modis_mcd43a1
     MetaInfoProvider:
       type: LpDaacMetaInfoProvider
       parameters:
-        path_to_json_file:
+        path_to_json_file: user_dir/modis_mcd43a1/modis_mcd43a1_store.json
