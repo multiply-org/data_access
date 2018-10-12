@@ -19,7 +19,7 @@ __author__ = 'Alexander Löw (Ludwig Maximilians-Universität München), ' \
 
 class DataSetMetaInfo(object):
     """
-    A representation of meta information about a data set. To be retrieved from a query on a MetaInfProvider.
+    A representation of meta information about a data set. To be retrieved from a query on a MetaInfoProvider.
     """
 
     def __init__(self, coverage: str, start_time: Optional[str], end_time: Optional[str], data_type: str,

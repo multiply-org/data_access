@@ -24,7 +24,7 @@ logging.getLogger().setLevel(logging.INFO)
 class DataAccessComponent(object):
     """
     The controlling component. The data access component is responsible for communicating with the various data stores
-     and decides which data is used from which data store.
+    and decides which data is used from which data store.
     """
 
     def __init__(self):
@@ -34,10 +34,22 @@ class DataAccessComponent(object):
             data_store.update()
 
     def show_stores(self):
+        """
+        Prints out a list of all registered data stores.
+        """
         for data_store in self._data_stores:
             print(data_store)
 
     def query(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[DataSetMetaInfo]:
+        """
+        Distributes the query on all registered data stores and returns meta information on all data sets that meet
+        the conditions of the query.
+        :param roi: The region of interest, given in the form of a wkt-string.
+        :param start_time: The start time of the query, given as a string in UTC time format
+        :param end_time: The end time of the query, given as a string in UTC time format
+        :param data_types: A list of data types to be queried for.
+        :return: A list of DataSetMetaInfos that meet the conditions of the query.
+        """
         query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types)
         meta_data_infos = []
         for data_store in self._data_stores:
@@ -45,7 +57,7 @@ class DataAccessComponent(object):
             meta_data_infos.extend(query_results)
         return meta_data_infos
 
-    def put(self, path: str, data_store_id: Optional[str]=None):
+    def put(self, path: str, data_store_id: Optional[str]=None) -> None:
         """
         Puts data into the data access component. If the id to a data store is provided, the data access component
         will attempt to put the data into the store. If data cannot be added to that particular store, it will not be
@@ -53,7 +65,6 @@ class DataAccessComponent(object):
         try to determine an apt data store. A data store is considered apt if it already holds data of the same type.
         :param path: A path to the data that shall be added to the Data Access Component.
         :param data_store_id: The id of a data store. Can be None.
-        :return:
         """
         data_type = get_valid_type(path)
         if data_type is '':
@@ -82,6 +93,9 @@ class DataAccessComponent(object):
                      format(path))
 
     def get_provided_data_types(self) -> List[str]:
+        """
+        :return: A list of all data types that are provided by the Data Access Component.
+        """
         provided_types = []
         for data_store in self._data_stores:
             provided_data_types = data_store.get_provided_data_types()
@@ -135,7 +149,7 @@ class DataAccessComponent(object):
 
     def _read_registered_data_stores(self) -> None:
         data_stores_file = self._get_default_data_stores_file()
-        self.read_data_stores(data_stores_file)
+        self._read_data_stores(data_stores_file)
 
     def _get_default_data_stores_file(self) -> str:
         multiply_home_dir = self._get_multiply_home_dir()
@@ -183,7 +197,7 @@ class DataAccessComponent(object):
             os.mkdir(multiply_home_dir)
         return multiply_home_dir
 
-    def read_data_stores(self, file: str) -> List[DataStore]:
+    def _read_data_stores(self, file: str) -> List[DataStore]:
         data_stores = []
         stream = open(file, 'r')
         data_store_lists = yaml.safe_load(stream)
@@ -227,7 +241,21 @@ class DataAccessComponent(object):
     #
 
     def create_local_data_store(self, base_dir: Optional[str] = None, meta_info_file: Optional[str] = None,
-                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None) -> DataStore:
+                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None):
+        """
+        Adds a a new local data store and saves it permanently. It will consist of a LocalFileSystem and a
+        JsonMetaInfoProvider.
+        :param base_dir: The base directory to which the data shall be written.
+        :param meta_info_file: A JSON file that already contains meta information about the data that is present in the
+        folder. If not provided, an empty file will be created and filled with the data that match the base directory
+        and the base pattern.
+        :param base_pattern: A pattern that allows to create an order in the base directory. Available options are 'dt'
+        for the data type, 'yy' for the year, 'mm' for the month, and 'dd' for the day, arrangeable in any oder. If no
+        pattern is given, all data will simply be written into the base directory.
+        :param id: An identifier for the Data Store. If there already exists a Data Store with the name, an additional
+        number will be added to the name.
+        :return: The newly created Data Store.
+        """
         multiply_home_dir = self._get_multiply_home_dir()
         if base_dir is None:
             base_dir = '{0}/{1}'.format(multiply_home_dir, DATA_FOLDER_NAME)
@@ -255,8 +283,6 @@ class DataAccessComponent(object):
                         is_contained = True
                         i += 1
                         break
-        writable_data_store = DataStore(local_file_system, json_meta_info_provider, id)
-        writable_data_store.update()
-        self._data_stores.append(writable_data_store)
-        return writable_data_store
-
+        data_store = DataStore(local_file_system, json_meta_info_provider, id)
+        data_store.update()
+        self._data_stores.append(data_store)

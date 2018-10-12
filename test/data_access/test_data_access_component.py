@@ -13,7 +13,7 @@ PATH_TO_YAML_FILE = './test/test_data/test_data_stores.yml'
 
 def test_data_access_read_data_stores():
     data_access_component = DataAccessComponent()
-    data_stores = data_access_component.read_data_stores(PATH_TO_YAML_FILE)
+    data_stores = data_access_component._read_data_stores(PATH_TO_YAML_FILE)
     assert 2 == len(data_stores)
 
     assert 'Default' == data_stores[0].id
@@ -30,7 +30,7 @@ def test_put_data_store():
         data_store = DataStore(local_file_system, json_meta_info_provider, 'a_test')
         data_access_component._put_data_store(data_store, path_to_yaml_file_2)
 
-        data_stores = data_access_component.read_data_stores(path_to_yaml_file_2)
+        data_stores = data_access_component._read_data_stores(path_to_yaml_file_2)
         assert 3 == len(data_stores)
         assert 'Default' == data_stores[0].id
         assert 'Fallback' == data_stores[1].id
@@ -53,7 +53,7 @@ def test_write_data_store_as_dict():
         data_store = {'DataStore': data_store_as_dict}
         data_access_component._write_data_store_as_dict(data_store, path_to_yaml_file_2)
 
-        data_stores = data_access_component.read_data_stores(path_to_yaml_file_2)
+        data_stores = data_access_component._read_data_stores(path_to_yaml_file_2)
         assert 3 == len(data_stores)
 
         assert 'Default' == data_stores[0].id
@@ -77,7 +77,7 @@ def test_write_data_store_as_dict_to_empty_file():
         data_store = {'DataStore': data_store_as_dict}
         data_access_component._write_data_store_as_dict(data_store, path_to_empty_yaml_file)
 
-        data_stores = data_access_component.read_data_stores(path_to_empty_yaml_file)
+        data_stores = data_access_component._read_data_stores(path_to_empty_yaml_file)
         assert 1 == len(data_stores)
 
         assert 'for_testing' == data_stores[0].id
