@@ -88,7 +88,6 @@ class DataAccessComponent(object):
                     data_store.put(path)
                     logging.info('Added data to data store {}.'.format(data_store.id))
                     return
-        # TODO consider to create local data store for these cases
         logging.info('Could not determine apt data store for data at {}. Did not add to Data Access Component.'.
                      format(path))
 
