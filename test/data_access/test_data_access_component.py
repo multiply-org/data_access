@@ -83,3 +83,11 @@ def test_write_data_store_as_dict_to_empty_file():
         assert 'for_testing' == data_stores[0].id
     finally:
         os.remove(path_to_empty_yaml_file)
+
+
+def test_create_local_data_store():
+    data_access_component = DataAccessComponent()
+    data_access_component.create_local_data_store(base_dir='./test/test_data/',
+                                                  meta_info_file='./test/test_data/meta_store.json',
+                                                  base_pattern='mm/dt/', id='cgfsvt',
+                                                  supported_data_types='TYPE_A,TYPE_B')

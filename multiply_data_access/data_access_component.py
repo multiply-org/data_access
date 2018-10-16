@@ -240,10 +240,14 @@ class DataAccessComponent(object):
     #
 
     def create_local_data_store(self, base_dir: Optional[str] = None, meta_info_file: Optional[str] = None,
-                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None):
+                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None,
+                                supported_data_types: Optional[str] = None):
         """
         Adds a a new local data store and saves it permanently. It will consist of a LocalFileSystem and a
         JsonMetaInfoProvider.
+        :param supported_data_types: A string with the comma-separated names of data types shall be allowed in this
+        data store. If this is None or empty, the data types will be derived from the data sets in the json file. If
+        there are no entries in the json file, it will be guessed from the data in the file system.
         :param base_dir: The base directory to which the data shall be written.
         :param meta_info_file: A JSON file that already contains meta information about the data that is present in the
         folder. If not provided, an empty file will be created and filled with the data that match the base directory
@@ -253,13 +257,13 @@ class DataAccessComponent(object):
         pattern is given, all data will simply be written into the base directory.
         :param id: An identifier for the Data Store. If there already exists a Data Store with the name, an additional
         number will be added to the name.
-        :return: The newly created Data Store.
         """
         multiply_home_dir = self._get_multiply_home_dir()
         if base_dir is None:
             base_dir = '{0}/{1}'.format(multiply_home_dir, DATA_FOLDER_NAME)
         if not os.path.exists(base_dir):
             os.mkdir(base_dir)
+        local_file_system = LocalFileSystem(base_dir, base_pattern)
         if meta_info_file is None:
             meta_info_file = '{0}/meta_info.json'.format(base_dir)
             count = 1
@@ -269,8 +273,18 @@ class DataAccessComponent(object):
             with open(meta_info_file, "w") as json_file:
                 empty_dict = dict(data_sets=())
                 json.dump(empty_dict, json_file, indent=2)
-        local_file_system = LocalFileSystem(base_dir, base_pattern)
-        json_meta_info_provider = JsonMetaInfoProvider(meta_info_file)
+            if supported_data_types is None or len(supported_data_types) == 0:
+                supported_data_types_list = []
+                found_data_set_meta_infos = local_file_system.scan()
+                for found_data_set_meta_info in found_data_set_meta_infos:
+                    if found_data_set_meta_info.data_type not in supported_data_types:
+                        supported_data_types_list.append(found_data_set_meta_info.data_type)
+                if len(supported_data_types_list) == 0:
+                    logging.info('No data type specified, no meta info file provided and no valid data found. '
+                                 'As the data store holds no data, it is not created.')
+                    return
+                supported_data_types = ','.join(supported_data_types_list)
+        json_meta_info_provider = JsonMetaInfoProvider(meta_info_file, supported_data_types)
         if id is None:
             i = 0
             is_contained = True
@@ -285,3 +299,4 @@ class DataAccessComponent(object):
         data_store = DataStore(local_file_system, json_meta_info_provider, id)
         data_store.update()
         self._data_stores.append(data_store)
+        logging.info('Added local data store {}'.format(data_store.id))
