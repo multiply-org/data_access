@@ -27,6 +27,8 @@ To install the MULTIPLY Data Access for development and for the current user, us
 
 - python setup.py develop --user
 
+.. _con_03:
+
 Configuration
 =============
 

@@ -1,3 +1,5 @@
+.. _bc_00:
+
 ==============
 Basic Concepts
 ==============
@@ -15,7 +17,7 @@ This separation has been undertaken so that queries can be performed quickly on 
 browse through the FileSystem which might be costly.
 Queries on the availability of data for a given data type, spatial region,
 and in a certain time range will be addressed to the MetaInfoProvider.
-Such information will be retrieved in the form of a ``DataSetMetaInfo`` object.
+Such information will be retrieved in the form of a :ref:`ug_02` object.
 This is a simple data storage object which provides information about the data type, spatial coverage, start time and
 end time of a dataset.
 
