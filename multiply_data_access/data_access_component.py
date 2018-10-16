@@ -174,7 +174,7 @@ class DataAccessComponent(object):
                 for key, value in data_store_entry['DataStore']['FileSystem']['parameters'].items():
                     if value is not None and 'user_dir' in value:
                         file = value.replace('user_dir', multiply_home_dir)
-                        if not os.path.exists(file):
+                        if not os.path.exists(file) and file.endswith('/'):
                             os.makedirs(file)
                         data_store_entry['DataStore']['FileSystem']['parameters'][key] = file
                 file_system = create_file_system_from_dict(data_store_entry['DataStore']['FileSystem'])
