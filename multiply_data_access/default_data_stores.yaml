@@ -24,7 +24,7 @@
       parameters:
         path_to_json_file: user_dir/cams/cams_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
-        data_types: CAMS
+        supported_data_types: CAMS
 - DataStore:
     FileSystem:
       type: HttpFileSystem
@@ -39,7 +39,7 @@
       parameters:
         path_to_json_file: user_dir/emus/emus_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/
-        data_types: ISO_MSI_A_EMU,ISO_MSI_B_EMU
+        supported_data_types: ISO_MSI_A_EMU,ISO_MSI_B_EMU
 - DataStore:
     FileSystem:
       type: HttpFileSystem
@@ -54,7 +54,7 @@
       parameters:
         path_to_json_file: user_dir/emus/wv_emu_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/emus/old_emus/
-        data_types: WV_EMU
+        supported_data_types: WV_EMU
 - DataStore:
     FileSystem:
       type: VrtFileSystem

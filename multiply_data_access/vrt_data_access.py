@@ -36,6 +36,7 @@ class VrtMetaInfoProvider(MetaInfoProvider):
         if 'accessed_meta_info_provider' not in parameters:
             raise ValueError('Vrt meta info provider must access other meta info provider')
         meta_info_provider_as_dict = {'type': parameters['accessed_meta_info_provider'], 'parameters': parameters}
+        meta_info_provider_as_dict['parameters']['supported_data_types'] = parameters['encapsulated_data_type']
         self._wrapped_meta_info_provider = create_meta_info_provider_from_dict(meta_info_provider_as_dict)
         if 'provided_data_type' not in parameters:
             raise ValueError('Vrt meta info provider must know provided data type')
@@ -107,6 +108,7 @@ class VrtMetaInfoProvider(MetaInfoProvider):
                       'provided_data_type': self._provided_data_type,
                       'accessed_meta_info_provider': self._wrapped_meta_info_provider.name()}
         parameters.update(self._wrapped_meta_info_provider.get_as_dict()['parameters'])
+        del parameters['supported_data_types']
         return parameters
 
     def can_update(self) -> bool:

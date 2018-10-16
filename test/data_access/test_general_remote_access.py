@@ -8,6 +8,7 @@ from multiply_data_access.general_remote_access import HttpFileSystem, HttpFileS
 from shapely.wkt import loads
 
 PATH_TO_JSON_FILE = './test/test_data/modis_store.json'
+PATH_TO_EMUS_STORE = './test/test_data/empty_store.json'
 TEMP_DIR = './test/test_data/'
 ELES_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/eles/'
 EMUS_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/emus/'
@@ -17,7 +18,7 @@ CAMS_TEST_URL = 'http://www2.geog.ucl.ac.uk/~ucfafyi/cams/'
 
 def test_meta_info_provider_create():
     parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': EMUS_TEST_URL,
-                  'data_types': '{}, TYPE_X'.format(DataTypeConstants.ASTER)}
+                  'supported_data_types': '{}, TYPE_X'.format(DataTypeConstants.MODIS_MCD_43)}
     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert provider is not None
@@ -25,7 +26,7 @@ def test_meta_info_provider_create():
 
 def test_meta_info_provider_name():
     parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': EMUS_TEST_URL,
-                  'data_types': '{}, TYPE_X'.format(DataTypeConstants.ASTER)}
+                  'supported_data_types': '{}, TYPE_X'.format(DataTypeConstants.MODIS_MCD_43)}
     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert 'HttpMetaInfoProvider' == provider.name()
@@ -35,7 +36,7 @@ def test_meta_info_provider_name():
 
 def test_meta_info_provider_get_parameters_as_dict():
     parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': EMUS_TEST_URL,
-                  'data_types': '{}, TYPE_X'.format(DataTypeConstants.ASTER)}
+                  'supported_data_types': '{}, TYPE_X'.format(DataTypeConstants.MODIS_MCD_43)}
     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     parameters_as_dict = provider._get_parameters_as_dict()
@@ -45,8 +46,8 @@ def test_meta_info_provider_get_parameters_as_dict():
     assert PATH_TO_JSON_FILE == parameters_as_dict['path_to_json_file']
     assert 'url' in parameters_as_dict.keys()
     assert EMUS_TEST_URL == parameters_as_dict['url']
-    assert 'data_types' in parameters_as_dict.keys()
-    assert 'ASTER,TYPE_X' == parameters_as_dict['data_types']
+    assert 'supported_data_types' in parameters_as_dict.keys()
+    assert 'MCD43A1.006,TYPE_X' == parameters_as_dict['supported_data_types']
 
 # this test is expensive. Execute to test access to elevation data
 # def test_query_wrapped_meta_info_provider_eles():
@@ -68,8 +69,8 @@ def test_meta_info_provider_get_parameters_as_dict():
 
 
 def test_query_wrapped_meta_info_provider_emus():
-    parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': EMUS_TEST_URL,
-                  'data_types': '{}, {}'.format(DataTypeConstants.S2A_EMULATOR, DataTypeConstants.S2B_EMULATOR)}
+    parameters = {'path_to_json_file': PATH_TO_EMUS_STORE, 'url': EMUS_TEST_URL,
+                  'supported_data_types': '{}, {}'.format(DataTypeConstants.S2A_EMULATOR, DataTypeConstants.S2B_EMULATOR)}
     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = 'POLYGON((-6. 42.7, -6.7 42.6, -6.7 42.1, -6. 42.1, -6. 42.7));2017-09-04;2017-09-04;' \
@@ -101,8 +102,8 @@ def test_query_wrapped_meta_info_provider_emus():
 
 
 def test_query_wrapped_meta_info_provider_wv_emu():
-    parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': WV_EMU_TEST_URL,
-                  'data_types': '{}'.format(DataTypeConstants.WV_EMULATOR)}
+    parameters = {'path_to_json_file': PATH_TO_EMUS_STORE, 'url': WV_EMU_TEST_URL,
+                  'supported_data_types': '{}'.format(DataTypeConstants.WV_EMULATOR)}
     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = 'POLYGON((-6. 42.7, -6.7 42.6, -6.7 42.1, -6. 42.1, -6. 42.7));2017-09-04;2017-09-04;WV_EMU'

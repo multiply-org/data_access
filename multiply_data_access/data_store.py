@@ -80,6 +80,8 @@ class DataStore(object):
         data_type = get_valid_type(from_url)
         if data_type == '':
             raise UserWarning('Could not determine data type of {}'.format(from_url))
+        if not self._meta_info_provider.provides_data_type(data_type):
+            raise UserWarning('Data Store {0} does not support data of type {1}'.format(self.id, data_type))
         data_set_meta_info = get_data_set_meta_info(data_type, from_url)
         updated_data_set_meta_info = self._file_system.put(from_url, data_set_meta_info)
         self._meta_info_provider.update(updated_data_set_meta_info)
@@ -92,6 +94,8 @@ class DataStore(object):
         found_data_set_meta_infos = self._file_system.scan()
         registered_data_set_meta_infos = self._meta_info_provider.get_all_data()
         for found_data_set_meta_info in found_data_set_meta_infos:
+            if not self._meta_info_provider.provides_data_type(found_data_set_meta_info.data_type):
+                continue
             already_registered = False
             for registered_data_set_meta_info in registered_data_set_meta_infos:
                 if found_data_set_meta_info.equals(registered_data_set_meta_info):

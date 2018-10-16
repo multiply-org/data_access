@@ -83,7 +83,11 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
     def __init__(self, parameters: dict):
         if 'path_to_json_file' not in parameters.keys():
             raise ValueError('Missing path to json file')
-        self._json_meta_info_provider = JsonMetaInfoProvider(parameters['path_to_json_file'])
+        if 'supported_data_types' in parameters.keys():
+            provided_data_types = parameters['supported_data_types']
+        else:
+            provided_data_types = ','.join(self.get_provided_data_types())
+        self._json_meta_info_provider = JsonMetaInfoProvider(parameters['path_to_json_file'], provided_data_types)
         self._init_wrapped_meta_info_provider(parameters)
 
     @abstractmethod
@@ -114,6 +118,7 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
 
     def _get_parameters_as_dict(self) -> dict:
         local_parameters = self._json_meta_info_provider._get_parameters_as_dict()
+        del local_parameters['supported_data_types']
         wrapped_parameters = self._get_wrapped_parameters_as_dict()
         local_parameters.update(wrapped_parameters)
         return local_parameters

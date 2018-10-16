@@ -23,7 +23,7 @@ def test_put():
     expected_data_dir = './test/test_data/empty_dir/29/S/QB/2017/9/4/0'
     try:
         local_file_system = LocalFileSystem(EMPTY_PATH, '')
-        meta_info_provider = JsonMetaInfoProvider(path_to_incorrect_json_file)
+        meta_info_provider = JsonMetaInfoProvider(path_to_incorrect_json_file, 'AWS_S2_L1C')
         writable_data_store = DataStore(local_file_system, meta_info_provider, 'put_test')
 
         writable_data_store.put(PATH_TO_S2_FILE)
@@ -57,7 +57,7 @@ def test_update():
     shutil.copyfile(INCORRECT_AWS_S2_META_INFO_FILE, path_to_incorrect_json_file)
     try:
         local_file_system = LocalFileSystem(AWS_S2_DATA_PATH, '')
-        meta_info_provider = JsonMetaInfoProvider(path_to_incorrect_json_file)
+        meta_info_provider = JsonMetaInfoProvider(path_to_incorrect_json_file, None)
         writable_data_store = DataStore(local_file_system, meta_info_provider, 'test')
 
         writable_data_store.update()

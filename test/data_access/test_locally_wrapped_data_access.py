@@ -56,67 +56,91 @@ class TestWrappedMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
 
 def test_create_wrapped_meta_info_provider():
-    parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file}
+    # copy this so we don't mess up the original file
+    path_to_json_file_2 = path_to_json_file + '_2'
+    shutil.copyfile(path_to_json_file, path_to_json_file_2)
+    try:
+        parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file_2}
 
-    wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
+        wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
 
-    assert wrapped_meta_info_provider is not None
+        assert wrapped_meta_info_provider is not None
+    finally:
+        os.remove(path_to_json_file_2)
 
 
 def test_wrapped_meta_info_provider_get_as_dict():
-    parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file}
-    wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
+    # copy this so we don't mess up the original file
+    path_to_json_file_2 = path_to_json_file + '_2'
+    shutil.copyfile(path_to_json_file, path_to_json_file_2)
+    try:
+        parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file_2}
+        wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
 
-    provider_as_dict = wrapped_meta_info_provider.get_as_dict()
+        provider_as_dict = wrapped_meta_info_provider.get_as_dict()
 
-    assert 2 == len(provider_as_dict)
-    assert 'type' in provider_as_dict.keys()
-    assert provider_as_dict['type'] == 'TestProvider'
-    assert 'parameters' in provider_as_dict.keys()
-    assert 2 == len(provider_as_dict['parameters'])
-    assert 'some_parameter' in provider_as_dict['parameters']
-    assert 'something' == provider_as_dict['parameters']['some_parameter']
-    assert 'path_to_json_file' in provider_as_dict['parameters']
-    assert path_to_json_file == provider_as_dict['parameters']['path_to_json_file']
+        assert 2 == len(provider_as_dict)
+        assert 'type' in provider_as_dict.keys()
+        assert provider_as_dict['type'] == 'TestProvider'
+        assert 'parameters' in provider_as_dict.keys()
+        assert 2 == len(provider_as_dict['parameters'])
+        assert 'some_parameter' in provider_as_dict['parameters']
+        assert 'something' == provider_as_dict['parameters']['some_parameter']
+        assert 'path_to_json_file' in provider_as_dict['parameters']
+        assert path_to_json_file_2 == provider_as_dict['parameters']['path_to_json_file']
+    finally:
+        os.remove(path_to_json_file_2)
 
 
 def test_supported_type():
-    parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file}
-    wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
+    # copy this so we don't mess up the original file
+    path_to_json_file_2 = path_to_json_file + '_2'
+    shutil.copyfile(path_to_json_file, path_to_json_file_2)
+    try:
+        parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file_2}
+        wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
 
-    assert not wrapped_meta_info_provider.provides_data_type('TYPE_A')
-    assert not wrapped_meta_info_provider.provides_data_type('TYPE_B')
-    assert wrapped_meta_info_provider.provides_data_type('TYPE_C')
+        assert not wrapped_meta_info_provider.provides_data_type('TYPE_A')
+        assert not wrapped_meta_info_provider.provides_data_type('TYPE_B')
+        assert wrapped_meta_info_provider.provides_data_type('TYPE_C')
+    finally:
+        os.remove(path_to_json_file_2)
 
 
 def test_query():
-    parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file}
-    wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
+    # copy this so we don't mess up the original file
+    path_to_json_file_2 = path_to_json_file + '_2'
+    shutil.copyfile(path_to_json_file, path_to_json_file_2)
+    try:
+        parameters = {'some_parameter': 'something', 'path_to_json_file': path_to_json_file_2}
+        wrapped_meta_info_provider = TestWrappedMetaInfoProvider(parameters)
 
-    query_string = "POLYGON((5 5, 35 5, 35 35, 5 35, 5 5));2017-03-10;2017-03-10;TYPE_C"
+        query_string = "POLYGON((5 5, 35 5, 35 35, 5 35, 5 5));2017-03-10;2017-03-10;TYPE_C"
 
-    data_set_meta_infos = wrapped_meta_info_provider.query(query_string)
+        data_set_meta_infos = wrapped_meta_info_provider.query(query_string)
 
-    assert len(data_set_meta_infos) == 1
-    assert data_set_meta_infos[0].coverage == 'POLYGON((0 35, 10 35, 10 35, 0 45, 0 35))'
-    assert data_set_meta_infos[0].start_time == '2017-03'
-    assert data_set_meta_infos[0].end_time == '2017-03'
-    assert data_set_meta_infos[0].data_type == 'TYPE_C'
-    assert data_set_meta_infos[0].identifier == 'vgfbhngf'
+        assert len(data_set_meta_infos) == 1
+        assert data_set_meta_infos[0].coverage == 'POLYGON((0 35, 10 35, 10 35, 0 45, 0 35))'
+        assert data_set_meta_infos[0].start_time == '2017-03'
+        assert data_set_meta_infos[0].end_time == '2017-03'
+        assert data_set_meta_infos[0].data_type == 'TYPE_C'
+        assert data_set_meta_infos[0].identifier == 'vgfbhngf'
 
-    other_query_string = "POLYGON((5 5, 35 5, 35 35, 5 35, 5 5));2017-03-10;2017-03-11;TYPE_C"
-    other_data_set_meta_infos = wrapped_meta_info_provider.query(other_query_string)
-    assert len(other_data_set_meta_infos) == 2
-    assert other_data_set_meta_infos[0].coverage == 'POLYGON((0 35, 10 35, 10 35, 0 45, 0 35))'
-    assert other_data_set_meta_infos[0].start_time == '2017-03'
-    assert other_data_set_meta_infos[0].end_time == '2017-03'
-    assert other_data_set_meta_infos[0].data_type == 'TYPE_C'
-    assert other_data_set_meta_infos[0].identifier == 'vgfbhngf'
-    assert other_data_set_meta_infos[1].coverage == "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15))"
-    assert other_data_set_meta_infos[1].start_time == '2017-03-11 14:33:00'
-    assert other_data_set_meta_infos[1].end_time == '2017-03-11 14:45:00'
-    assert other_data_set_meta_infos[1].data_type == 'TYPE_C'
-    assert other_data_set_meta_infos[1].identifier == 'dterftge'
+        other_query_string = "POLYGON((5 5, 35 5, 35 35, 5 35, 5 5));2017-03-10;2017-03-11;TYPE_C"
+        other_data_set_meta_infos = wrapped_meta_info_provider.query(other_query_string)
+        assert len(other_data_set_meta_infos) == 2
+        assert other_data_set_meta_infos[0].coverage == 'POLYGON((0 35, 10 35, 10 35, 0 45, 0 35))'
+        assert other_data_set_meta_infos[0].start_time == '2017-03'
+        assert other_data_set_meta_infos[0].end_time == '2017-03'
+        assert other_data_set_meta_infos[0].data_type == 'TYPE_C'
+        assert other_data_set_meta_infos[0].identifier == 'vgfbhngf'
+        assert other_data_set_meta_infos[1].coverage == "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15))"
+        assert other_data_set_meta_infos[1].start_time == '2017-03-11 14:33:00'
+        assert other_data_set_meta_infos[1].end_time == '2017-03-11 14:45:00'
+        assert other_data_set_meta_infos[1].data_type == 'TYPE_C'
+        assert other_data_set_meta_infos[1].identifier == 'dterftge'
+    finally:
+        os.remove(path_to_json_file_2)
 
 
 class TestWrappedFileSystem(LocallyWrappedFileSystem):

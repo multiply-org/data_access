@@ -1,5 +1,5 @@
 from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProvider, MetaInfoProviderAccessor
-from typing import List, Sequence
+from typing import List, Optional, Sequence
 from shapely.wkt import loads
 import json
 import os
@@ -14,8 +14,11 @@ class JsonMetaInfoProvider(MetaInfoProvider):
     A MetaInfoProvider that retrieves its meta information from a JSON file.
     """
 
-    def __init__(self, path_to_json_file: str):
+    def __init__(self, path_to_json_file: str, supported_data_types: Optional[str]):
         self.path_to_json_file = path_to_json_file
+        self.provided_data_types = None
+        if supported_data_types is not None:
+            self.provided_data_types = supported_data_types.split(',')
         if not os.path.exists(path_to_json_file):
             relative_path = '/'.join(path_to_json_file.split('/')[:-1])
             if not os.path.exists(relative_path):
@@ -24,7 +27,7 @@ class JsonMetaInfoProvider(MetaInfoProvider):
                 json.dump({'data_sets': []}, json_file, indent=2)
         with open(path_to_json_file, "r") as json_file:
             self.data_set_infos = json.load(json_file)
-            self._update_provided_data_sets()
+            self._init_provided_data_types_and_sets()
 
     @classmethod
     def name(cls) -> str:
@@ -69,6 +72,11 @@ class JsonMetaInfoProvider(MetaInfoProvider):
         return True
 
     def update(self, data_set_meta_info: DataSetMetaInfo):
+        data_type = data_set_meta_info.data_type
+        if data_type is None:
+            raise ValueError('Data must have Data Type')
+        if not self.provides_data_type(data_type):
+            raise ValueError('Data Type {} is not provided.'.format(data_type))
         if self._contains(data_set_meta_info):
             return
         data_set_info = {}
@@ -86,12 +94,10 @@ class JsonMetaInfoProvider(MetaInfoProvider):
             data_set_info['start_time'] = data_set_meta_info.start_time
         if data_set_end_time is not None:
             data_set_info['end_time'] = data_set_meta_info.end_time
-        if data_set_meta_info.data_type is not None:
-            data_set_info['data_type'] = data_set_meta_info.data_type
+        data_set_info['data_type'] = data_type
         data_set_info['name'] = data_set_meta_info.identifier
         self.data_set_infos['data_sets'].append(data_set_info)
         self._update_json_file()
-        self._update_provided_data_sets()
 
     def _contains(self, data_set_meta_info: DataSetMetaInfo):
         #todo consider making this an interface function
@@ -123,17 +129,25 @@ class JsonMetaInfoProvider(MetaInfoProvider):
                 continue
             self.data_set_infos['data_sets'].remove(data_set_info)
         self._update_json_file()
-        self._update_provided_data_sets()
 
     def _update_json_file(self):
         with open(self.path_to_json_file, "w") as json_file:
             json.dump(self.data_set_infos, json_file, indent=2)
 
-    def _update_provided_data_sets(self):
-        self.provided_data_types = []
-        for data_set_info in self.data_set_infos['data_sets']:
-            if data_set_info.get('data_type') not in self.provided_data_types:
-                self.provided_data_types.append(data_set_info.get('data_type'))
+    def _init_provided_data_types_and_sets(self):
+        if self.provided_data_types is not None and len(self.provided_data_types) > 0:
+            removed = False
+            for data_set_info in self.data_set_infos['data_sets']:
+                if data_set_info.get('data_type') not in self.provided_data_types:
+                    self.data_set_infos['data_sets'].remove(data_set_info)
+                    removed = True
+            if removed:
+                self._update_json_file()
+        else:
+            self.provided_data_types = []
+            for data_set_info in self.data_set_infos['data_sets']:
+                if data_set_info.get('data_type') not in self.provided_data_types:
+                    self.provided_data_types.append(data_set_info.get('data_type'))
 
     def get_all_data(self) -> Sequence[DataSetMetaInfo]:
         data_set_meta_infos = []
@@ -147,7 +161,8 @@ class JsonMetaInfoProvider(MetaInfoProvider):
         return data_set_meta_infos
 
     def _get_parameters_as_dict(self):
-        return {'path_to_json_file': self.path_to_json_file}
+        supported_data_types = ','.join(self.provided_data_types)
+        return {'path_to_json_file': self.path_to_json_file, 'supported_data_types': supported_data_types}
 
 
 class JsonMetaInfoProviderAccessor(MetaInfoProviderAccessor):
@@ -161,4 +176,8 @@ class JsonMetaInfoProviderAccessor(MetaInfoProviderAccessor):
     def create_from_parameters(cls, parameters: dict) -> JsonMetaInfoProvider:
         if 'path_to_json_file' not in parameters.keys():
             raise ValueError('Required parameter path_to_json_file is missing')
-        return JsonMetaInfoProvider(path_to_json_file=parameters['path_to_json_file'])
+        supported_data_types = None
+        if 'supported_data_types' in parameters.keys():
+            supported_data_types = parameters['supported_data_types']
+        return JsonMetaInfoProvider(path_to_json_file=parameters['path_to_json_file'],
+                                    supported_data_types=supported_data_types)

@@ -26,7 +26,7 @@ def test_put_data_store():
     try:
         data_access_component = DataAccessComponent()
         local_file_system = LocalFileSystem('./test/test_data/', '/yy/dt/dd/')
-        json_meta_info_provider = JsonMetaInfoProvider('./test/test_data/test_meta_info.json')
+        json_meta_info_provider = JsonMetaInfoProvider('./test/test_data/test_meta_info.json', 'TYPE_A,TYPE_B,TYPE_C')
         data_store = DataStore(local_file_system, json_meta_info_provider, 'a_test')
         data_access_component._put_data_store(data_store, path_to_yaml_file_2)
 

@@ -37,9 +37,9 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         if 'url' not in parameters.keys():
             raise ValueError('No url provided for Http MetaInfoProvider')
         self._url = parameters['url']
-        if 'data_types' not in parameters.keys():
-            raise ValueError('HttpMetaInfoProvider must receive data types as parameter')
-        self._data_types = parameters['data_types'].replace(' ', '').split(',')
+        if 'supported_data_types' not in parameters.keys():
+            raise ValueError('HttpMetaInfoProvider must receive supported data types as parameter')
+        self._data_types = parameters['supported_data_types'].replace(' ', '').split(',')
 
     def provides_data_type(self, data_type: str) -> bool:
         for provided_data_type in self._data_types:
@@ -76,7 +76,7 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         return data_set_meta_infos
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
-        parameters = {'url': self._url, 'data_types': ','.join(self._data_types)}
+        parameters = {'url': self._url, 'supported_data_types': ','.join(self._data_types)}
         return parameters
 
 
