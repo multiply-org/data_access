@@ -2,6 +2,7 @@ from multiply_data_access.data_access import DataSetMetaInfo, MetaInfoProviderAc
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedMetaInfoProvider
 from datetime import datetime, timedelta
 from multiply_core.observations import DataTypeConstants
+from multiply_core.util import get_time_from_string
 from typing import List, Optional
 from shapely.wkt import loads
 from shapely.geometry import Polygon
@@ -16,6 +17,7 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
 _NAME = 'AwsS2MetaInfoProvider'
 _AWS_BASE_TILE_INFO_URL = 'https://roda.sentinel-hub.com/sentinel-s2-l1c/tiles/{}/tileInfo.json'
 _ID_PATTERN = '{0}/{1}/{2}/{3}/{4}/{5}/{6}'
+FIRST_DAY = '2016-02-01'
 
 TILE_LAT_IDENTIFIERS = \
     ['C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X']
@@ -69,12 +71,17 @@ class AwsS2MetaInfoProvider(LocallyWrappedMetaInfoProvider):
         roi = self.get_roi_from_query_string(query_string)
         tile_descriptions = self.get_affected_tile_descriptions(roi)
         start_time = self.get_start_time_from_query_string(query_string)
+        if start_time is None:
+            start_time = get_time_from_string(FIRST_DAY)
         end_time = self.get_end_time_from_query_string(query_string)
+        if end_time is None:
+            end_time = datetime.datetime.now()
         data_set_meta_infos = []
         for tile_description in tile_descriptions:
             data_set_meta_infos += self._get_data_set_meta_infos_for_tile_description(tile_description, start_time,
                                                                                       end_time)
         return data_set_meta_infos
+
 
     def _get_data_set_meta_infos_for_tile_description(self, tile_description: TileDescription, start_time: datetime,
                                                       end_time: datetime) -> List[DataSetMetaInfo]:

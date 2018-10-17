@@ -26,6 +26,7 @@ _X_STEP = -463.31271653 * 2400
 _Y_STEP = 463.31271653 * 2400
 _M_Y0 = -20015109.354
 _M_X0 = 10007554.677
+FIRST_DAY = '2000-02-24'
 
 
 class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
@@ -50,7 +51,11 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         min_x, min_y, max_x, max_y = roi.bounds
         h_range, v_range = self._get_id_ranges(min_x, min_y, max_x, max_y)
         start_time = self.get_start_time_from_query_string(query_string)
+        if start_time is None:
+            start_time = get_time_from_string(FIRST_DAY)
         end_time = self.get_end_time_from_query_string(query_string)
+        if end_time is None:
+            end_time = datetime.datetime.now()
         current_time = start_time
         data_set_meta_infos = []
         while (current_time < end_time):
