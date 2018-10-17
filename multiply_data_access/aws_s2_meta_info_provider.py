@@ -75,7 +75,7 @@ class AwsS2MetaInfoProvider(LocallyWrappedMetaInfoProvider):
             start_time = get_time_from_string(FIRST_DAY)
         end_time = self.get_end_time_from_query_string(query_string)
         if end_time is None:
-            end_time = datetime.datetime.now()
+            end_time = datetime.now()
         data_set_meta_infos = []
         for tile_description in tile_descriptions:
             data_set_meta_infos += self._get_data_set_meta_infos_for_tile_description(tile_description, start_time,
