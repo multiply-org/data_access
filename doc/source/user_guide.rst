@@ -120,10 +120,9 @@ This will serve as identifier.
 is provided locally.
 This part would perform a download if necessary.
 
-``get_parameters_as_dict``: This will return the parameters that are needed to reconstruct the file system in the form
-of a dictionary.
+``get_parameters_as_dict``: This will return the parameters that are needed to reconstruct the file system.
 The parameters will eventually be written to the data stores file.
-Shall correspond to the dictionary handed in by the FileSystemAccesors's ``create_from_parameters``.
+Shall correspond to the dictionary handed in by the FileSystemAccessors's ``create_from_parameters``.
 
 ``can put``: Shall return true when the Data Access Component can add data to the file system.
 
@@ -157,7 +156,7 @@ setup(name='my-multiply-data-access-extension',
 Implementing a Locally Wrapped File System
 ------------------------------------------
 
-A locally wrapped fiel system requires a FileSystemAccessor that should be defined as above.
+A locally wrapped file system requires a FileSystemAccessor that should be defined as above.
 The ``LocallyWrappedFileSystem`` base class already implements some of the methods,
 but puts up other method stubs that need to be implemented.
 Note that all these methods are private.
@@ -169,13 +168,13 @@ Already implemented methods are:
 * put
 * remove
 * scan
-So, actually the only method that still needs implementing is ``name``.
+So, actually the only method from the ``FileSystem`` interface that still needs implementing is ``name``.
 
 .. autoclass:: multiply_data_access.locally_wrapped_data_access.LocallyWrappedFileSystem
     :members: _init_wrapped_file_system, _get_from_wrapped, _notify_copied_to_local, _get_wrapped_parameters_as_dict
 
 ``_init_wrapped_file_system``: This method is called right after the creation of the object.
-Implement it to initalize the file system.
+Implement it to initialize the file system with parameters.
 Shall correspond to the dictionary handed out by ``_get_wrapped_parameters_as_dict``.
 ``_get_from_wrapped``: Like ``get`` from the File System: Will retrieve FileRefs to data.
 This data has to be provided locally, so any downloading has to be performed here.
@@ -194,12 +193,115 @@ Shall correspond to the dictionary handed in to ``_init_wrapped_file_system``.
 Implementing a new Meta Info Provider
 -------------------------------------
 
-.. autoclass:: multiply_data_access.data_access.MetaInfoProvider
+In many cases when you require your own dedicated File System, you will want to add a Meta Info Provider.
+As for the File System, you also have the choice to create a locally wrapped version of it or not.
+The wrapping functionality is provided by the ``LocallyWrappedMetaInfoProvider`` in ``locally_wrapped_data_access.py``.
+Choose this if you want to provide information about remotely stored data and keep it separated from information
+about data from this source that has already been downloaded.
+
+Implementing a Non-Locally Wrapped Meta Info Provider
+-----------------------------------------------------
+
+To implement a regular Meta Info Provider, you need to create realizations of the interfaces
+``MetaInfoProviderAccessor`` and ``MetaInfoProvider`` defined in ``data_access.py``.
+The MetaInfoProviderAccessor is required by the DataAccessComponent so that MetaInfoProviders can be registered and
+created.
+The following lists the methods of the MetaInfoProviderAccessor interface that need to be implemented:
+
+.. autoclass:: multiply_data_access.data_access.MetaInfoProviderAccessor
     :members:
 
-.. Extend it
-..  Create new File System
-..  Create new Meta Info Provider
-..  Add new Data Type
+``name``: Shall return the name of the meta info provider.
 
-.. with deeper explanation of all the background and contents (the class/method-autodocumentation?)
+``create_from_parameters``: Will receive a list of parameters and create a meta infor provider by handing the
+parameters in as the initialization parameters.
+Shall correspond to the dictionary handed out by the MetaInfoProvider's ``_get_parameters_as_dict``.
+
+The methods to be implemented for the MetaInfoProvider are:
+
+.. autoclass:: multiply_data_access.data_access.MetaInfoProvider
+    :members: name, query, provides_data_type, get_provided_data_types, _get_parameters_as_dict, can_update, update,
+        remove,
+        get_all_data
+
+``name``: Shall simply return the name of the meta info provider.
+This will serve as identifier.
+
+``query``: Evaluates a query string and returns a list of data set meta infos about available data that fulfils the
+query.
+A query string consists of a geometry in the form of a wkt string, a start time in UTC format,
+an end time in UTC format, and a comma-separated list of data types.
+
+``provides_data_type``: True, if the meta info provider is apt for this data.
+Returning true here does not necessarilyy mean that data of this type is currently stored.
+
+``get_provided_data_types``: Returns a list of all data types that this meta info provider supports.
+
+``_get_parameters_as_dict``: A private method that will return the parameters that are needed to reconstruct
+the meta info provider.
+The parameters will eventually be written to the data stores file.
+Shall correspond to the dictionary handed in by the MetaInfoProviderAccessors's ``create_from_parameters``.
+
+``can_update``: Shall return true when entries about data available on the file system can be added to this
+meta info provider.
+
+``update``: Hands in a data set that has been put to the file system.
+The meta info provider is expected to store this information and retrieve it when it meets an incoming query.
+If this is not implemented, make sure that ``can_update`` returns false.
+
+
+``remove``: Shall remove the entry associated with the data set meta info from the provider's registry.
+If this is not implemented, make sure that ``can_update`` returns false.
+
+``get_all_data``: Shall return data set meta infos about all available data.
+
+As for the File System, the Meta Info Provider needs to be registered in the ``setup.py`` of the python package to
+make it available for the data access component.
+The registration should look like this:
+
+.. code-block:: console
+
+setup(name='my-multiply-data-access-extension',
+      version=1.0,
+      packages=['my_multiply_package'],
+      entry_points={
+          'meta_info_provider_plugins': [
+              'my_meta_info_provider = my_multiply_package:my_meta_info_provider.MyMetaInfoProviderAccessor'
+          ],
+      },
+      )
+
+Implementing a Locally Wrapped Meta Info Provider
+-------------------------------------------------
+
+A locally wrapped meta info provider is a special type of meta info provider and requires a MetaInfoProviderAccessor
+that should be defined as above.
+The ``LocallyWrappedMetaInfoProvider`` base class already implements some of the methods,
+but puts up other method stubs that need to be implemented.
+Note that all these methods are private and are never to be called from another class.
+
+Already implemented methods are:
+* query
+* _get_parameters_as_dict
+* can_update
+* update
+* remove
+* get_all_data
+So, the only methods from the ``MetaInfoProvider`` interface that still needs implementing are ``name``,
+``provides_data_type``, and ``get_provided_data_types``.
+
+.. autoclass:: multiply_data_access.locally_wrapped_data_access.LocallyWrappedFileSystem
+    :members: _init_wrapped_meta_info_provider, _query_wrapped_meta_info_provider, _get_wrapped_parameters_as_dict
+
+``_init_wrapped_meta_info_provider``: This method is called right after the creation of the object.
+Implement it to initialize the meta info provider with parameters.
+Shall correspond to the dictionary handed out by ``_get_wrapped_parameters_as_dict``.
+
+``_query_wrapped_meta_info_provider``: Evaluates a query string and returns a list of data set meta infos about
+available data that fulfils the query.
+A query string consists of a geometry in the form of a wkt string, a start time in UTC format,
+an end time in UTC format, and a comma-separated list of data types.
+
+``_get_wrapped_parameters_as_dict``: Similar to the ``FileSystem``'s ``get_parameters_as_dict``, this method will return
+the required initialization parameters in the form of a dictionary.
+Shall correspond to the dictionary handed in to ``_init_wrapped_file_system``.
