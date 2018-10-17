@@ -1,8 +1,8 @@
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
+from multiply_core.util import get_time_from_string
 from multiply_data_access.aws_s2_meta_info_provider import AwsS2MetaInfoProvider, AwsS2MetaInfoProviderAccessor, \
     _get_tile_stripes, _get_center_tile_identifiers, TileDescription
-from multiply_data_access.data_access import DataUtils
 from shapely.wkt import loads
 
 BARRAX_POLYGON = "POLYGON((-2.20397502663252 39.09868106889479,-1.9142106223355313 39.09868106889479," \
@@ -111,8 +111,8 @@ def test_get_data_set_meta_infos_for_tile_description():
     parameters = {'path_to_json_file': path_to_json_file}
     aws_s2_meta_info_provider = AwsS2MetaInfoProviderAccessor.create_from_parameters(parameters)
     tile_description = TileDescription('30SWJ', BARRAX_TILE)
-    start_time = DataUtils.get_time_from_string('2016-04-01')
-    end_time = DataUtils.get_time_from_string('2016-04-30')
+    start_time = get_time_from_string('2016-04-01')
+    end_time = get_time_from_string('2016-04-30')
     data_set_meta_infos = aws_s2_meta_info_provider._get_data_set_meta_infos_for_tile_description(tile_description,
                                                                                                   start_time, end_time)
     assert 6 == len(data_set_meta_infos)

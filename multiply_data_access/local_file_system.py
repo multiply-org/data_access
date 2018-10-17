@@ -5,8 +5,8 @@ Description
 This module contains an implementation of a file system that allows to get and put data stored on the local hard drive.
 """
 from multiply_core.observations import data_validation, get_data_type_path
-from multiply_core.util import FileRef
-from .data_access import DataSetMetaInfo, DataUtils, FileSystem, FileSystemAccessor
+from multiply_core.util import FileRef, get_days_of_month, get_mime_type, get_time_from_string, is_leap_year
+from .data_access import DataSetMetaInfo, FileSystem, FileSystemAccessor
 from .data_set_meta_info_extraction import get_data_set_meta_info
 from datetime import datetime, timedelta, MAXYEAR
 from enum import Enum
@@ -78,7 +78,7 @@ class LocalFileSystem(FileSystem):
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
         if os.path.exists(data_set_meta_info.identifier):
-            mime_type = DataUtils.get_mime_type(data_set_meta_info.identifier)
+            mime_type = get_mime_type(data_set_meta_info.identifier)
             file_refs.append(FileRef(data_set_meta_info.identifier, data_set_meta_info.start_time,
                                      data_set_meta_info.end_time, mime_type))
             return file_refs
@@ -93,19 +93,19 @@ class LocalFileSystem(FileSystem):
                     file_name = file_name.replace('\\', '/')
                     if data_set_meta_info.identifier in file_name and \
                             data_validation.is_valid(file_name, data_set_meta_info.data_type):
-                        mime_type = DataUtils.get_mime_type(file_name)
+                        mime_type = get_mime_type(file_name)
                         file_refs.append(FileRef(file_name, data_set_meta_info.start_time,
                                                  data_set_meta_info.end_time, mime_type))
             return file_refs
         if data_set_meta_info.start_time is None and data_set_meta_info.end_time is None:
-            mime_type = DataUtils.get_mime_type(relative_path)
+            mime_type = get_mime_type(relative_path)
             file_refs.append(FileRef(relative_path, data_set_meta_info.start_time,
                                      data_set_meta_info.end_time, mime_type))
             return file_refs
 
         # todo consider (weird) case when a start time but no end time is given
-        start_time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
-        end_time = DataUtils.get_time_from_string(data_set_meta_info.end_time)
+        start_time = get_time_from_string(data_set_meta_info.start_time)
+        end_time = get_time_from_string(data_set_meta_info.end_time)
         time = start_time
         while time <= end_time:
             path = relative_path
@@ -120,7 +120,7 @@ class LocalFileSystem(FileSystem):
                 file_name = file_name.replace('\\', '/')
                 if data_set_meta_info.identifier in file_name and \
                         data_validation.is_valid(file_name, data_set_meta_info.data_type):
-                    mime_type = DataUtils.get_mime_type(file_name)
+                    mime_type = get_mime_type(file_name)
                     file_refs.append(FileRef(file_name, data_set_meta_info.start_time,
                                              data_set_meta_info.end_time, mime_type))
         return file_refs
@@ -129,10 +129,10 @@ class LocalFileSystem(FileSystem):
         if self.time_step == TimeStep.DAILY:
             return time + timedelta(days=1)
         if self.time_step == TimeStep.MONTHLY:
-            num_delta_days = DataUtils.get_days_of_month(time.year, time.month)
+            num_delta_days = get_days_of_month(time.year, time.month)
             return time + timedelta(days=num_delta_days)
         if self.time_step == TimeStep.YEARLY:
-            if DataUtils.is_leap_year(time.year):
+            if is_leap_year(time.year):
                 return time + timedelta(days=366)
             else:
                 return time + timedelta(days=365)
@@ -150,7 +150,7 @@ class LocalFileSystem(FileSystem):
         if _YEAR_PATTERN in relative_path or _MONTH_PATTERN in relative_path or _DAY_PATTERN in relative_path:
             if data_set_meta_info.start_time is None:
                 raise ValueError('Data Set Meta Info is missing required time information')
-            time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
+            time = get_time_from_string(data_set_meta_info.start_time)
             relative_path = relative_path.replace('/{}/'.format(_YEAR_PATTERN), '/{:04d}/'.format(time.year))
             relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
             relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
@@ -167,7 +167,7 @@ class LocalFileSystem(FileSystem):
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
         # todo test whether this works with aws s2 data too
-        time = DataUtils.get_time_from_string(data_set_meta_info.start_time)
+        time = get_time_from_string(data_set_meta_info.start_time)
         relative_path = self.path + self.pattern
         relative_path = relative_path.replace('/{}/'.format(_DATA_TYPE_PATTERN),
                                               '/{}/'.format(data_set_meta_info.data_type))

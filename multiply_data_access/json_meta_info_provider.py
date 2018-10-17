@@ -1,4 +1,5 @@
-from .data_access import DataSetMetaInfo, DataUtils, MetaInfoProvider, MetaInfoProviderAccessor
+from .data_access import DataSetMetaInfo, MetaInfoProvider, MetaInfoProviderAccessor
+from multiply_core.util import get_time_from_string
 from typing import List, Optional, Sequence
 from shapely.wkt import loads
 import json
@@ -45,12 +46,12 @@ class JsonMetaInfoProvider(MetaInfoProvider):
                 data_set_coverage = loads(data_set_info.get('coverage'))
                 if not roi.intersects(data_set_coverage):
                     continue
-            if data_set_info.get('start_time') is not None:
-                data_set_start_time = DataUtils.get_time_from_string(data_set_info.get('start_time'), False)
+            if query_start_time is not None and data_set_info.get('start_time') is not None:
+                data_set_start_time = get_time_from_string(data_set_info.get('start_time'), False)
                 if query_end_time < data_set_start_time:
                     continue
-            if data_set_info.get('end_time') is not None:
-                data_set_end_time = DataUtils.get_time_from_string(data_set_info.get('end_time'), True)
+            if query_end_time is not None and data_set_info.get('end_time') is not None:
+                data_set_end_time = get_time_from_string(data_set_info.get('end_time'), True)
                 if data_set_end_time < query_start_time:
                     continue
             if data_set_info.get('data_type') in data_types:
@@ -84,10 +85,10 @@ class JsonMetaInfoProvider(MetaInfoProvider):
             data_set_info['coverage'] = data_set_meta_info.coverage
         data_set_start_time = None
         if data_set_meta_info.start_time is not None:
-            data_set_start_time = DataUtils.get_time_from_string(data_set_meta_info.start_time, False)
+            data_set_start_time = get_time_from_string(data_set_meta_info.start_time, False)
         data_set_end_time = None
         if data_set_meta_info.end_time is not None:
-            data_set_end_time = DataUtils.get_time_from_string(data_set_meta_info.start_time, True)
+            data_set_end_time = get_time_from_string(data_set_meta_info.start_time, True)
         if data_set_start_time is not None and data_set_end_time is not None and data_set_start_time > data_set_end_time:
             raise ValueError('start time must not be later than end time')
         if data_set_start_time is not None:

@@ -1,8 +1,7 @@
 from multiply_core.observations import add_validator, DataValidator
-from multiply_core.util import get_mime_type, FileRef
+from multiply_core.util import get_mime_type, FileRef, get_time_from_string
 from multiply_data_access import DataSetMetaInfo
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
-from multiply_data_access.data_access import DataUtils
 from datetime import datetime
 from shapely.geometry import Polygon
 from shapely.wkt import loads
@@ -36,9 +35,9 @@ class TestWrappedMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                                        identifier="dterftge")
         if not self.get_roi_from_query_string(query_string).intersects(loads(only_dataset.coverage)):
             return []
-        if self.get_start_time_from_query_string(query_string) > DataUtils.get_time_from_string(only_dataset.end_time):
+        if self.get_start_time_from_query_string(query_string) > get_time_from_string(only_dataset.end_time):
             return []
-        if self.get_end_time_from_query_string(query_string) < DataUtils.get_time_from_string(only_dataset.start_time):
+        if self.get_end_time_from_query_string(query_string) < get_time_from_string(only_dataset.start_time):
             return []
         if 'TYPE_C' not in self.get_data_types_from_query_string(query_string):
             return []
