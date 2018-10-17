@@ -57,6 +57,16 @@ class DataAccessComponent(object):
             meta_data_infos.extend(query_results)
         return meta_data_infos
 
+    def can_put(self, data_type: str) -> bool:
+        """
+        :param data_type: A data type.
+        :return: True, if data of this type can be added to at least one data store.
+        """
+        for data_store in self._data_stores:
+            if data_store.can_put() and data_store.provides_data_type(data_type):
+                return True
+        return False
+
     def put(self, path: str, data_store_id: Optional[str]=None) -> None:
         """
         Puts data into the data access component. If the id to a data store is provided, the data access component
