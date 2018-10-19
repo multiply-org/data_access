@@ -1,8 +1,6 @@
 from multiply_core.observations import get_valid_type
 from multiply_data_access import DataSetMetaInfo, DataStore, create_file_system_from_dict, \
     create_meta_info_provider_from_dict
-from .aws_s2_file_system import AwsS2FileSystem
-from .aws_s2_meta_info_provider import AwsS2MetaInfoProvider
 from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem
 from pathlib import Path
