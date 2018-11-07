@@ -3,6 +3,8 @@
 from setuptools import setup
 
 requirements = [
+    'beautifulsoup4',
+    'html5lib',
     'multiply_core',
     'nose',
     'shapely',
