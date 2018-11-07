@@ -8,7 +8,9 @@ import logging
 import os
 import re
 import requests
+import shutil
 
+from bs4 import BeautifulSoup
 from sys import stdout
 from typing import List, Sequence
 import urllib.request as urllib2
@@ -60,7 +62,10 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                 break
         if not may_continue:
             return data_set_meta_infos
-        page = urllib2.urlopen(self._url).read().decode('utf-8')
+        request = requests.get(self._url, stream=True)
+        soup = BeautifulSoup(request.content, 'html5lib')
+        links = soup.find_all('a')
+
         roi = self.get_roi_from_query_string(query_string)
         start_time = self.get_start_time_from_query_string(query_string)
         end_time = self.get_end_time_from_query_string(query_string)
@@ -68,10 +73,11 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
             if data_type not in self._data_types:
                 continue
             file_pattern = get_file_pattern(data_type)
-            available_files = re.findall('>{}<'.format(file_pattern), page)
+            matcher = re.compile(file_pattern)
+            available_files = [link['href'] for link in links if matcher.match(link['href']) is not None]
             for file in available_files:
-                if is_valid_for(file[1:-1], data_type, roi, start_time, end_time):
-                    data_set_meta_info = get_data_set_meta_info(data_type, file[1:-1])
+                if is_valid_for(file, data_type, roi, start_time, end_time):
+                    data_set_meta_info = get_data_set_meta_info(data_type, file)
                     data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 
@@ -109,16 +115,34 @@ class HttpFileSystem(LocallyWrappedFileSystem):
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
-        download_url = '{}/{}'.format(self._url, data_set_meta_info.identifier)
-        request = requests.get(download_url, stream=True)
-        if request.ok:
-            temp_path = os.path.join(self._temp_dir, data_set_meta_info.identifier)
-            logging.info('Downloading {}'.format(data_set_meta_info.identifier))
-            total_size_in_bytes = int(urllib2.urlopen(download_url).info()['Content-Length'])
+        url = '{}/{}'.format(self._url, data_set_meta_info.identifier)
+        self._download_url(url, self._temp_dir, data_set_meta_info.identifier)
+        destination = os.path.join(self._temp_dir, data_set_meta_info.identifier)
+        file_refs.append(FileRef(destination, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                                 get_mime_type(data_set_meta_info.identifier)))
+        logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
+        return file_refs
+
+    def _download_url(self, url: str, destination_dir: str, file_name: str):
+        destination = os.path.join(destination_dir, file_name)
+        request = requests.get(url, stream=True)
+        content_type = urllib2.urlopen(url).info().get_content_type()
+        if content_type == 'text/html':
+            soup = BeautifulSoup(request.content, 'html5lib')
+            links = soup.find_all('a')
+            file_names = [link['href'] for link in links
+                          if not link['href'].startswith('?') and not link['href'].startswith('/')]
+            for file_name in file_names:
+                self._download_url('{}/{}'.format(url, file_name), destination, file_name)
+        elif request.ok:
+            if not os.path.exists(destination_dir):
+                os.makedirs(destination_dir)
+            logging.info('Downloading {}'.format(file_name))
+            total_size_in_bytes = int(urllib2.urlopen(url).info()['Content-Length'])
             one_percent = total_size_in_bytes / 100
             downloaded_bytes = 0
             next_threshold = one_percent
-            with open(temp_path, 'wb') as fp:
+            with open(destination, 'wb') as fp:
                 for chunk in request.iter_content(chunk_size=1024):
                     if chunk:
                         fp.write(chunk)
@@ -127,15 +151,15 @@ class HttpFileSystem(LocallyWrappedFileSystem):
                             stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
                             stdout.flush()
                             next_threshold += one_percent
-            file_refs.append(FileRef(temp_path, data_set_meta_info.start_time, data_set_meta_info.end_time,
-                                     get_mime_type(data_set_meta_info.identifier)))
-            logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
-        return file_refs
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
         full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
         if os.path.exists(full_path):
-            os.remove(full_path)
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+            else:
+                os.remove(full_path)
+
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
         parameters = {'url': self._url, 'temp_dir': self._temp_dir}
