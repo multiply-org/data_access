@@ -10,7 +10,7 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 from abc import ABCMeta, abstractmethod
 from multiply_data_access.data_access import DataSetMetaInfo
-from multiply_core.observations import DataTypeConstants
+from multiply_core.observations import DataTypeConstants, get_relative_path
 from multiply_core.util import reproject, get_time_from_year_and_day_of_year
 from shapely.geometry import Point, Polygon
 from typing import Optional
@@ -289,7 +289,9 @@ class CamsTiffMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataTypeConstants.CAMS_TIFF
 
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
-        return DataSetMetaInfo(GLOBAL, path[-10:], path[-10:], DataTypeConstants.CAMS_TIFF, path)
+        relative_path = get_relative_path(path, DataTypeConstants.CAMS_TIFF)
+        return DataSetMetaInfo(GLOBAL, relative_path.replace('_', '-'), relative_path.replace('_', '-'),
+                               DataTypeConstants.CAMS_TIFF, relative_path)
 
 
 DATA_SET_META_INFO_PROVIDERS = []
