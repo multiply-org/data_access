@@ -282,6 +282,16 @@ class CamsMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataSetMetaInfo(GLOBAL, path[-13:-3], path[-13:-3], DataTypeConstants.CAMS, path)
 
 
+class CamsTiffMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.CAMS_TIFF
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        return DataSetMetaInfo(GLOBAL, path[-10:], path[-10:], DataTypeConstants.CAMS_TIFF, path)
+
+
 DATA_SET_META_INFO_PROVIDERS = []
 
 
@@ -297,6 +307,7 @@ add_data_set_meta_info_extractor(S2bMetaInfoExtractor())
 add_data_set_meta_info_extractor(WvMetaInfoExtractor())
 add_data_set_meta_info_extractor(CamsMetaInfoExtractor())
 add_data_set_meta_info_extractor(MODISMCD43MetaInfoExtractor())
+add_data_set_meta_info_extractor(CamsTiffMetaInfoExtractor())
 
 
 def get_data_set_meta_info(data_type: str, path: str) -> Optional[DataSetMetaInfo]:

@@ -24,7 +24,7 @@
       parameters:
         path_to_json_file: user_dir/cams_store.json
         url: http://www2.geog.ucl.ac.uk/~ucfafyi/cams/
-        supported_data_types: CAMS
+        supported_data_types: CAMS_TIFF
 - DataStore:
     FileSystem:
       type: HttpFileSystem

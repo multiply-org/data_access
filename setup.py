@@ -20,6 +20,9 @@ setup(name='multiply-data-access',
       description='MULTIPLY Data Access',
       author='MULTIPLY Team',
       packages=['multiply_data_access'],
+      package_data={
+          'multiply_data_access': ['*.yaml']
+      },
       entry_points={
           'file_system_plugins': [
               'local_file_system = multiply_data_access:local_file_system.LocalFileSystemAccessor',
