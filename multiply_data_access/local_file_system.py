@@ -155,7 +155,9 @@ class LocalFileSystem(FileSystem):
             relative_path = relative_path.replace('/{}/'.format(_MONTH_PATTERN), '/{:02d}/'.format(time.month))
             relative_path = relative_path.replace('/{}/'.format(_DAY_PATTERN), '/{:02d}/'.format(time.day))
         if not from_url == relative_path:
-            if os.path.isdir(from_url) and not os.path.exists(relative_path):
+            if os.path.isdir(from_url):
+                if os.path.exists(relative_path):
+                    shutil.rmtree(relative_path)
                 shutil.copytree(from_url, relative_path)
             else:
                 if not os.path.exists(relative_path):
