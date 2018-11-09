@@ -65,8 +65,8 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
         logging.info('Downloading S2 Data from {}-{}-{}'.format(month, day, year))
         request.save_data()
         saved_dir = '{}/{},{}-{:02d}-{:02d},{}/'.format(self._temp_dir, tile_name, year, month, day, aws_index)
-        new_dir = '{0}{1}/{2}/{3}/{4}/{5}/{6}/{7}/'.format(saved_dir, tile_name[0:2], tile_name[2:3], tile_name[3:5],
-                                                           year, month, day, aws_index)
+        new_dir = '{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/'.format(self._temp_dir, tile_name[0:2], tile_name[2:3],
+                                                            tile_name[3:5], year, month, day, aws_index)
         logging.info('Copying from {} to {}'.format(saved_dir, new_dir))
         copy_tree(saved_dir, new_dir)
         logging.info('Downloaded S2 Data from {}-{}-{}'.format(month, day, year))
@@ -85,10 +85,19 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo):
         tile_name = self._get_tile_name(data_set_meta_info.identifier)
         start_time = data_set_meta_info.start_time
+        start_time_as_datetime = get_time_from_string(data_set_meta_info.start_time)
+        year = start_time_as_datetime.year
+        month = start_time_as_datetime.month
+        day = start_time_as_datetime.day
         aws_index = self._get_aws_index(data_set_meta_info.identifier)
         time = get_time_from_string(start_time).strftime('%Y-%m-%d')
         file_dir = '{0}/{1},{2},{3}/'.format(self._temp_dir, tile_name, time, aws_index)
-        shutil.rmtree(file_dir)
+        other_file_dir = '{0}/{1}/{2}/{3}/{4}/{5}/{6}/{7}/'.format(self._temp_dir, tile_name[0:2], tile_name[2:3],
+                                                            tile_name[3:5], year, month, day, aws_index)
+        if os.path.exists(file_dir):
+            shutil.rmtree(file_dir)
+        if os.path.exists(other_file_dir):
+            shutil.rmtree(other_file_dir)
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
         parameters = {'temp_dir': self._temp_dir}
