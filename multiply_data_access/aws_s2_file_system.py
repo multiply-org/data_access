@@ -67,6 +67,7 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
         saved_dir = '{}/{},{}-{:02d}-{:02d},{}/'.format(self._temp_dir, tile_name, year, month, day, aws_index)
         new_dir = '{0}{1}/{2}/{3}/{4}/{5}/{6}/{7}/'.format(saved_dir, tile_name[0:2], tile_name[2:3], tile_name[3:5],
                                                            year, month, day, aws_index)
+        logging.info('Copying from {} to {}'.format(saved_dir, new_dir))
         copy_tree(saved_dir, new_dir)
         logging.info('Downloaded S2 Data from {}-{}-{}'.format(month, day, year))
         return FileRef(new_dir, data_set_meta_info.start_time, data_set_meta_info.end_time, get_mime_type(new_dir))
