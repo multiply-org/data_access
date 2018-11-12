@@ -21,6 +21,18 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
 
+import mock
+
+MOCK_MODULES = ['beautifulsoup4',
+'html5lib',
+'multiply-core',
+'shapely',
+'pyyaml',
+'request']
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
+
 
 # -- General configuration ------------------------------------------------
 
@@ -155,6 +167,3 @@ texinfo_documents = [
      author, 'MULTIPLY', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
