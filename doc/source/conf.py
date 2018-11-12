@@ -26,7 +26,7 @@ import mock
 MOCK_MODULES = ['beautifulsoup4',
 'html5lib',
 'multiply-core',
-'shapely',
+'shapely.geometry',
 'pyyaml',
 'request',
 'gdal']
