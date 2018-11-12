@@ -86,15 +86,19 @@ def test_aws_s2_file_system_get_file_ref():
 
 def test_notify_copied_to_local():
     dir_to_be_deleted = '{}/24CBS,2017-10-16,1/'.format(OUTPUT_DIR)
+    other_dir_to_be_deleted = '{}/24/C/BS/2017/10/16/1/'.format(OUTPUT_DIR)
     try:
         parameters = {'temp_dir': OUTPUT_DIR, 'path': './test/test_data/aws_s2_data/', 'pattern': ''}
         aws_s2_file_system = AwsS2FileSystemAccessor.create_from_parameters(parameters)
         if not os.path.exists(dir_to_be_deleted):
             os.mkdir(dir_to_be_deleted)
+        if not os.path.exists(other_dir_to_be_deleted):
+            os.makedirs(other_dir_to_be_deleted)
         data_set_meta_info = DataSetMetaInfo('something', '2017-10-16', '2017-10-16', 'AWS_S2_L1C',
                                              '24/C/BS/2017/10/16/1')
         aws_s2_file_system._notify_copied_to_local(data_set_meta_info)
         assert not os.path.exists(dir_to_be_deleted)
+        assert not os.path.exists(other_dir_to_be_deleted)
     finally:
         if os.path.exists(dir_to_be_deleted):
             shutil.rmtree(dir_to_be_deleted)

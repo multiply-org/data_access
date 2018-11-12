@@ -6,6 +6,7 @@ import osr
 import re
 from sys import stdout
 import urllib.request as urllib2
+from urllib.error import URLError
 
 from http.cookiejar import CookieJar
 from multiply_core.util import FileRef, get_mime_type, get_time_from_string
@@ -58,22 +59,25 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
             end_time = datetime.datetime.now()
         current_time = start_time
         data_set_meta_infos = []
-        while (current_time < end_time):
-            date_dir_url = '{}/{}/{}/{}.{:02d}.{:02d}/'.format(_BASE_URL, _PLATFORM, DataTypeConstants.MODIS_MCD_43,
-                                                               current_time.year, current_time.month, current_time.day)
-            date_page = urllib2.urlopen(date_dir_url).read().decode('utf-8')
-            for h in h_range:
-                for v in v_range:
-                    file_regex = '.hdf">MCD43A1.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
-                        format(current_time.year, current_time.timetuple().tm_yday, h, v)
-                    available_files = re.findall(file_regex, date_page)
-                    # todo do this only once
-                    tile_coverage = self._get_tile_coverage(h, v).wkt
-                    for file in available_files:
-                        data_set_meta_infos.append(DataSetMetaInfo(tile_coverage, current_time.strftime('%Y-%m-%d'),
-                                                                   current_time.strftime('%Y-%m-%d'),
-                                                                   DataTypeConstants.MODIS_MCD_43, file[6:]))
-            current_time += datetime.timedelta(days=1)
+        try:
+            while (current_time < end_time):
+                date_dir_url = '{}/{}/{}/{}.{:02d}.{:02d}/'.format(_BASE_URL, _PLATFORM, DataTypeConstants.MODIS_MCD_43,
+                                                                   current_time.year, current_time.month, current_time.day)
+                date_page = urllib2.urlopen(date_dir_url).read().decode('utf-8')
+                for h in h_range:
+                    for v in v_range:
+                        file_regex = '.hdf">MCD43A1.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
+                            format(current_time.year, current_time.timetuple().tm_yday, h, v)
+                        available_files = re.findall(file_regex, date_page)
+                        # todo do this only once
+                        tile_coverage = self._get_tile_coverage(h, v).wkt
+                        for file in available_files:
+                            data_set_meta_infos.append(DataSetMetaInfo(tile_coverage, current_time.strftime('%Y-%m-%d'),
+                                                                       current_time.strftime('%Y-%m-%d'),
+                                                                       DataTypeConstants.MODIS_MCD_43, file[6:]))
+                current_time += datetime.timedelta(days=1)
+        except URLError as e:
+            logging.warning('Could not access NASA Land Processing Data Archive: {}'.format(e.reason))
         return data_set_meta_infos
 
     def _get_tile_coverage(self, h: int, v: int) -> Polygon:
