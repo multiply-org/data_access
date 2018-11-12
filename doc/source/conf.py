@@ -55,7 +55,7 @@ author = 'MULTIPLY Development Team'
 # built documents.
 #
 # The short X.Y version.
-from multiply_core.version import __version__
+from multiply_data_access.version import __version__
 version = __version__
 # The full version, including alpha/beta/rc tags.
 release = __version__
