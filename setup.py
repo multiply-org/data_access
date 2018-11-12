@@ -2,7 +2,13 @@
 
 from setuptools import setup
 
-requirements = [
+import os
+
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+if on_rtd:
+    requirements = ['mock']
+else:
+    requirements = [
     'beautifulsoup4',
     'html5lib',
     'multiply_core',
@@ -10,9 +16,7 @@ requirements = [
     'shapely',
     'pytest',
     'pyyaml',
-    'requests',
-    'mock'
-]
+    'requests']
 
 __version__ = None
 with open('multiply_data_access/version.py') as f:
