@@ -28,7 +28,8 @@ MOCK_MODULES = ['beautifulsoup4',
 'multiply-core',
 'shapely',
 'pyyaml',
-'request']
+'request',
+'gdal']
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
