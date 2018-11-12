@@ -45,6 +45,7 @@ setup(name='multiply-data-access',
       },
       install_requires=requirements,
       dependency_links=[
-        'https://github.com/multiply-org/multiply-core.git#egg=multiply-core'
+        # 'https://github.com/multiply-org/multiply-core.git#egg=multiply-core'
+        'https://github.com/multiply-org/multiply-core/tarball/master/#egg=multiply-core-0.4.1.dev1'
       ]
 )
