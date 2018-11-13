@@ -1,6 +1,7 @@
 <img alt="MULTIPLY" align="right" src="https://raw.githubusercontent.com/multiply-org/multiply-core/master/doc/source/_static/logo/Multiply_multicolour.png" />
 
 [![Build Status](https://travis-ci.org/multiply-org/data-access.svg?branch=master)](https://travis-ci.org/multiply-org/data-access)
+[![Documentation Status](https://readthedocs.org/projects/multiply-data-access/badge/?version=latest)](http://multiply-data-access.readthedocs.io/en/latest/?badge=latest)
                 
 # MULTIPLY Data Access
 
