@@ -232,12 +232,13 @@ class MODISMCD43MetaInfoExtractor(DataSetMetaInfoExtractor):
         points = []
         lat0, lon0, z0 = self._modis_to_wgs84.TransformPoint(sinu_min_lat, sinu_min_lon)
         points.append(Point(lat0, lon0))
-        lat1, lon1, z1 = self._modis_to_wgs84.TransformPoint(sinu_min_lat, sinu_max_lon)
-        points.append(Point(lat1, lon1))
         lat2, lon2, z2 = self._modis_to_wgs84.TransformPoint(sinu_max_lat, sinu_min_lon)
         points.append(Point(lat2, lon2))
         lat3, lon3, z3 = self._modis_to_wgs84.TransformPoint(sinu_max_lat, sinu_max_lon)
         points.append(Point(lat3, lon3))
+        lat1, lon1, z1 = self._modis_to_wgs84.TransformPoint(sinu_min_lat, sinu_max_lon)
+        points.append(Point(lat1, lon1))
+        points.append(Point(lat0, lon0))
         polygon = Polygon([[p.x, p.y] for p in points])
         return polygon
 
