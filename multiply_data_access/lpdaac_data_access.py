@@ -19,6 +19,9 @@ from typing import List, Sequence
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
              'José Luis Gómez-Dans (University College London)'
 
+_SUPPORTED_DATA_TYPES = [DataTypeConstants.MODIS_MCD_43, DataTypeConstants.MODIS_MCD_15_A2]
+_DATA_OFFSETS = {DataTypeConstants.MODIS_MCD_43: 0, DataTypeConstants.MODIS_MCD_15_A2: 1}
+_DATA_INTERVALS = {DataTypeConstants.MODIS_MCD_43: 1, DataTypeConstants.MODIS_MCD_15_A2: 8}
 _BASE_URL = 'http://e4ftl01.cr.usgs.gov/'
 _PLATFORM = 'MOTA'
 _FILE_SYSTEM_NAME = 'LpDaacFileSystem'
@@ -43,41 +46,69 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
             "+proj=sinu +lon_0=0 +x_0=0 +y_0=0 +a=6371007.181 +b=6371007.181 +units=m +no_defs")
         self._wgs84_to_modis = osr.CoordinateTransformation(wgs84_srs, modis_sinu_srs)
         self._modis_to_wgs84 = osr.CoordinateTransformation(modis_sinu_srs, wgs84_srs)
+        if 'supported_data_types' not in parameters:
+            # use this as default for backwards compatibility
+            self._supported_data_types = [DataTypeConstants.MODIS_MCD_43]
+        else:
+            parameter_data_types  = parameters['supported_data_types'].replace(' ', '').split(',')
+            self._supported_data_types = []
+            for parameter_data_type in parameter_data_types:
+                if parameter_data_type not in _SUPPORTED_DATA_TYPES:
+                    logging.info('NASA Land Processes Distributed Active Archive Center does not support data type {}.'
+                                 .format(parameter_data_type))
+                    continue
+                self._supported_data_types.append(parameter_data_type)
 
     def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
-        data_types = self.get_data_types_from_query_string(query_string)
-        if not DataTypeConstants.MODIS_MCD_43 in data_types:
+        requested_data_types = []
+        query_data_types = self.get_data_types_from_query_string(query_string)
+        for supported_data_type in self._supported_data_types:
+            if supported_data_type in query_data_types:
+                requested_data_types.append(supported_data_type)
+        if len(requested_data_types) == 0:
             return []
         roi = self.get_roi_from_query_string(query_string)
         min_x, min_y, max_x, max_y = roi.bounds
         h_range, v_range = self._get_id_ranges(min_x, min_y, max_x, max_y)
+        tile_coverages = {}
+        for h in h_range:
+            for v in v_range:
+                tile_coverages[(h, v)] = self._get_tile_coverage(h, v).wkt
         start_time = self.get_start_time_from_query_string(query_string)
         if start_time is None:
             start_time = get_time_from_string(FIRST_DAY)
         end_time = self.get_end_time_from_query_string(query_string)
         if end_time is None:
             end_time = datetime.datetime.now()
-        current_time = start_time
         data_set_meta_infos = []
         try:
-            while (current_time < end_time):
-                date_dir_url = '{}/{}/{}/{}.{:02d}.{:02d}/'.format(_BASE_URL, _PLATFORM, DataTypeConstants.MODIS_MCD_43,
-                                                                   current_time.year, current_time.month, current_time.day)
-                date_page = urllib2.urlopen(date_dir_url).read().decode('utf-8')
-                for h in h_range:
-                    for v in v_range:
-                        file_regex = '.hdf">MCD43A1.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
-                            format(current_time.year, current_time.timetuple().tm_yday, h, v)
-                        available_files = re.findall(file_regex, date_page)
-                        # todo do this only once
-                        tile_coverage = self._get_tile_coverage(h, v).wkt
-                        for file in available_files:
-                            data_set_meta_infos.append(DataSetMetaInfo(tile_coverage, current_time.strftime('%Y-%m-%d'),
-                                                                       current_time.strftime('%Y-%m-%d'),
-                                                                       DataTypeConstants.MODIS_MCD_43, file[6:]))
-                current_time += datetime.timedelta(days=1)
+            for requested_data_type in requested_data_types:
+                start_doy = start_time.timetuple().tm_yday
+                current_time = start_time - datetime.timedelta(days=(start_doy - _DATA_OFFSETS[requested_data_type])
+                                                                    % _DATA_INTERVALS[requested_data_type])
+                while current_time < end_time:
+                    next_time = current_time + datetime.timedelta(days=_DATA_INTERVALS[requested_data_type])
+                    next_time -= datetime.timedelta(seconds=1)
+                    date_dir_url = '{}/{}/{}/{}.{:02d}.{:02d}/'.format(_BASE_URL, _PLATFORM, requested_data_type,
+                                                                       current_time.year, current_time.month,
+                                                                       current_time.day)
+                    date_page = urllib2.urlopen(date_dir_url).read().decode('utf-8')
+                    for h in h_range:
+                        for v in v_range:
+                            file_regex = '.hdf">{}.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
+                                format(requested_data_type.split('.')[0], current_time.year,
+                                       current_time.timetuple().tm_yday, h, v)
+                            available_files = re.findall(file_regex, date_page)
+                            for file in available_files:
+                                current_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
+                                logging.info('Found {} data set for {}'.format(requested_data_type, current_time))
+                                data_set_meta_infos.append(DataSetMetaInfo(tile_coverages[(h, v)],
+                                                                           current_time,
+                                                                           next_time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                                           requested_data_type, file[6:]))
+                    current_time = next_time + datetime.timedelta(seconds=1)
         except URLError as e:
-            logging.warning('Could not access NASA Land Processing Data Archive: {}'.format(e.reason))
+            logging.warning('Could not access NASA Land Processes Distributed Active Archive Center: {}'.format(e.reason))
         return data_set_meta_infos
 
     def _get_tile_coverage(self, h: int, v: int) -> Polygon:
@@ -120,10 +151,13 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         return {}
 
     def provides_data_type(self, data_type: str) -> bool:
-        return data_type == DataTypeConstants.MODIS_MCD_43
+        return data_type in self._supported_data_types
 
     def get_provided_data_types(self) -> List[str]:
-        return [DataTypeConstants.MODIS_MCD_43]
+        if hasattr(self, '_supported_data_types'):
+            return self._supported_data_types
+        else:
+            return [DataTypeConstants.MODIS_MCD_43]
 
 
 class LpDaacMetaInfoProviderAccessor(MetaInfoProviderAccessor):
@@ -159,7 +193,7 @@ class LpDaacFileSystem(LocallyWrappedFileSystem):
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
         time = get_time_from_string(data_set_meta_info.start_time)
-        file_url = '{}/{}/{}/{}.{:02d}.{:02d}/{}'.format(_BASE_URL, _PLATFORM, DataTypeConstants.MODIS_MCD_43,
+        file_url = '{}/{}/{}/{}.{:02d}.{:02d}/{}'.format(_BASE_URL, _PLATFORM, data_set_meta_info.data_type,
                                                          time.year, time.month, time.day, data_set_meta_info.identifier)
         request = urllib2.Request(file_url)
         authorization = base64.encodebytes(str.encode('{}:{}'.format(self._username, self._password))). \

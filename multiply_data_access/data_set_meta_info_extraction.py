@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 from multiply_data_access.data_access import DataSetMetaInfo
 from multiply_core.observations import DataTypeConstants, get_relative_path
 from multiply_core.util import reproject, get_time_from_year_and_day_of_year
+from datetime import timedelta
 from shapely.geometry import Point, Polygon
 from typing import Optional
 import gdal
@@ -195,7 +196,7 @@ class AsterMetaInfoExtractor(DataSetMetaInfoExtractor):
         return DataSetMetaInfo(coverage.wkt, None, None, DataTypeConstants.ASTER, path)
 
 
-class MODISMCD43MetaInfoExtractor(DataSetMetaInfoExtractor):
+class MODISMetaInfoExtractor(DataSetMetaInfoExtractor):
 
     def __init__(self):
         self._X_STEP = -463.31271653 * 2400
@@ -210,19 +211,20 @@ class MODISMCD43MetaInfoExtractor(DataSetMetaInfoExtractor):
         self._wgs84_to_modis = osr.CoordinateTransformation(wgs84_srs, modis_sinu_srs)
         self._modis_to_wgs84 = osr.CoordinateTransformation(modis_sinu_srs, wgs84_srs)
 
-    @classmethod
-    def name(cls) -> str:
-        return DataTypeConstants.MODIS_MCD_43
-
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
         h = int(path[-27:-25])
         v = int(path[-24:-22])
         tile_coverage = self._get_tile_coverage(h, v).wkt
         year = int(path[-36:-32])
         doy = int(path[-32:-29])
-        date = get_time_from_year_and_day_of_year(year, doy)
-        return DataSetMetaInfo(tile_coverage, date.strftime('%Y-%m-%d'), date.strftime('%Y-%m-%d'),
-                               DataTypeConstants.MODIS_MCD_43, path[-45:])
+        start_time = get_time_from_year_and_day_of_year(year, doy)
+        end_time = self._get_end_time(year, doy)
+        return DataSetMetaInfo(tile_coverage, start_time.strftime('%Y-%m-%d %H:%M:%S'),
+                               end_time.strftime('%Y-%m-%d %H:%M:%S'), self.name(), path[path.find('MCD'):])
+
+    @abstractmethod
+    def _get_end_time(self, year: int, doy: int):
+        pass
 
     def _get_tile_coverage(self, h: int, v: int) -> Polygon:
         sinu_min_lat = h * self._Y_STEP + self._M_Y0
@@ -241,6 +243,29 @@ class MODISMCD43MetaInfoExtractor(DataSetMetaInfoExtractor):
         points.append(Point(lat0, lon0))
         polygon = Polygon([[p.x, p.y] for p in points])
         return polygon
+
+
+class MODISMCD43MetaInfoExtractor(MODISMetaInfoExtractor):
+
+    def _get_end_time(self, year: int, doy: int):
+        time = get_time_from_year_and_day_of_year(year, doy, set_to_end=True)
+        return time
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.MODIS_MCD_43
+
+
+class MODISMCD15A2MetaInfoExtractor(MODISMetaInfoExtractor):
+
+    def _get_end_time(self, year: int, doy: int):
+        time = get_time_from_year_and_day_of_year(year, doy, set_to_end=True)
+        time += timedelta(days=7)
+        return time
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.MODIS_MCD_15_A2
 
 
 class S2aMetaInfoExtractor(DataSetMetaInfoExtractor):
@@ -310,6 +335,7 @@ add_data_set_meta_info_extractor(S2bMetaInfoExtractor())
 add_data_set_meta_info_extractor(WvMetaInfoExtractor())
 add_data_set_meta_info_extractor(CamsMetaInfoExtractor())
 add_data_set_meta_info_extractor(MODISMCD43MetaInfoExtractor())
+add_data_set_meta_info_extractor(MODISMCD15A2MetaInfoExtractor())
 add_data_set_meta_info_extractor(CamsTiffMetaInfoExtractor())
 
 
