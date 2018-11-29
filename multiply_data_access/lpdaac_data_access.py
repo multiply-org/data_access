@@ -100,10 +100,9 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                                        current_time.timetuple().tm_yday, h, v)
                             available_files = re.findall(file_regex, date_page)
                             for file in available_files:
-                                current_time = current_time.strftime('%Y-%m-%d %H:%M:%S')
-                                logging.info('Found {} data set for {}'.format(requested_data_type, current_time))
-                                data_set_meta_infos.append(DataSetMetaInfo(tile_coverages[(h, v)],
-                                                                           current_time,
+                                current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+                                logging.info('Found {} data set for {}'.format(requested_data_type, current_time_str))
+                                data_set_meta_infos.append(DataSetMetaInfo(tile_coverages[(h, v)], current_time_str,
                                                                            next_time.strftime('%Y-%m-%d %H:%M:%S'),
                                                                            requested_data_type, file[6:]))
                     current_time = next_time + datetime.timedelta(seconds=1)
