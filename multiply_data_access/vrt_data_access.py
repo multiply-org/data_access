@@ -78,9 +78,9 @@ class VrtMetaInfoProvider(MetaInfoProvider):
             return referenced_data_sets
         tree = ET.parse(self._path_to_vrt_file)
         root = tree.getroot()
-        raster_bands = root.findall('VRTRasterBand')
+        raster_bands = root.find('VRTRasterBand').findall('SimpleSource')
         for raster_band in raster_bands:
-            referenced_data_set = raster_band.find('SimpleSource').find('SourceFilename').text
+            referenced_data_set = raster_band.find('SourceFilename').text
             referenced_data_sets.append(referenced_data_set.split('/')[-1])
         return referenced_data_sets
 
