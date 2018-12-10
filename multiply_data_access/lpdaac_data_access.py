@@ -13,7 +13,7 @@ from multiply_core.util import FileRef, get_mime_type, get_time_from_string
 from multiply_core.observations import DataTypeConstants
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystemAccessor, MetaInfoProviderAccessor
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
-from shapely.geometry import Point, Polygon
+from multiply_data_access.modis_tile_coverage_provider import get_tile_coverage
 from typing import List, Sequence
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH),' \
@@ -68,12 +68,12 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         if len(requested_data_types) == 0:
             return []
         roi = self.get_roi_from_query_string(query_string)
-        min_x, min_y, max_x, max_y = roi.bounds
-        h_range, v_range = self._get_id_ranges(min_x, min_y, max_x, max_y)
-        tile_coverages = {}
-        for h in h_range:
-            for v in v_range:
-                tile_coverages[(h, v)] = self._get_tile_coverage(h, v).wkt
+        tile_coverages = []
+        for v in range(18):
+            for h in range(36):
+                tile_coverage = get_tile_coverage(h, v)
+                if tile_coverage.intersects(roi):
+                    tile_coverages.append((h, v, tile_coverage.wkt))
         start_time = self.get_start_time_from_query_string(query_string)
         if start_time is None:
             start_time = get_time_from_string(FIRST_DAY)
@@ -93,39 +93,21 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                                                                        current_time.year, current_time.month,
                                                                        current_time.day)
                     date_page = urllib2.urlopen(date_dir_url).read().decode('utf-8')
-                    for h in h_range:
-                        for v in v_range:
-                            file_regex = '.hdf">{}.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
-                                format(requested_data_type.split('.')[0], current_time.year,
-                                       current_time.timetuple().tm_yday, h, v)
-                            available_files = re.findall(file_regex, date_page)
-                            for file in available_files:
-                                current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
-                                logging.info('Found {} data set for {}'.format(requested_data_type, current_time_str))
-                                data_set_meta_infos.append(DataSetMetaInfo(tile_coverages[(h, v)], current_time_str,
-                                                                           next_time.strftime('%Y-%m-%d %H:%M:%S'),
-                                                                           requested_data_type, file[6:]))
+                    for h, v, tile_coverage in tile_coverages:
+                        file_regex = '.hdf">{}.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
+                            format(requested_data_type.split('.')[0], current_time.year,
+                                   current_time.timetuple().tm_yday, h, v)
+                        available_files = re.findall(file_regex, date_page)
+                        for file in available_files:
+                            current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+                            logging.info('Found {} data set for {}'.format(requested_data_type, current_time_str))
+                            data_set_meta_infos.append(DataSetMetaInfo(tile_coverage, current_time_str,
+                                                                       next_time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                                       requested_data_type, file[6:]))
                     current_time = next_time + datetime.timedelta(seconds=1)
         except URLError as e:
             logging.warning('Could not access NASA Land Processes Distributed Active Archive Center: {}'.format(e.reason))
         return data_set_meta_infos
-
-    def _get_tile_coverage(self, h: int, v: int) -> Polygon:
-        sinu_min_lat = h * _Y_STEP + _M_Y0
-        sinu_max_lat = (h + 1) * _Y_STEP + _M_Y0
-        sinu_min_lon = v * _X_STEP + _M_X0
-        sinu_max_lon = (v + 1) * _X_STEP + _M_X0
-        points = []
-        lat0, lon0, z0 = self._modis_to_wgs84.TransformPoint(sinu_min_lat, sinu_min_lon)
-        points.append(Point(lat0, lon0))
-        lat1, lon1, z1 = self._modis_to_wgs84.TransformPoint(sinu_min_lat, sinu_max_lon)
-        points.append(Point(lat1, lon1))
-        lat2, lon2, z2 = self._modis_to_wgs84.TransformPoint(sinu_max_lat, sinu_min_lon)
-        points.append(Point(lat2, lon2))
-        lat3, lon3, z3 = self._modis_to_wgs84.TransformPoint(sinu_max_lat, sinu_max_lon)
-        points.append(Point(lat3, lon3))
-        polygon = Polygon([[p.x, p.y] for p in points])
-        return polygon
 
     def _get_id_ranges(self, min_x: float, min_y: float, max_x: float, max_y: float) -> ([], []):
         h0, v0 = self._get_h_v_tile_ids(min_x, min_y)

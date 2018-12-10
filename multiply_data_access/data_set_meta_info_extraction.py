@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 from multiply_data_access.data_access import DataSetMetaInfo
 from multiply_core.observations import DataTypeConstants, get_relative_path
 from multiply_core.util import reproject, get_time_from_year_and_day_of_year
+from multiply_data_access.modis_tile_coverage_provider import get_tile_coverage
 from datetime import timedelta
 from shapely.geometry import Point, Polygon
 from typing import Optional
@@ -214,7 +215,7 @@ class MODISMetaInfoExtractor(DataSetMetaInfoExtractor):
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
         h = int(path[-27:-25])
         v = int(path[-24:-22])
-        tile_coverage = self._get_tile_coverage(h, v).wkt
+        tile_coverage = get_tile_coverage(h, v).wkt
         year = int(path[-36:-32])
         doy = int(path[-32:-29])
         start_time = get_time_from_year_and_day_of_year(year, doy)
@@ -225,24 +226,6 @@ class MODISMetaInfoExtractor(DataSetMetaInfoExtractor):
     @abstractmethod
     def _get_end_time(self, year: int, doy: int):
         pass
-
-    def _get_tile_coverage(self, h: int, v: int) -> Polygon:
-        sinu_min_lat = h * self._Y_STEP + self._M_Y0
-        sinu_max_lat = (h + 1) * self._Y_STEP + self._M_Y0
-        sinu_min_lon = v * self._X_STEP + self._M_X0
-        sinu_max_lon = (v + 1) * self._X_STEP + self._M_X0
-        points = []
-        lat0, lon0, z0 = self._modis_to_wgs84.TransformPoint(sinu_min_lat, sinu_min_lon)
-        points.append(Point(lat0, lon0))
-        lat2, lon2, z2 = self._modis_to_wgs84.TransformPoint(sinu_max_lat, sinu_min_lon)
-        points.append(Point(lat2, lon2))
-        lat3, lon3, z3 = self._modis_to_wgs84.TransformPoint(sinu_max_lat, sinu_max_lon)
-        points.append(Point(lat3, lon3))
-        lat1, lon1, z1 = self._modis_to_wgs84.TransformPoint(sinu_min_lat, sinu_max_lon)
-        points.append(Point(lat1, lon1))
-        points.append(Point(lat0, lon0))
-        polygon = Polygon([[p.x, p.y] for p in points])
-        return polygon
 
 
 class MODISMCD43MetaInfoExtractor(MODISMetaInfoExtractor):
