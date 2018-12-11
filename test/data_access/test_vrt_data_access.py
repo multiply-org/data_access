@@ -165,8 +165,9 @@ def test_vrt_meta_info_provider_get_referenced_data_sets_from_vrt():
 
     data_sets_from_vrt = provider._get_referenced_data_sets_from_vrt()
 
-    assert 1 == len(data_sets_from_vrt)
+    assert 2 == len(data_sets_from_vrt)
     assert 'ASTGTM2_N36W005_dem.tif' == data_sets_from_vrt[0]
+    assert 'ASTGTM2_N36W006_dem.tif' == data_sets_from_vrt[1]
 
 
 def test_vrt_file_system_create():
