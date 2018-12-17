@@ -72,7 +72,7 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         for v in range(18):
             for h in range(36):
                 tile_coverage = get_tile_coverage(h, v)
-                if tile_coverage.intersects(roi):
+                if tile_coverage is not None and tile_coverage.intersects(roi):
                     tile_coverages.append((h, v, tile_coverage.wkt))
         start_time = self.get_start_time_from_query_string(query_string)
         if start_time is None:
