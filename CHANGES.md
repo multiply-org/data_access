@@ -1,3 +1,16 @@
+## Version 0.4.1
+
+### Improvements and new Features
+- Added documentation including installation manual
+- Default stores are set up on initial start
+- Json Meta Info Provider receives supported data types as parameter
+- added can_put functionality
+- It is possible to explicitly state which data types a Local Data Stores shall be able to provide
+- Start and End Time are not necessarily part of a query
+- Added environment.yml
+- Added support for mcd15a2
+- Fixed determination of MODIS Tile Coverages
+
 ## Version 0.4
 
 ### Improvements and new Features
