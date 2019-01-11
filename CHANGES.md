@@ -1,3 +1,8 @@
+## Version 0.4.2
+
+### Fixes
+- Temporary Directories are created if they do not exist already
+
 ## Version 0.4.1
 
 ### Improvements and new Features
