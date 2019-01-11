@@ -30,7 +30,7 @@ _NAME = 'AwsS2FileSystem'
 class AwsS2FileSystem(LocallyWrappedFileSystem):
 
     def _init_wrapped_file_system(self, parameters: dict):
-        if 'temp_dir' not in parameters.keys() or not os.path.exists(parameters['temp_dir']):
+        if 'temp_dir' not in parameters.keys():
             raise ValueError('No valid temporal directory provided for AWS S2 File System')
         if not os.path.exists(parameters['temp_dir']):
             os.makedirs(parameters['temp_dir'])
