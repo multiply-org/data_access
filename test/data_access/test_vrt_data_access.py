@@ -19,6 +19,8 @@ PATH_TO_OTHER_VRT_FILE = './test/test_data/global_dem_2.vrt'
 PATH_TO_NON_EXISTENT_VRT_FILE = './test/test_data/global_dem_3.vrt'
 PATH_TO_JSON_FILE = './test/test_data/aster_meta_info.json'
 ASTER_POLYGON = "POLYGON ((-5. 37., -4. 37., -4. 36., -5. 36., -5. 37.))"
+COVERED_GEOMETRY = 'MULTIPOLYGON (((-7 39, -6 39, -6 38, -7 38, -7 39)), ' \
+                   '((-5 37, -4 37, -4 36, -5 36, -6 36, -6 37, -5 37)))'
 
 
 def test_vrt_meta_info_provider_create():
@@ -51,15 +53,16 @@ def test_vrt_meta_info_provider_query_vrt_file_does_not_exist_yet():
     data_set_meta_infos = provider.query(query_string)
 
     assert 1 == len(data_set_meta_infos)
-    aster_polygon = loads(ASTER_POLYGON)
+    polygon = loads(COVERED_GEOMETRY)
     covered_geometry = loads(data_set_meta_infos[0].coverage)
-    assert covered_geometry.almost_equals(aster_polygon)
+    assert covered_geometry.almost_equals(polygon)
     assert data_set_meta_infos[0].start_time is None
     assert data_set_meta_infos[0].end_time is None
     assert 'Aster DEM' == data_set_meta_infos[0].data_type
     assert 'a_non_existing_file' == data_set_meta_infos[0].identifier
     assert data_set_meta_infos[0].referenced_data is not None
-    assert 'ASTGTM2_N36W005_dem.tif' == data_set_meta_infos[0].referenced_data
+    assert 'ASTGTM2_N36W005_dem.tif;ASTGTM2_N36W006_dem.tif;ASTGTM2_N38W007_dem.tif' == \
+           data_set_meta_infos[0].referenced_data
 
 
 def test_vrt_meta_info_provider_query_existing_vrt_file_can_use_existing_vrt():
@@ -72,15 +75,16 @@ def test_vrt_meta_info_provider_query_existing_vrt_file_can_use_existing_vrt():
     data_set_meta_infos = provider.query(query_string)
 
     assert 1 == len(data_set_meta_infos)
-    aster_polygon = loads(ASTER_POLYGON)
+    polygon = loads(COVERED_GEOMETRY)
     covered_geometry = loads(data_set_meta_infos[0].coverage)
-    assert covered_geometry.almost_equals(aster_polygon)
+    assert covered_geometry.almost_equals(polygon)
     assert data_set_meta_infos[0].start_time is None
     assert data_set_meta_infos[0].end_time is None
     assert 'Aster DEM' == data_set_meta_infos[0].data_type
     assert PATH_TO_VRT_FILE == data_set_meta_infos[0].identifier
     assert data_set_meta_infos[0].referenced_data is not None
-    assert 'ASTGTM2_N36W005_dem.tif' == data_set_meta_infos[0].referenced_data
+    assert 'ASTGTM2_N36W005_dem.tif;ASTGTM2_N36W006_dem.tif;ASTGTM2_N38W007_dem.tif' == \
+           data_set_meta_infos[0].referenced_data
 
 
 def test_vrt_meta_info_provider_query_existing_vrt_file_new_vrt():
@@ -93,15 +97,16 @@ def test_vrt_meta_info_provider_query_existing_vrt_file_new_vrt():
     data_set_meta_infos = provider.query(query_string)
 
     assert 1 == len(data_set_meta_infos)
-    aster_polygon = loads('POLYGON ((-5. 37., -4. 37., -4. 36., -5. 36., -6. 36., -6. 37., -5. 37.))')
+    polygon = loads(COVERED_GEOMETRY)
     covered_geometry = loads(data_set_meta_infos[0].coverage)
-    assert covered_geometry.almost_equals(aster_polygon)
+    assert covered_geometry.almost_equals(polygon)
     assert data_set_meta_infos[0].start_time is None
     assert data_set_meta_infos[0].end_time is None
     assert 'Aster DEM' == data_set_meta_infos[0].data_type
     assert PATH_TO_VRT_FILE == data_set_meta_infos[0].identifier
     assert data_set_meta_infos[0].referenced_data is not None
-    assert 'ASTGTM2_N36W005_dem.tif;ASTGTM2_N36W006_dem.tif' == data_set_meta_infos[0].referenced_data
+    assert 'ASTGTM2_N36W005_dem.tif;ASTGTM2_N36W006_dem.tif;ASTGTM2_N38W007_dem.tif' == \
+           data_set_meta_infos[0].referenced_data
 
 
 def test_vrt_meta_info_provider_query_existing_vrt_file_new_vrt_with_multipolygon():
@@ -114,7 +119,7 @@ def test_vrt_meta_info_provider_query_existing_vrt_file_new_vrt_with_multipolygo
     data_set_meta_infos = provider.query(query_string)
 
     assert 1 == len(data_set_meta_infos)
-    multi_polygon = loads('MULTIPOLYGON (((-5 37, -4 37, -4 36, -5 36, -5 37)), ((-7 39, -6 39, -6 38, -7 38, -7 39)))')
+    multi_polygon = loads(COVERED_GEOMETRY)
     covered_geometry = loads(data_set_meta_infos[0].coverage)
     assert covered_geometry.almost_equals(multi_polygon)
     assert data_set_meta_infos[0].start_time is None
@@ -122,7 +127,8 @@ def test_vrt_meta_info_provider_query_existing_vrt_file_new_vrt_with_multipolygo
     assert 'Aster DEM' == data_set_meta_infos[0].data_type
     assert PATH_TO_VRT_FILE == data_set_meta_infos[0].identifier
     assert data_set_meta_infos[0].referenced_data is not None
-    assert 'ASTGTM2_N36W005_dem.tif;ASTGTM2_N38W007_dem.tif' == data_set_meta_infos[0].referenced_data
+    assert 'ASTGTM2_N36W005_dem.tif;ASTGTM2_N36W006_dem.tif;ASTGTM2_N38W007_dem.tif' == \
+           data_set_meta_infos[0].referenced_data
 
 
 def test_vrt_meta_info_provider_provides_data_type():
@@ -164,7 +170,7 @@ def test_vrt_meta_info_provider_encapsulates_data_type():
     provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert not provider.encapsulates_data_type('Aster DEM')
-    assert not provider.encapsulates_data_type(DataTypeConstants.ASTER)
+    assert provider.encapsulates_data_type(DataTypeConstants.ASTER)
     assert not provider.encapsulates_data_type('zgjdh')
 
 
