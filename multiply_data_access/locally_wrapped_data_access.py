@@ -111,7 +111,6 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
             local_data_meta_set_infos.append(data_set_meta_info)
         return local_data_meta_set_infos
 
-
     @abstractmethod
     def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
         """Queries a wrapped file system."""
