@@ -94,7 +94,8 @@ class DataStore(object):
         found_data_set_meta_infos = self._file_system.scan()
         registered_data_set_meta_infos = self._meta_info_provider.get_all_data()
         for found_data_set_meta_info in found_data_set_meta_infos:
-            if not self._meta_info_provider.provides_data_type(found_data_set_meta_info.data_type):
+            if not self._meta_info_provider.provides_data_type(found_data_set_meta_info.data_type) and \
+                    not self._meta_info_provider.encapsulates_data_type(found_data_set_meta_info.data_type):
                 continue
             already_registered = False
             for registered_data_set_meta_info in registered_data_set_meta_infos:
