@@ -157,6 +157,17 @@ def test_vrt_meta_info_provider_get_parameters_as_dict():
     assert PATH_TO_JSON_FILE == parameters_as_dict['path_to_json_file']
 
 
+def test_vrt_meta_info_provider_encapsulates_data_type():
+    parameters = {'path_to_vrt_file': PATH_TO_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
+                  'provided_data_type': 'Aster DEM',
+                  'accessed_meta_info_provider': 'JsonMetaInfoProvider', 'path_to_json_file': PATH_TO_JSON_FILE}
+    provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    assert not provider.encapsulates_data_type('Aster DEM')
+    assert not provider.encapsulates_data_type(DataTypeConstants.ASTER)
+    assert not provider.encapsulates_data_type('zgjdh')
+
+
 def test_vrt_meta_info_provider_get_referenced_data_sets_from_vrt():
     parameters = {'path_to_vrt_file': PATH_TO_OTHER_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
                   'provided_data_type': 'Aster DEM',

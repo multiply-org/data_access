@@ -102,6 +102,9 @@ class VrtMetaInfoProvider(MetaInfoProvider):
     def get_provided_data_types(self) -> List[str]:
         return [self._provided_data_type]
 
+    def encapsulates_data_type(self, data_type: str) -> bool:
+        return data_type == self._encapsulated_data_type
+
     def _get_parameters_as_dict(self) -> dict:
         parameters = {'path_to_vrt_file': self._path_to_vrt_file,
                       'encapsulated_data_type': self._encapsulated_data_type,

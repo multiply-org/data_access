@@ -140,6 +140,9 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         else:
             return [DataTypeConstants.MODIS_MCD_43]
 
+    def encapsulates_data_type(self, data_type: str) -> bool:
+        return False
+
 
 class LpDaacMetaInfoProviderAccessor(MetaInfoProviderAccessor):
     @classmethod

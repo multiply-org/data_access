@@ -66,6 +66,9 @@ class JsonMetaInfoProvider(MetaInfoProvider):
     def provides_data_type(self, data_type: str):
         return data_type in self.provided_data_types
 
+    def encapsulates_data_type(self, data_type: str) -> bool:
+        return False
+
     def get_provided_data_types(self) -> List[str]:
         return self.provided_data_types
 

@@ -52,6 +52,9 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
     def get_provided_data_types(self) -> List[str]:
         return self._data_types
 
+    def encapsulates_data_type(self, data_type: str) -> bool:
+        return False
+
     def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
         data_set_meta_infos = []
         queried_data_types = self.get_data_types_from_query_string(query_string)

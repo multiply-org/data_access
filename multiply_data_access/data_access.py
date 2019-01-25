@@ -159,15 +159,25 @@ class MetaInfoProvider(metaclass=ABCMeta):
     @abstractmethod
     def provides_data_type(self, data_type: str) -> bool:
         """
-        Whether the mete info provider provides access to data of the queried type
+        Whether the meta info provider provides access to data of the queried type
         :param data_type: A string labelling the data
-        :return: True if data of that type can be requested from the meta infor provider
+        :return: True if data of that type can be requested from the meta info provider
         """
 
     @abstractmethod
     def get_provided_data_types(self) -> List[str]:
         """
         :return: A list of the data types provided by this data store.
+        """
+
+    @abstractmethod
+    def encapsulates_data_type(self, data_type: str) -> bool:
+        """
+        Whether the meta info provider provides encapsulated access to data of the queried type. Data access is
+        considered encapsulated when the data is not provided directly from the meta info provider, but indirectly by
+        requesting a provided data type which in some form relies on the encapsulated data.
+        :param data_type: A string labelling the data
+        :return: True if data of that type is encapsulated by one of the meta infor provider's provided data types.
         """
 
     @staticmethod
