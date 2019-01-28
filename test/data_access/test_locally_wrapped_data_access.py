@@ -27,7 +27,8 @@ class TestWrappedMetaInfoProvider(LocallyWrappedMetaInfoProvider):
             raise ValueError('I required some parameter')
         self._some_parameter = parameters['some_parameter']
 
-    def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
+    def _query_wrapped_meta_info_provider(self, query_string: str, local_data_set_meta_infos: List[DataSetMetaInfo]) \
+            -> List[DataSetMetaInfo]:
         only_dataset = DataSetMetaInfo(coverage="POLYGON((15 15, 25 15, 25 25, 15 25, 15 15))",
                                        start_time="2017-03-11 14:33:00",
                                        end_time="2017-03-11 14:45:00",

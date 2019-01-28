@@ -97,7 +97,7 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
 
     def query(self, query_string: str) -> List[DataSetMetaInfo]:
         local_data_meta_set_infos = self._json_meta_info_provider.query(query_string)
-        wrapped_data_set_meta_infos = self._query_wrapped_meta_info_provider(query_string)
+        wrapped_data_set_meta_infos = self._query_wrapped_meta_info_provider(query_string, local_data_meta_set_infos)
         to_be_appended = []
         for wrapped_data_set_meta_info in wrapped_data_set_meta_infos:
             already_contained = False
@@ -112,7 +112,8 @@ class LocallyWrappedMetaInfoProvider(MetaInfoProvider):
         return local_data_meta_set_infos
 
     @abstractmethod
-    def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
+    def _query_wrapped_meta_info_provider(self, query_string: str, local_data_set_meta_infos: List[DataSetMetaInfo]) \
+            -> List[DataSetMetaInfo]:
         """Queries a wrapped file system."""
 
     def _get_parameters_as_dict(self) -> dict:

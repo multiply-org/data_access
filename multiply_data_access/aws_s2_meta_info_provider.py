@@ -64,7 +64,8 @@ class AwsS2MetaInfoProvider(LocallyWrappedMetaInfoProvider):
     def name(cls) -> str:
         return _NAME
 
-    def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
+    def _query_wrapped_meta_info_provider(self, query_string: str, local_data_set_meta_infos: List[DataSetMetaInfo]) \
+            -> List[DataSetMetaInfo]:
         data_types = self.get_data_types_from_query_string(query_string)
         if DataTypeConstants.AWS_S2_L1C not in data_types:
             return []

@@ -59,7 +59,8 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                     continue
                 self._supported_data_types.append(parameter_data_type)
 
-    def _query_wrapped_meta_info_provider(self, query_string: str) -> List[DataSetMetaInfo]:
+    def _query_wrapped_meta_info_provider(self, query_string: str, local_data_set_meta_infos: List[DataSetMetaInfo]) \
+            -> List[DataSetMetaInfo]:
         requested_data_types = []
         query_data_types = self.get_data_types_from_query_string(query_string)
         for supported_data_type in self._supported_data_types:
@@ -87,23 +88,35 @@ class LpDaacMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                 current_time = start_time - datetime.timedelta(days=(start_doy - _DATA_OFFSETS[requested_data_type])
                                                                     % _DATA_INTERVALS[requested_data_type])
                 while current_time < end_time:
+                    current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+                    current_tile_coverages = []
+                    for h, v, tile_coverage in tile_coverages:
+                        add_to_current = True
+                        for local_data_set_meta_info in local_data_set_meta_infos:
+                            if local_data_set_meta_info.coverage == tile_coverage and \
+                                    local_data_set_meta_info.start_time == current_time_str:
+                                add_to_current = False
+                                break
+                        if add_to_current:
+                            current_tile_coverages.append((h, v, tile_coverage))
                     next_time = current_time + datetime.timedelta(days=_DATA_INTERVALS[requested_data_type])
                     next_time -= datetime.timedelta(seconds=1)
-                    date_dir_url = '{}/{}/{}/{}.{:02d}.{:02d}/'.format(_BASE_URL, _PLATFORM, requested_data_type,
-                                                                       current_time.year, current_time.month,
-                                                                       current_time.day)
-                    date_page = urllib2.urlopen(date_dir_url).read().decode('utf-8')
-                    for h, v, tile_coverage in tile_coverages:
-                        file_regex = '.hdf">{}.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
-                            format(requested_data_type.split('.')[0], current_time.year,
-                                   current_time.timetuple().tm_yday, h, v)
-                        available_files = re.findall(file_regex, date_page)
-                        for file in available_files:
-                            current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
-                            logging.info('Found {} data set for {}'.format(requested_data_type, current_time_str))
-                            data_set_meta_infos.append(DataSetMetaInfo(tile_coverage, current_time_str,
-                                                                       next_time.strftime('%Y-%m-%d %H:%M:%S'),
-                                                                       requested_data_type, file[6:]))
+                    if len(current_tile_coverages) > 0:
+                        date_dir_url = '{}/{}/{}/{}.{:02d}.{:02d}/'.format(_BASE_URL, _PLATFORM, requested_data_type,
+                                                                           current_time.year, current_time.month,
+                                                                           current_time.day)
+                        date_page = urllib2.urlopen(date_dir_url).read().decode('utf-8')
+                        for h, v, tile_coverage in current_tile_coverages:
+                            file_regex = '.hdf">{}.A{}{:03d}.h{:02d}v{:02d}.006.*.hdf'. \
+                                format(requested_data_type.split('.')[0], current_time.year,
+                                       current_time.timetuple().tm_yday, h, v)
+                            available_files = re.findall(file_regex, date_page)
+                            for file in available_files:
+                                current_time_str = current_time.strftime('%Y-%m-%d %H:%M:%S')
+                                logging.info('Found {} data set for {}'.format(requested_data_type, current_time_str))
+                                data_set_meta_infos.append(DataSetMetaInfo(tile_coverage, current_time_str,
+                                                                           next_time.strftime('%Y-%m-%d %H:%M:%S'),
+                                                                           requested_data_type, file[6:]))
                     current_time = next_time + datetime.timedelta(seconds=1)
         except URLError as e:
             logging.warning('Could not access NASA Land Processes Distributed Active Archive Center: {}'.format(e.reason))

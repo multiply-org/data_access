@@ -75,7 +75,7 @@ def test_query_wrapped_meta_info_provider_emus():
 
     query_string = 'POLYGON((-6. 42.7, -6.7 42.6, -6.7 42.1, -6. 42.1, -6. 42.7));2017-09-04;2017-09-04;' \
                    'ISO_MSI_A_EMU, ISO_MSI_B_EMU'
-    data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string)
+    data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string, [])
 
     assert 12 == len(data_set_meta_infos)
     for i, data_set_meta_info in enumerate(data_set_meta_infos):
@@ -107,7 +107,7 @@ def test_query_wrapped_meta_info_provider_wv_emu():
     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = 'POLYGON((-6. 42.7, -6.7 42.6, -6.7 42.1, -6. 42.1, -6. 42.7));2017-09-04;2017-09-04;WV_EMU'
-    data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string)
+    data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string, [])
 
     assert 1 == len(data_set_meta_infos)
     assert 'POLYGON((-180.0 90.0, 180.0 90.0, 180.0 -90.0, -180.0 -90.0, -180.0 90.0))' == \
