@@ -73,7 +73,12 @@ class DataSetMetaInfo(object):
 
     def equals(self, other: object) -> bool:
         """Checks whether two data set meta infos are equal. Does not check the identifier or referenced data sets!"""
-        return type(other) == DataSetMetaInfo and self._data_type == other.data_type and \
+        return self.equals_except_data_type(other) and self._data_type == other.data_type
+
+    def equals_except_data_type(self, other: object) -> bool:
+        """Checks whether two data set meta infos are equal, except that they may have the same data type.
+        Does not check the identifier or referenced data sets!"""
+        return type(other) == DataSetMetaInfo and \
             are_times_equal(self._start_time, other.start_time) and \
             are_times_equal(self._end_time, other.end_time) and \
             are_polygons_almost_equal(self.coverage, other.coverage)
