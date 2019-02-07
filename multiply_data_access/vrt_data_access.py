@@ -57,7 +57,7 @@ class VrtMetaInfoProvider(MetaInfoProvider):
             for i in range(len(additional_files)):
                 if additional_files[i] not in referenced_data:
                     referenced_data.append(additional_files[i])
-                    coverages.append(additional_files[i])
+                    coverages.append(additional_coverages[i])
             coverage = cascaded_union(coverages)
         referenced_data = ';'.join(referenced_data)
         data_set_meta_info = DataSetMetaInfo(coverage.wkt, None, None, self._provided_data_type,
