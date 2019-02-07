@@ -1,3 +1,11 @@
+## Version 0.4.3
+
+### Improvements and new Features
+- Improved handling of vrt files
+- Improved performance of remote MODIS lookups
+- added check  
+- updated dependencies to be consistent
+
 ## Version 0.4.2
 
 ### Fixes
