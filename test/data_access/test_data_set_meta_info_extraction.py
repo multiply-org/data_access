@@ -17,12 +17,11 @@ def test_aws_s2_meta_info_extractor():
     assert path_to_s2_dir == data_set_meta_info.identifier
     assert '2017-09-04 11:18:25' == data_set_meta_info.start_time
     assert '2017-09-04 11:18:25' == data_set_meta_info.end_time
-    geometry_bounds = wkt.loads(data_set_meta_info.coverage).bounds
-    assert 4 == len(geometry_bounds)
-    assert -6.754676710360797 in geometry_bounds
-    assert 36.906971812661624 in geometry_bounds
-    assert -5.4774490849610435 in geometry_bounds
-    assert 37.92559054724302 in geometry_bounds
+    coverage = wkt.loads(data_set_meta_info.coverage)
+    expected_coverage = wkt.loads('POLYGON((-6.724926539250627 37.92559054724302, '
+                                  '-5.477449084961044 37.89483865860684, -5.523445655745983 36.90697181266162,'
+                                  '-6.754676710360797 36.93665039721959, -6.724926539250627 37.92559054724302))')
+    assert coverage.almost_equals(expected_coverage)
 
 
 def test_s2_l2_meta_info_extractor():
@@ -33,12 +32,11 @@ def test_s2_l2_meta_info_extractor():
     assert path_to_s2_l2_dir == data_set_meta_info.identifier
     assert '2017-01-19 11:05:33' == data_set_meta_info.start_time
     assert '2017-01-19 11:05:33' == data_set_meta_info.end_time
-    geometry_bounds = wkt.loads(data_set_meta_info.coverage).bounds
-    assert 4 == len(geometry_bounds)
-    assert -3.000233454377241 in geometry_bounds
-    assert 38.754036047778804 in geometry_bounds
-    assert -1.7187196513335372 in geometry_bounds
-    assert 39.75026792656397 in geometry_bounds
+    expected_wkt_coverage = wkt.loads('POLYGON((-3.000233454377241 39.75026792656398, '
+                                      '-1.718719651333537 39.74319619168243, -1.736596780811647 38.7540360477788, '
+                                      '-3.00023019602957 38.76086445672779, -3.000233454377241 39.75026792656398))')
+    coverage = wkt.loads(data_set_meta_info.coverage)
+    assert coverage.almost_equals(expected_wkt_coverage)
 
 
 def test_modis_mcd43a1_extractor():
@@ -49,12 +47,11 @@ def test_modis_mcd43a1_extractor():
     assert 'MCD43A1.A2017015.h17v05.006.2017024094450.hdf' == data_set_meta_info.identifier
     assert '2017-01-15 00:00:00' == data_set_meta_info.start_time
     assert '2017-01-15 23:59:59' == data_set_meta_info.end_time
-    geometry_bounds = wkt.loads(data_set_meta_info.coverage).bounds
-    assert 4 == len(geometry_bounds)
-    assert -13.05407289035348 in geometry_bounds
-    assert 29.9999999970181 in geometry_bounds
-    assert 1.127072786096139e-09 in geometry_bounds
-    assert 39.99999999616804 in geometry_bounds
+    coverage = wkt.loads(data_set_meta_info.coverage)
+    expected_coverage = wkt.loads('POLYGON ((-13.05407289035348 39.99999999616804, '
+                                  '1.127072786096139e-09 39.99999999616804, 9.96954409223065e-10 29.9999999970181, '
+                                  '-11.54700538146705 29.9999999970181, -13.05407289035348 39.99999999616804))')
+    assert coverage.almost_equals(expected_coverage)
 
 
 def test_modis_mcd15a2_extractor():
@@ -65,9 +62,8 @@ def test_modis_mcd15a2_extractor():
     assert 'MCD15A2H.A2018313.h17v05.006.2018323214613.hdf' == data_set_meta_info.identifier
     assert '2018-11-09 00:00:00' == data_set_meta_info.start_time
     assert '2018-11-16 23:59:59' == data_set_meta_info.end_time
-    geometry_bounds = wkt.loads(data_set_meta_info.coverage).bounds
-    assert 4 == len(geometry_bounds)
-    assert -13.05407289035348 in geometry_bounds
-    assert 29.9999999970181 in geometry_bounds
-    assert 1.127072786096139e-09 in geometry_bounds
-    assert 39.99999999616804 in geometry_bounds
+    coverage = wkt.loads(data_set_meta_info.coverage)
+    expected_coverage = wkt.loads('POLYGON ((-13.05407289035348 39.99999999616804, '
+                                  '1.127072786096139e-09 39.99999999616804, 9.96954409223065e-10 29.9999999970181, '
+                                  '-11.54700538146705 29.9999999970181, -13.05407289035348 39.99999999616804))')
+    assert coverage.almost_equals(expected_coverage)
