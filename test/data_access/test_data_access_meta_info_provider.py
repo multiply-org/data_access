@@ -1,18 +1,29 @@
 from nose.tools import assert_equal
 from multiply_data_access import MetaInfoProvider
+from shapely.wkt import dumps
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
 
 def test_meta_info_provider_get_roi_from_query_string():
-    query_string = 'POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10));;'
+    query_string = 'POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10));;;;EPSG:4326'
     roi = MetaInfoProvider.get_roi_from_query_string(query_string)
     assert roi.geom_type == 'Polygon'
 
     try:
-        MetaInfoProvider.get_roi_from_query_string('POINT (0 0);;')
+        MetaInfoProvider.get_roi_from_query_string('POINT (0 0);;;;EPSG:4326')
     except ValueError:
         assert True
+
+
+def test_meta_info_provider_get_roi_from_query_string_other_srs():
+    query_string = 'POLYGON((685700. 6462200., 685700. 6470700., 697660. 6470700., 697660. 6462200., 685700. 6462200.))' \
+                   ';;;;EPSG:3301'
+    roi = MetaInfoProvider.get_roi_from_query_string(query_string)
+    assert roi.geom_type == 'Polygon'
+    assert dumps(roi) == 'POLYGON ((27.1647563115467534 58.2611263320005577, ' \
+                         '27.1716005869326196 58.3373581174386473, 27.3755330955532621 58.3321196269764286, ' \
+                         '27.3682501734918766 58.2558991181697223, 27.1647563115467534 58.2611263320005577))'
 
 
 def test_meta_info_provider_get_start_time_from_string():

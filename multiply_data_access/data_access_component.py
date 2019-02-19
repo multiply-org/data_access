@@ -38,7 +38,8 @@ class DataAccessComponent(object):
         for data_store in self._data_stores:
             print(data_store)
 
-    def query(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[DataSetMetaInfo]:
+    def query(self, roi: str, start_time: str, end_time: str, data_types: str, roi_grid: str = 'EPSG:4326') \
+            -> List[DataSetMetaInfo]:
         """
         Distributes the query on all registered data stores and returns meta information on all data sets that meet
         the conditions of the query.
@@ -46,9 +47,10 @@ class DataAccessComponent(object):
         :param start_time: The start time of the query, given as a string in UTC time format
         :param end_time: The end time of the query, given as a string in UTC time format
         :param data_types: A list of data types to be queried for.
+        :param roi_grid: The EPSG code of the spatial reference system in which the roi is given. Default is WGS 84.
         :return: A list of DataSetMetaInfos that meet the conditions of the query.
         """
-        query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types)
+        query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types, roi_grid)
         meta_data_infos = []
         for data_store in self._data_stores:
             query_results = data_store.query(query_string)
@@ -143,7 +145,7 @@ class DataAccessComponent(object):
         return urls
 
     @staticmethod
-    def _build_query_string(roi: str, start_time: str, end_time: str, data_types: str) -> str:
+    def _build_query_string(roi: str, start_time: str, end_time: str, data_types: str, roi_grid: str) -> str:
         """
         Builds a query string. In a future version, this will be an opensearch url.
         :param roi:
@@ -152,7 +154,8 @@ class DataAccessComponent(object):
         :param data_types:
         :return:    A query string that may be passed on to a data store
         """
-        return roi + ';' + start_time + ';' + end_time + ';' + data_types
+        # return roi + ';' + start_time + ';' + end_time + ';' + data_types + ';' + roi_grid
+        return ';'.join([roi, start_time, end_time, data_types, roi_grid])
 
     def _read_registered_data_stores(self) -> None:
         data_stores_file = self._get_default_data_stores_file()

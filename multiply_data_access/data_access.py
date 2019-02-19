@@ -5,14 +5,16 @@ Description
 
 This module contains the MULTIPLY data access API.
 """
+import pyproj
 
 from abc import ABCMeta, abstractmethod
 from typing import List, Sequence, Optional
-from datetime import datetime, timedelta
+from datetime import datetime
+from functools import partial
 from multiply_core.util import FileRef, are_times_equal, are_polygons_almost_equal, get_time_from_string
+from shapely.ops import transform
 from shapely.wkt import loads
 from shapely.geometry import Polygon
-import os
 
 __author__ = 'Alexander Löw (Ludwig Maximilians-Universität München), ' \
              'Tonio Fincke (Brockmann Consult GmbH)'
@@ -187,10 +189,22 @@ class MetaInfoProvider(metaclass=ABCMeta):
 
     @staticmethod
     def get_roi_from_query_string(query_string: str) -> Optional[Polygon]:
-        roi_as_wkt = query_string.split(';')[0]
+        split_query_string = query_string.split(';')
+        roi_as_wkt = split_query_string[0]
         if roi_as_wkt == '':
             return None
         roi = loads(roi_as_wkt)
+        if len(split_query_string) > 4:
+            roi_grid = split_query_string[4]
+            if not roi_grid.startswith('EPSG'):
+                raise ValueError('ROI grid must be given as EPSG code (e.g., EPSG:4326)')
+            if roi_grid != 'EPSG:4326':
+                project = partial(
+                    pyproj.transform,
+                    pyproj.Proj(init=roi_grid),
+                    pyproj.Proj(init='EPSG:4326'))
+                roi = transform(project, roi)
+        # todo also allow MultiPolygons
         if not isinstance(roi, Polygon):
             raise ValueError('ROI must be a polygon')
         return roi
