@@ -113,13 +113,14 @@ class DataAccessComponent(object):
                     provided_types.append(provided_data_type)
         return provided_types
 
-    def get_data_urls(self, roi: str, start_time: str, end_time: str, data_types: str) -> List[str]:
+    def get_data_urls(self, roi: str, start_time: str, end_time: str, data_types: str, roi_grid: str = 'EPSG:4326') \
+            -> List[str]:
         """
         Builds a query from the given parameters and asks all data stores whether they contain data that match the
         query. If datasets are found, url's to their positions are returned.
         :return: a list of url's to locally stored files that match the conditions given by the query in the parameter.
         """
-        query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types)
+        query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types, roi_grid)
         urls = []
         for data_store in self._data_stores:
             query_results = data_store.query(query_string)
@@ -145,7 +146,8 @@ class DataAccessComponent(object):
         return urls
 
     @staticmethod
-    def _build_query_string(roi: str, start_time: str, end_time: str, data_types: str, roi_grid: str) -> str:
+    def _build_query_string(roi: str, start_time: str, end_time: str, data_types: str,
+                            roi_grid: Optional[str] = 'EPSG:4326') -> str:
         """
         Builds a query string. In a future version, this will be an opensearch url.
         :param roi:
@@ -155,6 +157,8 @@ class DataAccessComponent(object):
         :return:    A query string that may be passed on to a data store
         """
         # return roi + ';' + start_time + ';' + end_time + ';' + data_types + ';' + roi_grid
+        if roi_grid is None:
+            roi_grid = 'EPSG:4326'
         return ';'.join([roi, start_time, end_time, data_types, roi_grid])
 
     def _read_registered_data_stores(self) -> None:
