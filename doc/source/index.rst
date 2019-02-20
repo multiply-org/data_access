@@ -3,9 +3,9 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-====================
-MULTIPLY Data Access
-====================
+======================
+MULTIPLY - Data Access
+======================
 
 This is the help for the MULTIPLY Data Access Component (DAC).
 The DAC forms part of the MULTIPLY platform, which is a platform for the retrieval of bio-physical land parameters
