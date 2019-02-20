@@ -57,7 +57,6 @@ class VrtMetaInfoProvider(MetaInfoProvider):
             for i in range(len(additional_files)):
                 if additional_files[i] not in referenced_data:
                     referenced_data.append(additional_files[i])
-                    print(additional_coverages[i])
                     coverages.append(additional_coverages[i])
             coverage = cascaded_union(coverages)
         referenced_data = ';'.join(referenced_data)
@@ -88,7 +87,7 @@ class VrtMetaInfoProvider(MetaInfoProvider):
 
     def _get_coverages_from_wrapped_meta_info_provider(self, query_string: str) -> (List[Polygon], List[str]):
         split_string = query_string.split(';')
-        split_string[-1] = self._encapsulated_data_type
+        split_string[3] = self._encapsulated_data_type
         new_query_string = ';'.join(split_string)
         encapsulated_data_meta_set_infos = self._wrapped_meta_info_provider.query(new_query_string)
         coverages = []
