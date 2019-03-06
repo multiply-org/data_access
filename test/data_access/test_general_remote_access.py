@@ -5,7 +5,6 @@ from multiply_core.observations import DataTypeConstants
 from multiply_data_access.data_access import DataSetMetaInfo
 from multiply_data_access.general_remote_access import HttpFileSystem, HttpFileSystemAccessor, \
     HttpMetaInfoProvider, HttpMetaInfoProviderAccessor
-from shapely.wkt import loads
 
 PATH_TO_JSON_FILE = './test/test_data/modis_store.json'
 PATH_TO_EMUS_STORE = './test/test_data/empty_store.json'
