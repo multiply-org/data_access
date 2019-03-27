@@ -66,7 +66,11 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                 break
         if not may_continue:
             return data_set_meta_infos
-        request = requests.get(self._url, stream=True)
+        try:
+            request = requests.get(self._url, stream=True)
+        except ConnectionError:
+            logging.warning('Could not retrieve meta information from {} due to a connection error.'.format(self._url))
+            return data_set_meta_infos
         soup = BeautifulSoup(request.content, 'html5lib')
         links = soup.find_all('a')
 
@@ -120,16 +124,21 @@ class HttpFileSystem(LocallyWrappedFileSystem):
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
         url = '{}/{}'.format(self._url, data_set_meta_info.identifier)
-        self._download_url(url, self._temp_dir, data_set_meta_info.identifier)
-        destination = os.path.join(self._temp_dir, data_set_meta_info.identifier)
-        file_refs.append(FileRef(destination, data_set_meta_info.start_time, data_set_meta_info.end_time,
-                                 get_mime_type(data_set_meta_info.identifier)))
-        logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
+        success = self._download_url(url, self._temp_dir, data_set_meta_info.identifier)
+        if success:
+            destination = os.path.join(self._temp_dir, data_set_meta_info.identifier)
+            file_refs.append(FileRef(destination, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                                     get_mime_type(data_set_meta_info.identifier)))
+            logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
         return file_refs
 
-    def _download_url(self, url: str, destination_dir: str, file_name: str):
+    def _download_url(self, url: str, destination_dir: str, file_name: str) -> bool:
         destination = os.path.join(destination_dir, file_name)
-        request = requests.get(url, stream=True)
+        try:
+            request = requests.get(url, stream=True)
+        except ConnectionError:
+            logging.warning('Could not retrieve data from {} due to a connection error.'.format(self._url))
+            return False
         content_type = urllib2.urlopen(url).info().get_content_type()
         if content_type == 'text/html':
             soup = BeautifulSoup(request.content, 'html5lib')
@@ -155,6 +164,7 @@ class HttpFileSystem(LocallyWrappedFileSystem):
                             stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
                             stdout.flush()
                             next_threshold += one_percent
+        return True
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
         full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
@@ -163,7 +173,6 @@ class HttpFileSystem(LocallyWrappedFileSystem):
                 shutil.rmtree(full_path)
             else:
                 os.remove(full_path)
-
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
         parameters = {'url': self._url, 'temp_dir': self._temp_dir}

@@ -1,6 +1,7 @@
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 import os
+import pytest
 from multiply_core.observations import DataTypeConstants
 from multiply_data_access.data_access import DataSetMetaInfo
 from multiply_data_access.general_remote_access import HttpFileSystem, HttpFileSystemAccessor, \
@@ -67,6 +68,7 @@ def test_meta_info_provider_get_parameters_as_dict():
 #     assert 'ASTGTM2_N42W007_dem.tif' == data_set_meta_infos[0].identifier
 
 
+@pytest.mark.skip(reason='Test will not work when server is down')
 def test_query_wrapped_meta_info_provider_emus():
     parameters = {'path_to_json_file': PATH_TO_EMUS_STORE, 'url': EMUS_TEST_URL,
                   'supported_data_types': '{}, {}'.format(DataTypeConstants.S2A_EMULATOR, DataTypeConstants.S2B_EMULATOR)}
@@ -100,6 +102,7 @@ def test_query_wrapped_meta_info_provider_emus():
     assert 'isotropic_MSI_emulators_optimization_xcp_S2B.pkl' == data_set_meta_infos[11].identifier
 
 
+@pytest.mark.skip(reason='Test will not work when server is down')
 def test_query_wrapped_meta_info_provider_wv_emu():
     parameters = {'path_to_json_file': PATH_TO_EMUS_STORE, 'url': WV_EMU_TEST_URL,
                   'supported_data_types': '{}'.format(DataTypeConstants.WV_EMULATOR)}
