@@ -1,4 +1,4 @@
-## Version 0.4.3
+## Version 0.4.4
 
 ### Improvements and new Features
 - Added Roi Grid as optional query parameter
