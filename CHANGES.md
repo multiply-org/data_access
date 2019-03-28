@@ -1,6 +1,15 @@
 ## Version 0.4.3
 
 ### Improvements and new Features
+- Added Roi Grid as optional query parameter
+
+### Fixes
+- Made code less vulnerable to connection errors
+- Fixed indexing error when retrieving dem files
+
+## Version 0.4.3
+
+### Improvements and new Features
 - Improved handling of vrt files
 - Improved performance of remote MODIS lookups
 - added check  
