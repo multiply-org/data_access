@@ -106,6 +106,62 @@ class AwsS2MetaInfoExtractor(DataSetMetaInfoExtractor):
                 return x.text
 
 
+class S2L1CMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    def __init__(self):
+        self._footprint_element_names = \
+            ['{https://psd-14.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd}Geometric_Info', 'Product_Footprint',
+             'Product_Footprint', 'Global_Footprint', 'EXT_POS_LIST']
+        self._time_element_names = \
+            ['{https://psd-14.sentinel2.eo.esa.int/PSD/User_Product_Level-1C.xsd}General_Info', 'Product_Info']
+        self._start_time_element = 'PRODUCT_START_TIME'
+        self._stop_time_element = 'PRODUCT_STOP_TIME'
+        self._polygon_format = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.S2_L1C
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        coverage = self._extract_coverage(path)
+        start_time = self._extract_start_time(path)
+        end_time = self._extract_end_time(path)
+        return DataSetMetaInfo(coverage, start_time, end_time, self.name(), path)
+
+    @staticmethod
+    def _get_xml_root(xml_file_name: str):
+        tree = ElementTree.parse(xml_file_name)
+        return tree.getroot()
+
+    def _extract_coverage(self, path: str) -> str:
+        element = self._get_xml_root(path + '/MTD_MSIL1C.xml')
+        for footprint_element_name in self._footprint_element_names:
+            element = element.find(footprint_element_name)
+            if element is None:
+                return ''
+        coords = element.text.split(' ')
+        if len(coords) < 10:
+            return ''
+        return self._polygon_format.format(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5], coords[6],
+                                           coords[7], coords[8], coords[9])
+
+    def _extract_start_time(self, path:str) -> str:
+        return self._extract_time(path, self._start_time_element)
+
+    def _extract_end_time(self, path:str) -> str:
+        return self._extract_time(path, self._stop_time_element)
+
+    def _extract_time(self, path: str, final_element_name: str) -> str:
+        element = self._get_xml_root(path + '/MTD_MSIL1C.xml')
+        time_element_names = self._time_element_names.copy()
+        time_element_names.append(final_element_name)
+        for time_element_name in time_element_names:
+            element = element.find(time_element_name)
+            if element is None:
+                return ''
+        return element.text.split('.')[0]
+
+
 class S2L2MetaInfoExtractor(DataSetMetaInfoExtractor):
 
     @classmethod
@@ -132,7 +188,7 @@ class S2L2MetaInfoExtractor(DataSetMetaInfoExtractor):
                 return time
 
     def _extract_coverage(self, filename: str) -> str:
-        """Parses the XML metadata file to extract the sensing time."""
+        """Parses the XML metadata file to extract the coverage."""
         root = self._get_xml_root(filename + '/metadata.xml')
         ulx = 0
         uly = 0

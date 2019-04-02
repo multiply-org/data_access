@@ -1,4 +1,4 @@
-from multiply_data_access.data_set_meta_info_extraction import DataSetMetaInfoExtractor, AwsS2MetaInfoExtractor, \
+from multiply_data_access.data_set_meta_info_extraction import AwsS2MetaInfoExtractor, S2L1CMetaInfoExtractor, \
     S2L2MetaInfoExtractor, MODISMCD43MetaInfoExtractor, MODISMCD15A2MetaInfoExtractor
 
 from shapely import wkt
@@ -6,6 +6,7 @@ from shapely import wkt
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
 path_to_s2_dir = './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0/'
+path_to_s2_l1c_dir = './test/test_data/S2B_MSIL1C_20180819T100019_N0206_R122_T32TQR_20180819T141300'
 path_to_s2_l2_dir = './test/test_data/s2_l2_dir/'
 
 
@@ -22,6 +23,19 @@ def test_aws_s2_meta_info_extractor():
                                   '-5.477449084961044 37.89483865860684, -5.523445655745983 36.90697181266162,'
                                   '-6.754676710360797 36.93665039721959, -6.724926539250627 37.92559054724302))')
     assert coverage.almost_equals(expected_coverage)
+
+
+def test_s2_l1c_meta_info_extractor():
+    provider = S2L1CMetaInfoExtractor()
+    assert 'S2_L1C' == provider.name()
+    data_set_meta_info = provider.extract_meta_info(path_to_s2_l1c_dir)
+    assert 'S2_L1C' == data_set_meta_info.data_type
+    assert path_to_s2_l1c_dir == data_set_meta_info.identifier
+    assert '2017-09-10T10:40:21' == data_set_meta_info.start_time
+    assert '2017-09-10T10:40:21' == data_set_meta_info.end_time
+    assert 'POLYGON((7.434601639013215 55.03692054207882, 9.152753273727466 55.04689020612033, ' \
+           '9.149109963691934 54.06011138907911, 7.471920122716345 54.050496442234184, ' \
+           '7.434601639013215 55.03692054207882))' == data_set_meta_info.coverage
 
 
 def test_s2_l2_meta_info_extractor():
