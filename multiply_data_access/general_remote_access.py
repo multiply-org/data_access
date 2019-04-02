@@ -68,7 +68,7 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
             return data_set_meta_infos
         try:
             request = requests.get(self._url, stream=True)
-        except ConnectionError:
+        except requests.ConnectionError:
             logging.warning('Could not retrieve meta information from {} due to a connection error.'.format(self._url))
             return data_set_meta_infos
         soup = BeautifulSoup(request.content, 'html5lib')
