@@ -367,6 +367,7 @@ def add_data_set_meta_info_extractor(data_set_meta_info_provider: DataSetMetaInf
 
 
 add_data_set_meta_info_extractor(AwsS2MetaInfoExtractor())
+add_data_set_meta_info_extractor(S2L1CMetaInfoExtractor())
 add_data_set_meta_info_extractor(S2L2MetaInfoExtractor())
 add_data_set_meta_info_extractor(AsterMetaInfoExtractor())
 add_data_set_meta_info_extractor(S2aMetaInfoExtractor())
