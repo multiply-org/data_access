@@ -10,9 +10,8 @@ import pyproj
 from abc import ABCMeta, abstractmethod
 from typing import List, Sequence, Optional
 from datetime import datetime
-from functools import partial
-from multiply_core.util import FileRef, are_times_equal, are_polygons_almost_equal, get_time_from_string
-from shapely.ops import transform
+from multiply_core.util import FileRef, are_times_equal, are_polygons_almost_equal, get_time_from_string, \
+    reproject_to_wgs84
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 
@@ -193,17 +192,12 @@ class MetaInfoProvider(metaclass=ABCMeta):
         roi_as_wkt = split_query_string[0]
         if roi_as_wkt == '':
             return None
-        roi = loads(roi_as_wkt)
-        if len(split_query_string) > 4:
+        if len(split_query_string) == 4:
+            roi = loads(roi_as_wkt)
+        else:
             roi_grid = split_query_string[4]
-            if not roi_grid.startswith('EPSG'):
-                raise ValueError('ROI grid must be given as EPSG code (e.g., EPSG:4326)')
-            if roi_grid != 'EPSG:4326':
-                project = partial(
-                    pyproj.transform,
-                    pyproj.Proj(init=roi_grid),
-                    pyproj.Proj(init='EPSG:4326'))
-                roi = transform(project, roi)
+            roi = reproject_to_wgs84(roi_as_wkt, roi_grid)
+            roi = loads(roi)
         # todo also allow MultiPolygons
         if not isinstance(roi, Polygon):
             raise ValueError('ROI must be a polygon')
