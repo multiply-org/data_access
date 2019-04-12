@@ -27,10 +27,10 @@ class MundiMetaInfoProvider(MetaInfoProvider):
 
     def __init__(self, parameters: dict):
         collections_description_url = '{}{}'.format(_BASE_URL, _COLLECTIONS_DESCRIPTIONS_ADDITION)
-        # collections_request = requests.get(collections_description_url, stream=True)
         descriptions = urllib2.urlopen(collections_description_url).read()
         descriptions_root = XML(descriptions)
         platforms = []
+        # todo make this more sophisticated
         for child in descriptions_root:
             if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
                 if child.get('rel') == 'search':
@@ -38,7 +38,6 @@ class MundiMetaInfoProvider(MetaInfoProvider):
                         if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
                             for child3 in child2:
                                 platforms.append(child3.get('value'))
-        # collections_request.close()
         instruments = []
         processing_levels = []
         if 'Sentinel2' in platforms:
