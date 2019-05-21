@@ -9,7 +9,6 @@ from distutils.dir_util import copy_tree
 from multiply_core.util import FileRef, get_mime_type, get_time_from_string
 from .data_access import DataSetMetaInfo, FileSystemAccessor
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem
-from sentinelhub import AwsTileRequest
 from typing import Optional, Sequence
 import itertools
 import logging
@@ -28,6 +27,9 @@ _NAME = 'AwsS2FileSystem'
 
 
 class AwsS2FileSystem(LocallyWrappedFileSystem):
+
+    def __init__(self):
+        from sentinelhub import AwsTileRequest
 
     def _init_wrapped_file_system(self, parameters: dict):
         if 'temp_dir' not in parameters.keys():
