@@ -144,7 +144,7 @@ class MundiMetaInfoProvider(MetaInfoProvider):
 
     def get_all_data(self) -> Sequence[DataSetMetaInfo]:
         #todo raise exception
-        pass
+        return []
 
 
 class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
@@ -183,7 +183,7 @@ class MundiFileSystem(FileSystem):
         pass
 
     def scan(self) -> Sequence[DataSetMetaInfo]:
-        pass
+        return []
 
 
 class MundiFileSystemAccessor(FileSystemAccessor):
