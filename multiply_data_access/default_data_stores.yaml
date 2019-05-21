@@ -93,6 +93,14 @@
         path_to_json_file: user_dir/modis_mcd43a1_store.json
 - DataStore:
     FileSystem:
+      type: MundiFileSystem
+      parameters:
+    Id: Mundi
+    MetaInfoProvider:
+      type: MundiMetaInfoProvider
+      parameters:
+- DataStore:
+    FileSystem:
       type: LocalFileSystem
       parameters:
         path: user_dir/data/
