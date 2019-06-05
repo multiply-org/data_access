@@ -28,7 +28,7 @@ _NAME = 'AwsS2FileSystem'
 
 class AwsS2FileSystem(LocallyWrappedFileSystem):
 
-    def __init__(self):
+    def __init__(self, parameters: dict):
         from sentinelhub import AwsTileRequest
 
     def _init_wrapped_file_system(self, parameters: dict):
