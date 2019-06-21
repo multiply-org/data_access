@@ -9,15 +9,15 @@ if on_rtd:
     requirements = ['mock']
 else:
     requirements = [
-    'beautifulsoup4',
-    'html5lib',
-    'lxml',
-    'multiply_core',
-    'nose',
-    'shapely',
-    'pytest',
-    'pyyaml',
-    'requests']
+        'beautifulsoup4',
+        'html5lib',
+        'lxml',
+        'multiply_core',
+        'nose',
+        'shapely',
+        'pytest',
+        'pyyaml',
+        'requests']
 
 __version__ = None
 with open('multiply_data_access/version.py') as f:
@@ -52,4 +52,4 @@ setup(name='multiply-data-access',
           ],
       },
       install_requires=requirements
-)
+      )
