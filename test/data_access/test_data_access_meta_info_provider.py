@@ -1,5 +1,5 @@
 from multiply_data_access import MetaInfoProvider
-from shapely.wkt import dumps, loads
+from shapely.wkt import loads
 
 __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 
