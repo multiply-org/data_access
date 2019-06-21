@@ -30,6 +30,7 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
 
     def __init__(self, parameters: dict):
         from sentinelhub import AwsTileRequest
+        super().__init__(parameters)
 
     def _init_wrapped_file_system(self, parameters: dict):
         if 'temp_dir' not in parameters.keys():
