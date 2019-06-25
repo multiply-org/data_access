@@ -29,8 +29,9 @@ def test_mundi_meta_info_provider_get_provided_data_types():
 
     provided_data_types = mundi_meta_info_provider.get_provided_data_types()
 
-    assert 1 == len(provided_data_types)
-    assert 'S2_L1C' == provided_data_types[0]
+    assert 4 == len(provided_data_types)
+    expected_data_types = ['S1_SLC','S2_L1C', 'S3_L1_OLCI_RR', 'S3_L1_OLCI_FR']
+    assert all([a == b for a, b in zip(provided_data_types, expected_data_types)])
 
 
 def test_mundi_meta_info_provider_encapsulates_data_type():

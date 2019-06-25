@@ -8,12 +8,12 @@ from datetime import datetime
 from lxml.etree import XML
 import requests
 from shapely.geometry import Polygon
-from shapely.wkt import dumps, load, loads
-from typing import Sequence, List
+from shapely.wkt import dumps
+from typing import List, Sequence
 import urllib.request as urllib2
 
 from multiply_core.observations import DataTypeConstants
-from multiply_core.util import FileRef
+from multiply_core.util import FileRef, get_time_from_string
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystem, FileSystemAccessor, MetaInfoProvider, \
     MetaInfoProviderAccessor
 
@@ -27,6 +27,24 @@ _COLLECTIONS_DESCRIPTIONS_ADDITION = 'collections/opensearch/description.xml'
 _COLLECTION_DESCRIPTION_ADDITION = '{}/opensearch/description.xml'
 _BASE_CATALOGUE_URL = "https://mundiwebservices.com/acdc/catalog/proxy/search/{}/opensearch?q=({})"
 _POLYGON_FORMAT = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
+_DATA_TYPE_PARAMETER_DICTS = {
+    DataTypeConstants.S1_SLC:
+        {'platform': 'Sentinel1', 'processingLevel': 'L1_', 'instrument': 'SAR', 'productType': 'SLC',
+         'baseBucket': 's1-l1-slc', 'storageStructure': 'YYYY/MM/DD/mm/pp/',
+         'placeholders': {'mm': {'start': 4, 'end': 6}, 'pp': {'start': 14, 'end': 16}}},
+    DataTypeConstants.S2_L1C:
+        {'platform': 'Sentinel2', 'processingLevel': 'L1C', 'instrument': 'MSI', 'productType': 'IMAGE',
+         'baseBucket': 's2-l1c', 'storageStructure': 'UU/L/SS/YYYY/MM/DD/',
+         'placeholders': {'UU': {'start': 39, 'end': 41}, 'L': {'start': 41, 'end': 42},
+                          'SS': {'start': 42, 'end': 44}}},
+    DataTypeConstants.S3_L1_OLCI_RR:
+        {'platform': 'Sentinel3', 'processingLevel': 'L1_', 'instrument': 'OLCI', 'productType': 'OL_1_ERR___',
+         'baseBucket': 's3-olci', 'storageStructure': 'LRR/YYYY/MM/DD/', 'placeholders': {}},
+    DataTypeConstants.S3_L1_OLCI_FR:
+        {'platform': 'Sentinel3', 'processingLevel': 'L1_', 'instrument': 'OLCI', 'productType': 'OL_1_EFR___',
+         'baseBucket': 's3-olci', 'storageStructure': 'LFR/YYYY/MM/DD/', 'placeholders': {}}
+}
+_MUNDI_SERVER = 'obs.otc.t-systems.com'
 
 
 class MundiMetaInfoProvider(MetaInfoProvider):
@@ -44,25 +62,33 @@ class MundiMetaInfoProvider(MetaInfoProvider):
                         if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
                             for child3 in child2:
                                 platforms.append(child3.get('value'))
-        instruments = []
-        processing_levels = []
-        if 'Sentinel2' in platforms:
-            platform_url = '{}{}'.format(_BASE_URL, _COLLECTION_DESCRIPTION_ADDITION.format('Sentinel2'))
-            description = urllib2.urlopen(platform_url).read()
-            platform_description_root = XML(description)
-            for child in platform_description_root:
-                if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
-                    for child2 in child:
-                        if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
-                            if child2.get('name') == 'instrument':
-                                for child3 in child2:
-                                    instruments.append(child3.get('value'))
-                            elif child2.get('name') == 'processingLevel':
-                                for child3 in child2:
-                                    processing_levels.append(child3.get('value'))
         self._provided_data_types = []
-        if 'MSI' in instruments and 'L1C' in processing_levels:
-            self._provided_data_types.append(DataTypeConstants.S2_L1C)
+        for data_type in _DATA_TYPE_PARAMETER_DICTS:
+            data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
+            instruments = []
+            processing_levels = []
+            product_types = []
+            if data_type_dict['platform'] in platforms:
+                platform_url = '{}{}'.format(_BASE_URL, _COLLECTION_DESCRIPTION_ADDITION.format(data_type_dict['platform']))
+                description = urllib2.urlopen(platform_url).read()
+                platform_description_root = XML(description)
+                for child in platform_description_root:
+                    if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
+                        for child2 in child:
+                            if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
+                                if child2.get('name') == 'instrument':
+                                    for child3 in child2:
+                                        instruments.append(child3.get('value'))
+                                elif child2.get('name') == 'processingLevel':
+                                    for child3 in child2:
+                                        processing_levels.append(child3.get('value'))
+                                elif child2.get('name') == 'productType':
+                                    for child3 in child2:
+                                        product_types.append(child3.get('value'))
+            if data_type_dict['instrument'] in instruments and \
+                    data_type_dict['processingLevel'] in processing_levels and \
+                    data_type_dict['productType'] in product_types:
+                self._provided_data_types.append(data_type)
 
     @classmethod
     def name(cls) -> str:
@@ -96,22 +122,17 @@ class MundiMetaInfoProvider(MetaInfoProvider):
                         data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 
-    def _create_mundi_query(self, roi: str, data_type: str, start_time: str, end_time: str) -> str:
-        query_part = "(sensingStartDate:[{} TO {}]AND footprint:\"Intersects({})\")&processingLevel={}"
-        query_part = query_part.format(start_time, end_time, roi, self._get_processing_level(data_type))
-        return _BASE_CATALOGUE_URL.format(self._get_platform(data_type), query_part)
+    @staticmethod
+    def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str) -> str:
+        data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
+        query_part = "(sensingStartDate:[{} TO {}]AND footprint:\"Intersects({})\")&processingLevel={}&instrument={}" \
+                     "&productType={}"
+        query_part = query_part.format(start_time, end_time, roi, data_type_dict['processingLevel'],
+                                       data_type_dict['instrument'], data_type_dict['productType'])
+        return _BASE_CATALOGUE_URL.format(data_type_dict['platform'], query_part)
 
-    def _get_platform(self, data_type: str) -> str:
-        if data_type == DataTypeConstants.S2_L1C:
-            return "Sentinel2"
-        return ""
-
-    def _get_processing_level(self, data_type: str) -> str:
-        if data_type == DataTypeConstants.S2_L1C:
-            return "L1C"
-        return ""
-
-    def _convert_mundi_coverage(self, mundi_coverage_string: str):
+    @staticmethod
+    def _convert_mundi_coverage(mundi_coverage_string: str):
         coords = mundi_coverage_string.split(" ")
         coord_list = []
         for i in range(0, len(coords), 2):
@@ -135,15 +156,15 @@ class MundiMetaInfoProvider(MetaInfoProvider):
         return False
 
     def update(self, data_set_meta_info: DataSetMetaInfo):
-        #todo raise exception
+        # todo raise exception
         pass
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
-        #todo raise exception
+        # todo raise exception
         pass
 
     def get_all_data(self) -> Sequence[DataSetMetaInfo]:
-        #todo raise exception
+        # todo raise exception
         return []
 
 
