@@ -1,19 +1,22 @@
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 from multiply_data_access import DataSetMetaInfo
-from multiply_data_access.mundi_data_access import MundiFileSystem, MundiFileSystemAccessor, \
+from multiply_data_access.mundi_data_access_2 import MundiFileSystem, MundiFileSystemAccessor, \
     MundiMetaInfoProvider, MundiMetaInfoProviderAccessor
+META_INFO_FILE = './test/test_data/local_mundi_store.json'
+_MUNDI_DIR = './test/test_data/mundi_dir'
+_MUNDI_TEMP_DIR = './test/test_data/mundi_temp_dir'
 
 
 def test_mundi_meta_info_provider_name():
-    parameters = {}
+    parameters = {'path_to_json_file': META_INFO_FILE}
     mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert 'MundiMetaInfoProvider' == mundi_meta_info_provider.name()
 
 
 def test_mundi_meta_info_provider_provides_data_type():
-    parameters = {}
+    parameters = {'path_to_json_file': META_INFO_FILE}
     mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert mundi_meta_info_provider.provides_data_type('S2_L1C')
@@ -24,7 +27,7 @@ def test_mundi_meta_info_provider_provides_data_type():
 
 
 def test_mundi_meta_info_provider_get_provided_data_types():
-    parameters = {}
+    parameters = {'path_to_json_file': META_INFO_FILE}
     mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     provided_data_types = mundi_meta_info_provider.get_provided_data_types()
@@ -35,7 +38,7 @@ def test_mundi_meta_info_provider_get_provided_data_types():
 
 
 def test_mundi_meta_info_provider_encapsulates_data_type():
-    parameters = {}
+    parameters = {'path_to_json_file': META_INFO_FILE}
     mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert not mundi_meta_info_provider.encapsulates_data_type('S2_L1C')
@@ -45,20 +48,8 @@ def test_mundi_meta_info_provider_encapsulates_data_type():
     assert not mundi_meta_info_provider.encapsulates_data_type('vfsgt')
 
 
-def test_mundi_meta_info_provider_accessor_name():
-    assert 'MundiMetaInfoProvider' == MundiMetaInfoProviderAccessor.name()
-
-
-def test_mundi_meta_info_provider_accessor_create_from_parameters():
-    parameters = {}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
-
-    assert mundi_meta_info_provider is not None
-    assert isinstance(mundi_meta_info_provider, MundiMetaInfoProvider)
-
-
 def test_mundi_meta_info_provider_query():
-    parameters = {}
+    parameters = {'path_to_json_file': META_INFO_FILE}
     mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-01;2018-06-05;S2_L1C"
@@ -97,12 +88,24 @@ def test_mundi_meta_info_provider_query():
     assert '2018-06-04T10:30:21Z' == data_set_meta_infos[1].end_time
 
 
+def test_mundi_meta_info_provider_accessor_name():
+    assert 'MundiMetaInfoProvider' == MundiMetaInfoProviderAccessor.name()
+
+
+def test_mundi_meta_info_provider_accessor_create_from_parameters():
+    parameters = {'path_to_json_file': META_INFO_FILE}
+    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    assert mundi_meta_info_provider is not None
+    assert isinstance(mundi_meta_info_provider, MundiMetaInfoProvider)
+
+
 def test_mundi_file_system_accessor_name():
     assert 'MundiFileSystem' == MundiFileSystemAccessor.name()
 
 
 def test_mundi_file_system_accessor_create_from_parameters():
-    mundi_parameters = {'path': './test/test_data/'}
+    mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
     mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
 
     assert mundi_file_system is not None
@@ -112,16 +115,16 @@ def test_mundi_file_system_accessor_create_from_parameters():
 def test_mundi_file_system_name():
     assert 'MundiFileSystem' == MundiFileSystem.name()
 
-    mundi_parameters = {'access_key_id': '', 'secret_access_key': '', 'path': './test/test_data/'}
+    mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
     mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
     assert 'MundiFileSystem' == mundi_file_system.name()
 
 
-def test_mundi_file_system_get_parameters_as_dict():
-    mundi_parameters = {'access_key_id': '', 'secret_access_key': '', 'path': './test/test_data/'}
+def test_mundi_file_system_get_wrapped_parameters_as_dict():
+    mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
     mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
 
-    mundi_file_system_as_dict = mundi_file_system.get_parameters_as_dict()
+    mundi_file_system_as_dict = mundi_file_system._get_wrapped_parameters_as_dict()
     assert mundi_file_system_as_dict is not None
     assert dict == type(mundi_file_system_as_dict)
     assert 3 == len(mundi_file_system_as_dict.keys())
@@ -129,15 +132,8 @@ def test_mundi_file_system_get_parameters_as_dict():
     assert '' == mundi_file_system_as_dict['access_key_id']
     assert 'secret_access_key' in mundi_file_system_as_dict
     assert '' == mundi_file_system_as_dict['secret_access_key']
-    assert 'path' in mundi_file_system_as_dict
-    assert './test/test_data/' == mundi_file_system_as_dict['path']
-
-
-def test_mundi_file_system_get_parameters_can_put():
-    mundi_parameters = {'access_key_id': '', 'secret_access_key': '', 'path': './test/test_data/'}
-    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
-
-    assert not mundi_file_system.can_put()
+    assert 'temp_dir' in mundi_file_system_as_dict
+    assert _MUNDI_TEMP_DIR == mundi_file_system_as_dict['temp_dir']
 
 
 def test_mundi_file_system_get_bucket():

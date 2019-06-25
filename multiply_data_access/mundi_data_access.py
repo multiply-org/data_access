@@ -9,6 +9,7 @@ from lxml.etree import XML
 import logging
 import os
 import requests
+import shutil
 from shapely.geometry import Polygon
 from shapely.wkt import dumps
 from typing import List, Sequence
@@ -18,6 +19,7 @@ from multiply_core.observations import DataTypeConstants
 from multiply_core.util import FileRef, get_time_from_string
 from multiply_data_access.data_access import DataSetMetaInfo, FileSystem, FileSystemAccessor, MetaInfoProvider, \
     MetaInfoProviderAccessor
+from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
@@ -49,54 +51,13 @@ _DATA_TYPE_PARAMETER_DICTS = {
 _MUNDI_SERVER = 'obs.otc.t-systems.com'
 
 
-class MundiMetaInfoProvider(MetaInfoProvider):
+class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
-    def __init__(self, parameters: dict):
-        collections_description_url = '{}{}'.format(_BASE_URL, _COLLECTIONS_DESCRIPTIONS_ADDITION)
-        descriptions = urllib2.urlopen(collections_description_url).read()
-        descriptions_root = XML(descriptions)
-        platforms = []
-        # todo make this more sophisticated
-        for child in descriptions_root:
-            if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
-                if child.get('rel') == 'search':
-                    for child2 in child:
-                        if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
-                            for child3 in child2:
-                                platforms.append(child3.get('value'))
-        self._provided_data_types = []
-        for data_type in _DATA_TYPE_PARAMETER_DICTS:
-            data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-            instruments = []
-            processing_levels = []
-            product_types = []
-            if data_type_dict['platform'] in platforms:
-                platform_url = '{}{}'.format(_BASE_URL, _COLLECTION_DESCRIPTION_ADDITION.format(data_type_dict['platform']))
-                description = urllib2.urlopen(platform_url).read()
-                platform_description_root = XML(description)
-                for child in platform_description_root:
-                    if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
-                        for child2 in child:
-                            if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
-                                if child2.get('name') == 'instrument':
-                                    for child3 in child2:
-                                        instruments.append(child3.get('value'))
-                                elif child2.get('name') == 'processingLevel':
-                                    for child3 in child2:
-                                        processing_levels.append(child3.get('value'))
-                                elif child2.get('name') == 'productType':
-                                    for child3 in child2:
-                                        product_types.append(child3.get('value'))
-            if data_type_dict['instrument'] in instruments and \
-                    data_type_dict['processingLevel'] in processing_levels and \
-                    data_type_dict['productType'] in product_types:
-                self._provided_data_types.append(data_type)
+    def _init_wrapped_meta_info_provider(self, parameters: dict) -> None:
+        pass
 
-    @classmethod
-    def name(cls) -> str:
-        return _META_INFO_PROVIDER_NAME
-
-    def query(self, query_string: str) -> List[DataSetMetaInfo]:
+    def _query_wrapped_meta_info_provider(self, query_string: str, local_data_set_meta_infos: List[DataSetMetaInfo]) -> \
+            List[DataSetMetaInfo]:
         roi = dumps(self.get_roi_from_query_string(query_string))
         data_types = self.get_data_types_from_query_string(query_string)
         start_time = datetime.strftime(self.get_start_time_from_query_string(query_string), "%Y-%m-%dT%H:%M:%SZ")
@@ -142,32 +103,64 @@ class MundiMetaInfoProvider(MetaInfoProvider):
         coverage = Polygon(coord_list)
         return dumps(coverage)
 
+    def _get_wrapped_parameters_as_dict(self) -> dict:
+        return {}
+
+    @classmethod
+    def name(cls) -> str:
+        return _META_INFO_PROVIDER_NAME
+
     def provides_data_type(self, data_type: str) -> bool:
         return data_type in self._provided_data_types
 
     def get_provided_data_types(self) -> List[str]:
+        if not hasattr(self, '_provided_data_types'):
+            self._init_data_types()
         return self._provided_data_types
+
+    def _init_data_types(self):
+        collections_description_url = '{}{}'.format(_BASE_URL, _COLLECTIONS_DESCRIPTIONS_ADDITION)
+        descriptions = urllib2.urlopen(collections_description_url).read()
+        descriptions_root = XML(descriptions)
+        platforms = []
+        # todo make this more sophisticated
+        for child in descriptions_root:
+            if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
+                if child.get('rel') == 'search':
+                    for child2 in child:
+                        if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
+                            for child3 in child2:
+                                platforms.append(child3.get('value'))
+        self._provided_data_types = []
+        for data_type in _DATA_TYPE_PARAMETER_DICTS:
+            data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
+            instruments = []
+            processing_levels = []
+            product_types = []
+            if data_type_dict['platform'] in platforms:
+                platform_url = '{}{}'.format(_BASE_URL, _COLLECTION_DESCRIPTION_ADDITION.format(data_type_dict['platform']))
+                description = urllib2.urlopen(platform_url).read()
+                platform_description_root = XML(description)
+                for child in platform_description_root:
+                    if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
+                        for child2 in child:
+                            if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
+                                if child2.get('name') == 'instrument':
+                                    for child3 in child2:
+                                        instruments.append(child3.get('value'))
+                                elif child2.get('name') == 'processingLevel':
+                                    for child3 in child2:
+                                        processing_levels.append(child3.get('value'))
+                                elif child2.get('name') == 'productType':
+                                    for child3 in child2:
+                                        product_types.append(child3.get('value'))
+            if data_type_dict['instrument'] in instruments and \
+                    data_type_dict['processingLevel'] in processing_levels and \
+                    data_type_dict['productType'] in product_types:
+                self._provided_data_types.append(data_type)
 
     def encapsulates_data_type(self, data_type: str) -> bool:
         return False
-
-    def _get_parameters_as_dict(self) -> dict:
-        return {}
-
-    def can_update(self) -> bool:
-        return False
-
-    def update(self, data_set_meta_info: DataSetMetaInfo):
-        # todo raise exception
-        pass
-
-    def remove(self, data_set_meta_info: DataSetMetaInfo):
-        # todo raise exception
-        pass
-
-    def get_all_data(self) -> Sequence[DataSetMetaInfo]:
-        # todo raise exception
-        return []
 
 
 class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
@@ -181,34 +174,30 @@ class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
         return MundiMetaInfoProvider(parameters)
 
 
-class MundiFileSystem(FileSystem):
+class MundiFileSystem(LocallyWrappedFileSystem):
 
-    def __init__(self, parameters: dict):
+    def _init_wrapped_file_system(self, parameters: dict) -> None:
         if 'access_key_id' not in parameters.keys():
+            self._access_key_id = ''
             logging.warning('No access key id set. Will not be able to download data from MUNDI DIAS')
         else:
             self._access_key_id = parameters['access_key_id']
         if 'secret_access_key' not in parameters.keys():
             logging.warning('No secret access key set. Will not be able to download data from MUNDI DIAS')
+            self._secret_access_key = ''
         else:
             self._secret_access_key = parameters['secret_access_key']
-        if 'path' not in parameters.keys():
-            raise ValueError('Missing parameter \'path\'')
-        self._path = self._get_validated_path(parameters['path'])
-
-    @staticmethod
-    def _get_validated_path(path: str) -> str:
-        if not os.path.exists(path):
-            os.makedirs(path)
-        if not path.endswith('/'):
-            path += '/'
-        return path
+        if 'temp_dir' not in parameters.keys():
+            raise ValueError('No valid temporal directory provided for AWS S2 File System')
+        if not os.path.exists(parameters['temp_dir']):
+            os.makedirs(parameters['temp_dir'])
+        self._temp_dir = parameters['temp_dir']
 
     @classmethod
     def name(cls) -> str:
         return _FILE_SYSTEM_NAME
 
-    def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
+    def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         from com.obs.client.obs_client import ObsClient
         if data_set_meta_info.data_type not in _DATA_TYPE_PARAMETER_DICTS:
             logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
@@ -256,21 +245,17 @@ class MundiFileSystem(FileSystem):
             prefix = prefix.replace(placeholder, data_set_meta_info.identifier[start:end])
         return prefix
 
-    def get_parameters_as_dict(self) -> dict:
-        return {'access_key_id': self._access_key_id, 'secret_access_key': self._secret_access_key, 'path': self._path}
+    def _get_wrapped_parameters_as_dict(self) -> dict:
+        return {'access_key_id': self._access_key_id, 'secret_access_key': self._secret_access_key,
+                'temp_dir': self._temp_dir}
 
-    def can_put(self) -> bool:
-        return False
-
-    def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo) -> DataSetMetaInfo:
-        raise UserWarning('Method not supported')
-
-    def remove(self, data_set_meta_info: DataSetMetaInfo):
-        raise UserWarning('Method not supported')
-
-    def scan(self) -> Sequence[DataSetMetaInfo]:
-        logging.info('Skip scanning of MUNDI DIAS file system')
-        return []
+    def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
+        full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
+        if os.path.exists(full_path):
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+            else:
+                os.remove(full_path)
 
 
 class MundiFileSystemAccessor(FileSystemAccessor):
@@ -280,5 +265,5 @@ class MundiFileSystemAccessor(FileSystemAccessor):
         return _FILE_SYSTEM_NAME
 
     @classmethod
-    def create_from_parameters(cls, parameters: dict) -> FileSystem:
+    def create_from_parameters(cls, parameters: dict) -> MundiFileSystem:
         return MundiFileSystem(parameters)
