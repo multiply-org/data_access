@@ -6,6 +6,8 @@ This module contains the functionality to access data from the MUNDI DIAS.
 """
 from datetime import datetime
 from lxml.etree import XML
+import logging
+import os
 import requests
 from shapely.geometry import Polygon
 from shapely.wkt import dumps
@@ -30,11 +32,11 @@ _POLYGON_FORMAT = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
 _DATA_TYPE_PARAMETER_DICTS = {
     DataTypeConstants.S1_SLC:
         {'platform': 'Sentinel1', 'processingLevel': 'L1_', 'instrument': 'SAR', 'productType': 'SLC',
-         'baseBucket': 's1-l1-slc', 'storageStructure': 'YYYY/MM/DD/mm/pp/',
+         'baseBucket': 's1-l1-slc-{YYYY}-q{q}', 'storageStructure': 'YYYY/MM/DD/mm/pp/',
          'placeholders': {'mm': {'start': 4, 'end': 6}, 'pp': {'start': 14, 'end': 16}}},
     DataTypeConstants.S2_L1C:
         {'platform': 'Sentinel2', 'processingLevel': 'L1C', 'instrument': 'MSI', 'productType': 'IMAGE',
-         'baseBucket': 's2-l1c', 'storageStructure': 'UU/L/SS/YYYY/MM/DD/',
+         'baseBucket': 's2-l1c-{YYYY}-q{q}', 'storageStructure': 'UU/L/SS/YYYY/MM/DD/',
          'placeholders': {'UU': {'start': 39, 'end': 41}, 'L': {'start': 41, 'end': 42},
                           'SS': {'start': 42, 'end': 44}}},
     DataTypeConstants.S3_L1_OLCI_RR:
@@ -182,28 +184,92 @@ class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 class MundiFileSystem(FileSystem):
 
     def __init__(self, parameters: dict):
-        pass
+        if 'access_key_id' not in parameters.keys():
+            logging.warning('No access key id set. Will not be able to download data from MUNDI DIAS')
+        else:
+            self._access_key_id = parameters['access_key_id']
+        if 'secret_access_key' not in parameters.keys():
+            logging.warning('No secret access key set. Will not be able to download data from MUNDI DIAS')
+        else:
+            self._secret_access_key = parameters['secret_access_key']
+        if 'path' not in parameters.keys():
+            raise ValueError('Missing parameter \'path\'')
+        self._path = self._get_validated_path(parameters['path'])
+
+    @staticmethod
+    def _get_validated_path(path: str) -> str:
+        if not os.path.exists(path):
+            os.makedirs(path)
+        if not path.endswith('/'):
+            path += '/'
+        return path
 
     @classmethod
     def name(cls) -> str:
         return _FILE_SYSTEM_NAME
 
     def get(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
-        pass
+        from com.obs.client.obs_client import ObsClient
+        if data_set_meta_info.data_type not in _DATA_TYPE_PARAMETER_DICTS:
+            logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
+                            f'implementation.')
+            return []
+        bucket = self._get_bucket_name(data_set_meta_info)
+        prefix = self._get_prefix(data_set_meta_info)
+        obs_client = ObsClient(access_key_id=self._access_key_id,
+                               secret_access_key=self._secret_access_key,
+                               server=_MUNDI_SERVER)
+        objects = obs_client.listObjects(bucketName=bucket, prefix=prefix)
+        keys = []
+        if objects.status < 300:
+            for content in objects.body.contents:
+                keys.append(content.key)
+        else:
+            logging.error(objects.errorCode)
+        for key in keys:
+            relative_path_to_file = key.split(data_set_meta_info.identifier)[1]
+            resp = obs_client.getObject(bucket, key, downloadPath=f'{self._path}/{relative_path_to_file}')
+            if resp.status >= 300:
+                logging.error(objects.errorCode)
+        obs_client.close()
+
+    @staticmethod
+    def _get_bucket_name(data_set_meta_info: DataSetMetaInfo):
+        start_time = get_time_from_string(data_set_meta_info.start_time)
+        base_bucket_name = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['baseBucket']
+        quarter = int(int(start_time.month - 1) / 3) + 1
+        bucket_name = base_bucket_name.replace('{YYYY}', str(start_time.year))
+        bucket_name = bucket_name.replace('{q}', str(quarter))
+        return bucket_name
+
+    @staticmethod
+    def _get_prefix(data_set_meta_info: DataSetMetaInfo):
+        data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]
+        storage_structure = data_type_dict['storageStructure']
+        data_time = get_time_from_string(data_set_meta_info.start_time)
+        prefix = storage_structure.replace('{}'.format('YYYY'), '{:04d}'.format(data_time.year))
+        prefix = prefix.replace('{}'.format('MM'), '{:02d}'.format(data_time.month))
+        prefix = prefix.replace('{}'.format('DD'), '{:02d}'.format(data_time.day))
+        for placeholder in data_type_dict['placeholders'].keys():
+            start = data_type_dict['placeholders'][placeholder]['start']
+            end = data_type_dict['placeholders'][placeholder]['end']
+            prefix = prefix.replace(placeholder, data_set_meta_info.identifier[start:end])
+        return prefix
 
     def get_parameters_as_dict(self) -> dict:
-        pass
+        return {'access_key_id': self._access_key_id, 'secret_access_key': self._secret_access_key, 'path': self._path}
 
     def can_put(self) -> bool:
-        pass
+        return False
 
     def put(self, from_url: str, data_set_meta_info: DataSetMetaInfo) -> DataSetMetaInfo:
-        pass
+        raise UserWarning('Method not supported')
 
     def remove(self, data_set_meta_info: DataSetMetaInfo):
-        pass
+        raise UserWarning('Method not supported')
 
     def scan(self) -> Sequence[DataSetMetaInfo]:
+        logging.info('Skip scanning of MUNDI DIAS file system')
         return []
 
 

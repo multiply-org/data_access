@@ -1,6 +1,6 @@
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
-
+from multiply_data_access import DataSetMetaInfo
 from multiply_data_access.mundi_data_access import MundiFileSystem, MundiFileSystemAccessor, \
     MundiMetaInfoProvider, MundiMetaInfoProviderAccessor
 
@@ -102,8 +102,79 @@ def test_mundi_file_system_accessor_name():
 
 
 def test_mundi_file_system_accessor_create_from_parameters():
-    parameters = {}
-    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(parameters)
+    mundi_parameters = {'path': './test/test_data/'}
+    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
 
     assert mundi_file_system is not None
     assert isinstance(mundi_file_system, MundiFileSystem)
+
+
+def test_mundi_file_system_name():
+    assert 'MundiFileSystem' == MundiFileSystem.name()
+
+    mundi_parameters = {'access_key_id': '', 'secret_access_key': '', 'path': './test/test_data/'}
+    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+    assert 'MundiFileSystem' == mundi_file_system.name()
+
+
+def test_mundi_file_system_get_parameters_as_dict():
+    mundi_parameters = {'access_key_id': '', 'secret_access_key': '', 'path': './test/test_data/'}
+    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+
+    mundi_file_system_as_dict = mundi_file_system.get_parameters_as_dict()
+    assert mundi_file_system_as_dict is not None
+    assert dict == type(mundi_file_system_as_dict)
+    assert 3 == len(mundi_file_system_as_dict.keys())
+    assert 'access_key_id' in mundi_file_system_as_dict
+    assert '' == mundi_file_system_as_dict['access_key_id']
+    assert 'secret_access_key' in mundi_file_system_as_dict
+    assert '' == mundi_file_system_as_dict['secret_access_key']
+    assert 'path' in mundi_file_system_as_dict
+    assert './test/test_data/' == mundi_file_system_as_dict['path']
+
+
+def test_mundi_file_system_get_parameters_can_put():
+    mundi_parameters = {'access_key_id': '', 'secret_access_key': '', 'path': './test/test_data/'}
+    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+
+    assert not mundi_file_system.can_put()
+
+
+def test_mundi_file_system_get_bucket():
+    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+                                         start_time='2018-06-01', end_time='2018-06-01', data_type='S2_L1C',
+                                         identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
+    bucket_name = MundiFileSystem._get_bucket_name(data_set_meta_info)
+    assert 's2-l1c-2018-q2' == bucket_name
+
+    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+                                         start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
+                                         identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
+    bucket_name = MundiFileSystem._get_bucket_name(data_set_meta_info)
+    assert 's1-l1-slc-2018-q4' == bucket_name
+
+    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+                                         start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
+                                         identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
+    bucket_name = MundiFileSystem._get_bucket_name(data_set_meta_info)
+    assert 's3-olci' == bucket_name
+
+
+def test_mundi_file_system_get_prefix():
+    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+                                         start_time='2018-06-02', end_time='2018-06-02', data_type='S2_L1C',
+                                         identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
+    prefix = MundiFileSystem._get_prefix(data_set_meta_info)
+    assert '32/U/NE/2018/06/02/' == prefix
+
+    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+                                         start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
+                                         identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
+    prefix = MundiFileSystem._get_prefix(data_set_meta_info)
+    assert '2018/10/02/IW/DV/' == prefix
+
+    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+                                         start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
+                                         identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
+    prefix = MundiFileSystem._get_prefix(data_set_meta_info)
+    assert 'LFR/2018/01/05/' == prefix
