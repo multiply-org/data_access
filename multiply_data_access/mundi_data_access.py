@@ -16,9 +16,8 @@ from typing import List, Sequence
 import urllib.request as urllib2
 
 from multiply_core.observations import DataTypeConstants
-from multiply_core.util import FileRef, get_time_from_string
-from multiply_data_access.data_access import DataSetMetaInfo, FileSystem, FileSystemAccessor, MetaInfoProvider, \
-    MetaInfoProviderAccessor
+from multiply_core.util import FileRef, get_mime_type, get_time_from_string
+from multiply_data_access.data_access import DataSetMetaInfo, FileSystemAccessor, MetaInfoProviderAccessor
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
@@ -217,10 +216,14 @@ class MundiFileSystem(LocallyWrappedFileSystem):
             logging.error(objects.errorCode)
         for key in keys:
             relative_path_to_file = key.split(data_set_meta_info.identifier)[1]
-            resp = obs_client.getObject(bucket, key, downloadPath=f'{self._path}/{relative_path_to_file}')
+            resp = obs_client.getObject(bucket, key, downloadPath=f'{self._temp_dir}/{data_set_meta_info.identifier}/{relative_path_to_file}')
             if resp.status >= 300:
                 logging.error(objects.errorCode)
         obs_client.close()
+        file_ref = FileRef(f'{self._temp_dir}/{data_set_meta_info.identifier}',
+                           data_set_meta_info.start_time, data_set_meta_info.end_time,
+                           get_mime_type(data_set_meta_info.identifier))
+        return [file_ref]
 
     @staticmethod
     def _get_bucket_name(data_set_meta_info: DataSetMetaInfo):

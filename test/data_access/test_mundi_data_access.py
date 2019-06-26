@@ -1,8 +1,12 @@
+import os
+import pytest
+import shutil
+from multiply_data_access import DataSetMetaInfo
+from multiply_data_access.mundi_data_access import MundiFileSystem, MundiFileSystemAccessor, \
+    MundiMetaInfoProvider, MundiMetaInfoProviderAccessor
+
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
-from multiply_data_access import DataSetMetaInfo
-from multiply_data_access.mundi_data_access_2 import MundiFileSystem, MundiFileSystemAccessor, \
-    MundiMetaInfoProvider, MundiMetaInfoProviderAccessor
 META_INFO_FILE = './test/test_data/local_mundi_store.json'
 _MUNDI_DIR = './test/test_data/mundi_dir'
 _MUNDI_TEMP_DIR = './test/test_data/mundi_temp_dir'
@@ -118,6 +122,29 @@ def test_mundi_file_system_name():
     mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
     mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
     assert 'MundiFileSystem' == mundi_file_system.name()
+
+
+@pytest.mark.skip(reason='Test actually performs downloading and needs authorization')
+def test_mundi_file_system_get():
+    try:
+        mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
+        mundi_parameters['access_key_id'] = '' # enter access key id here
+        mundi_parameters['secret_access_key'] = '' # enter secret access key here
+        mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+        data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+                                             start_time='2018-09-26', end_time='2018-09-26', data_type='S2_L1C',
+                                             identifier='S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404')
+        file_refs = mundi_file_system.get(data_set_meta_info)
+        assert 1 == len(file_refs)
+        assert '{}/S2_L1C/2018/09/26/S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404'.format(_MUNDI_DIR) == file_refs[0].url
+        assert '2018-09-26' == file_refs[0].start_time
+        assert '2018-09-26' == file_refs[0].end_time
+        assert 'application/x-directory' == file_refs[0].mime_type
+    finally:
+        if os.path.exists(_MUNDI_TEMP_DIR):
+            shutil.rmtree(_MUNDI_TEMP_DIR)
+        if os.path.exists(_MUNDI_DIR):
+            shutil.rmtree(_MUNDI_DIR)
 
 
 def test_mundi_file_system_get_wrapped_parameters_as_dict():
