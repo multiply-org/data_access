@@ -13,7 +13,6 @@ else:
         'html5lib',
         'lxml',
         'multiply_core',
-        'nose',
         'shapely',
         'pytest',
         'pyyaml',
