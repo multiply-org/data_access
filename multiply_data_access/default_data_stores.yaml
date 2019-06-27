@@ -95,10 +95,16 @@
     FileSystem:
       type: MundiFileSystem
       parameters:
+        temp_dir: user_dir/temp/mundi/
+        access_key_id:
+        secret_access_key:
+        path: user_dir/data/
+        pattern: /dt/yy/mm/dd/
     Id: Mundi
     MetaInfoProvider:
       type: MundiMetaInfoProvider
       parameters:
+        path_to_json_file: user_dir/mundi_local_store.json
 - DataStore:
     FileSystem:
       type: LocalFileSystem
