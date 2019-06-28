@@ -33,19 +33,19 @@ _POLYGON_FORMAT = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
 _DATA_TYPE_PARAMETER_DICTS = {
     DataTypeConstants.S1_SLC:
         {'platform': 'Sentinel1', 'processingLevel': 'L1_', 'instrument': 'SAR', 'productType': 'SLC',
-         'baseBucket': 's1-l1-slc-{YYYY}-q{q}', 'storageStructure': 'YYYY/MM/DD/mm/pp/',
+         'baseBuckets': ['s1-l1-slc-{YYYY}-q{q}'], 'storageStructure': 'YYYY/MM/DD/mm/pp/',
          'placeholders': {'mm': {'start': 4, 'end': 6}, 'pp': {'start': 14, 'end': 16}}},
     DataTypeConstants.S2_L1C:
         {'platform': 'Sentinel2', 'processingLevel': 'L1C', 'instrument': 'MSI', 'productType': 'IMAGE',
-         'baseBucket': 's2-l1c-{YYYY}-q{q}', 'storageStructure': 'UU/L/SS/YYYY/MM/DD/',
+         'baseBuckets': ['s2-l1c-{YYYY}-q{q}', 's2-l1c-{YYYY}', 's2-l1c'], 'storageStructure': 'UU/L/SS/YYYY/MM/DD/',
          'placeholders': {'UU': {'start': 39, 'end': 41}, 'L': {'start': 41, 'end': 42},
                           'SS': {'start': 42, 'end': 44}}},
     DataTypeConstants.S3_L1_OLCI_RR:
         {'platform': 'Sentinel3', 'processingLevel': 'L1_', 'instrument': 'OLCI', 'productType': 'OL_1_ERR___',
-         'baseBucket': 's3-olci', 'storageStructure': 'LRR/YYYY/MM/DD/', 'placeholders': {}},
+         'baseBuckets': ['s3-olci'], 'storageStructure': 'LRR/YYYY/MM/DD/', 'placeholders': {}},
     DataTypeConstants.S3_L1_OLCI_FR:
         {'platform': 'Sentinel3', 'processingLevel': 'L1_', 'instrument': 'OLCI', 'productType': 'OL_1_EFR___',
-         'baseBucket': 's3-olci', 'storageStructure': 'LFR/YYYY/MM/DD/', 'placeholders': {}}
+         'baseBuckets': ['s3-olci'], 'storageStructure': 'LFR/YYYY/MM/DD/', 'placeholders': {}}
 }
 _MUNDI_SERVER = 'obs.otc.t-systems.com'
 
@@ -202,23 +202,30 @@ class MundiFileSystem(LocallyWrappedFileSystem):
             logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
                             f'implementation.')
             return []
-        bucket = self._get_bucket_name(data_set_meta_info)
+        buckets = self._get_bucket_names(data_set_meta_info)
         prefix = self._get_prefix(data_set_meta_info)
         obs_client = ObsClient(access_key_id=self._access_key_id,
                                secret_access_key=self._secret_access_key,
                                server=_MUNDI_SERVER)
-        objects = obs_client.listObjects(bucketName=bucket, prefix=prefix)
         keys = []
-        if objects.status < 300:
-            for content in objects.body.contents:
-                keys.append(content.key)
-        else:
-            logging.error(objects.errorCode)
+        right_bucket = None
+        for bucket in buckets:
+            right_bucket = bucket
+            objects = obs_client.listObjects(bucketName=bucket, prefix=prefix)
+            if objects.status < 300:
+                for content in objects.body.contents:
+                    keys.append(content.key)
+                break
+            else:
+                logging.error(objects.errorCode)
+        if len(keys) == 0:
+            return []
         for key in keys:
             relative_path_to_file = key.split(data_set_meta_info.identifier)[1]
-            resp = obs_client.getObject(bucket, key, downloadPath=f'{self._temp_dir}/{data_set_meta_info.identifier}/{relative_path_to_file}')
+            resp = obs_client.getObject(right_bucket, key, downloadPath=f'{self._temp_dir}/{data_set_meta_info.identifier}/{relative_path_to_file}')
             if resp.status >= 300:
-                logging.error(objects.errorCode)
+                logging.error(resp.errorCode)
+                return []
         obs_client.close()
         file_ref = FileRef(f'{self._temp_dir}/{data_set_meta_info.identifier}',
                            data_set_meta_info.start_time, data_set_meta_info.end_time,
@@ -226,13 +233,16 @@ class MundiFileSystem(LocallyWrappedFileSystem):
         return [file_ref]
 
     @staticmethod
-    def _get_bucket_name(data_set_meta_info: DataSetMetaInfo):
+    def _get_bucket_names(data_set_meta_info: DataSetMetaInfo) -> List[str]:
         start_time = get_time_from_string(data_set_meta_info.start_time)
-        base_bucket_name = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['baseBucket']
-        quarter = int(int(start_time.month - 1) / 3) + 1
-        bucket_name = base_bucket_name.replace('{YYYY}', str(start_time.year))
-        bucket_name = bucket_name.replace('{q}', str(quarter))
-        return bucket_name
+        base_bucket_names = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['baseBuckets']
+        bucket_names = []
+        for base_bucket_name in base_bucket_names:
+            quarter = int(int(start_time.month - 1) / 3) + 1
+            bucket_name = base_bucket_name.replace('{YYYY}', str(start_time.year))
+            bucket_name = bucket_name.replace('{q}', str(quarter))
+            bucket_names.append(bucket_name)
+        return bucket_names
 
     @staticmethod
     def _get_prefix(data_set_meta_info: DataSetMetaInfo):
