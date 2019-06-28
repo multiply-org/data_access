@@ -215,7 +215,8 @@ class MundiFileSystem(LocallyWrappedFileSystem):
             if objects.status < 300:
                 for content in objects.body.contents:
                     keys.append(content.key)
-                break
+                if len(keys) > 0:
+                    break
             else:
                 logging.error(objects.errorCode)
         if len(keys) == 0:
