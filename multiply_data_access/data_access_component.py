@@ -28,6 +28,8 @@ class DataAccessComponent(object):
     def __init__(self):
         self._data_stores = []
         self._read_registered_data_stores()
+
+    def update(self):
         for data_store in self._data_stores:
             data_store.update()
 
