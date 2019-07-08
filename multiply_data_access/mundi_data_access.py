@@ -64,32 +64,38 @@ class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         data_set_meta_infos = []
         for data_type in data_types:
             if self.provides_data_type(data_type):
-                mundi_query = self._create_mundi_query(roi, data_type, start_time, end_time)
-                response = requests.get(mundi_query)
-                response_xml = XML(response.content)
-                for child in response_xml:
-                    if child.tag == '{http://www.w3.org/2005/Atom}entry':
-                        data_set_meta_info_id = ""
-                        data_set_meta_info_time = ""
-                        data_set_meta_info_coverage = ""
-                        for child2 in child:
-                            if child2.tag == '{http://www.w3.org/2005/Atom}id':
-                                data_set_meta_info_id = child2.text
-                            elif child2.tag == '{http://www.georss.org/georss}polygon':
-                                data_set_meta_info_coverage = self._convert_mundi_coverage(child2.text)
-                            elif child2.tag == '{http://tas/DIAS}sensingStartDate':
-                                data_set_meta_info_time = child2.text
-                        data_set_meta_info = DataSetMetaInfo(data_set_meta_info_coverage, data_set_meta_info_time,
-                                                             data_set_meta_info_time, data_type, data_set_meta_info_id)
-                        data_set_meta_infos.append(data_set_meta_info)
+                run = 0
+                continue_checking_for_data_sets = True
+                while continue_checking_for_data_sets:
+                    mundi_query = self._create_mundi_query(roi, data_type, start_time, end_time, run)
+                    run += 1
+                    response = requests.get(mundi_query)
+                    response_xml = XML(response.content)
+                    continue_checking_for_data_sets = False
+                    for child in response_xml:
+                        if child.tag == '{http://www.w3.org/2005/Atom}entry':
+                            data_set_meta_info_id = ""
+                            data_set_meta_info_time = ""
+                            data_set_meta_info_coverage = ""
+                            for child2 in child:
+                                if child2.tag == '{http://www.w3.org/2005/Atom}id':
+                                    data_set_meta_info_id = child2.text
+                                elif child2.tag == '{http://www.georss.org/georss}polygon':
+                                    data_set_meta_info_coverage = self._convert_mundi_coverage(child2.text)
+                                elif child2.tag == '{http://tas/DIAS}sensingStartDate':
+                                    data_set_meta_info_time = child2.text
+                            data_set_meta_info = DataSetMetaInfo(data_set_meta_info_coverage, data_set_meta_info_time,
+                                                                 data_set_meta_info_time, data_type, data_set_meta_info_id)
+                            data_set_meta_infos.append(data_set_meta_info)
+                            continue_checking_for_data_sets = True
         return data_set_meta_infos
 
     @staticmethod
-    def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str) -> str:
+    def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str, run: int) -> str:
         data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-        query_part = "(sensingStartDate:[{} TO {}]AND footprint:\"Intersects({})\")&processingLevel={}&instrument={}" \
-                     "&productType={}"
-        query_part = query_part.format(start_time, end_time, roi, data_type_dict['processingLevel'],
+        query_part = "(sensingStartDate:[{} TO {}]AND footprint:\"Intersects({})\")&startIndex={}&maxRecords=10" \
+                     "&processingLevel={}&instrument={}&productType={}"
+        query_part = query_part.format(start_time, end_time, roi, (10 * run) + 1, data_type_dict['processingLevel'],
                                        data_type_dict['instrument'], data_type_dict['productType'])
         return _BASE_CATALOGUE_URL.format(data_type_dict['platform'], query_part)
 

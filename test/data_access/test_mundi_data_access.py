@@ -92,6 +92,16 @@ def test_mundi_meta_info_provider_query():
     assert '2018-06-04T10:30:21Z' == data_set_meta_infos[1].end_time
 
 
+def test_mundi_meta_info_provider_query_more_than_fifty_data_sets():
+    parameters = {'path_to_json_file': META_INFO_FILE}
+    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-03-01;2018-09-05;S2_L1C"
+    data_set_meta_infos = mundi_meta_info_provider.query(query_string)
+
+    assert 77 == len(data_set_meta_infos)
+
+
 def test_mundi_meta_info_provider_accessor_name():
     assert 'MundiMetaInfoProvider' == MundiMetaInfoProviderAccessor.name()
 
