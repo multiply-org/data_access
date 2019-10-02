@@ -93,7 +93,7 @@ class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
     @staticmethod
     def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str, run: int) -> str:
         data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-        query_part = "(sensingStartDate:[{} TO {}]AND footprint:\"Intersects({})\")&startIndex={}&maxRecords=10" \
+        query_part = "(sensingStartDate:[{} TO {}] AND footprint:\"Intersects({})\")&startIndex={}&maxRecords=10" \
                      "&processingLevel={}&instrument={}&productType={}"
         query_part = query_part.format(start_time, end_time, roi, (10 * run) + 1, data_type_dict['processingLevel'],
                                        data_type_dict['instrument'], data_type_dict['productType'])
