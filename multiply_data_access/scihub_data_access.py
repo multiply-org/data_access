@@ -17,6 +17,7 @@ from shapely.wkt import dumps
 from sys import stdout
 from typing import List, Sequence
 import urllib.request as urllib2
+from urllib.error import HTTPError
 
 from multiply_core.observations import DataTypeConstants
 from multiply_core.util import FileRef, get_mime_type, get_time_from_string
@@ -166,28 +167,32 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
         authorization = base64.encodebytes(str.encode('{}:{}'.format(self._username, self._password))). \
             replace(b'\n', b'').decode()
         request.add_header('Authorization', 'Basic {}'.format(authorization))
-        remote_file = self._opener.open(request)
-        temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
-        logging.info('Downloading {}'.format(data_set_meta_info.identifier))
-        with open(temp_url, 'wb') as temp_file:
-            total_size_in_bytes = int(remote_file.info()['Content-Length'])
-            one_percent = total_size_in_bytes / 100
-            downloaded_bytes = 0
-            next_threshold = one_percent
-            length = 1024 * 1024
-            buf = remote_file.read(length)
-            while buf:
-                temp_file.write(buf)
+        try:
+            remote_file = self._opener.open(request)
+            temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
+            logging.info('Downloading {}'.format(data_set_meta_info.identifier))
+            with open(temp_url, 'wb') as temp_file:
+                total_size_in_bytes = int(remote_file.info()['Content-Length'])
+                one_percent = total_size_in_bytes / 100
+                downloaded_bytes = 0
+                next_threshold = one_percent
+                length = 1024 * 1024
                 buf = remote_file.read(length)
-                downloaded_bytes += 1024 * 1024
-                if downloaded_bytes > next_threshold:
-                    stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
-                    stdout.flush()
-                    next_threshold += one_percent
-        logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
-        file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                while buf:
+                    temp_file.write(buf)
+                    buf = remote_file.read(length)
+                    downloaded_bytes += 1024 * 1024
+                    if downloaded_bytes > next_threshold:
+                        stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
+                        stdout.flush()
+                        next_threshold += one_percent
+            logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
+            file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
                                  get_mime_type(temp_url)))
+        except HTTPError as e:
+            logging.info(f"Could not download from url '{file_url}'. {e.reason}")
         return file_refs
+
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
         full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
