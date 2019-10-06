@@ -29,8 +29,7 @@ _BASE_URL = 'https://mundiwebservices.com/acdc/catalog/proxy/search/'
 _COLLECTIONS_DESCRIPTIONS_ADDITION = 'collections/opensearch/description.xml'
 _COLLECTION_DESCRIPTION_ADDITION = '{}/opensearch/description.xml'
 
-# _BASE_CATALOGUE_URL = "https://mundiwebservices.com/acdc/catalog/proxy/search/{}/opensearch?q=({})"
-_BASE_CATALOGUE_URL = "https://scihub.copernicus.eu/dhus/search?start={}&rows=100&q=({})"
+_BASE_CATALOGUE_URL = "https://scihub.copernicus.eu/dhus/search?start={}&rows=50&q=({})"
 _POLYGON_FORMAT = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
 _DATA_TYPE_PARAMETER_DICTS = {
     DataTypeConstants.S1_SLC: {'platformname': 'Sentinel-1', 'productType': 'SLC'}
@@ -45,7 +44,12 @@ class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         return _META_INFO_PROVIDER_NAME
 
     def _init_wrapped_meta_info_provider(self, parameters: dict) -> None:
-        pass
+        if 'username' not in parameters.keys():
+            raise ValueError('No username provided for Lp Daac File System')
+        self._username = parameters['username']
+        if 'password' not in parameters.keys():
+            raise ValueError('No password provided for Lp Daac File System')
+        self._password = parameters['password']
 
     def _query_wrapped_meta_info_provider(self, query_string: str,
                                           local_data_set_meta_infos: List[DataSetMetaInfo]) -> List[DataSetMetaInfo]:
@@ -61,23 +65,34 @@ class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                 while continue_checking_for_data_sets:
                     scihub_query = self._create_scihub_query(roi, data_type, start_time, end_time, run)
                     run += 1
-                    response = requests.get(scihub_query, auth=('tfincke', 'PwfSH198'))
+                    response = requests.get(scihub_query, auth=(self._username, self._password))
                     response_xml = XML(response.content)
                     continue_checking_for_data_sets = False
                     for child in response_xml:
                         if child.tag == '{http://www.w3.org/2005/Atom}entry':
                             data_set_meta_info_id = ""
-                            data_set_meta_info_time = ""
+                            data_set_meta_info_start_time = ""
+                            data_set_meta_info_end_time = ""
                             data_set_meta_info_coverage = ""
+                            data_set_meta_info_reference = ""
                             for child2 in child:
                                 if child2.tag == '{http://www.w3.org/2005/Atom}id':
+                                    data_set_meta_info_reference = child2.text
+                                elif child2.tag == '{http://www.w3.org/2005/Atom}title':
                                     data_set_meta_info_id = child2.text
-                                elif child2.tag == '{http://www.georss.org/georss}polygon':
-                                    data_set_meta_info_coverage = self._convert_mundi_coverage(child2.text)
-                                elif child2.tag == '{http://tas/DIAS}sensingStartDate':
-                                    data_set_meta_info_time = child2.text
-                            data_set_meta_info = DataSetMetaInfo(data_set_meta_info_coverage, data_set_meta_info_time,
-                                                                 data_set_meta_info_time, data_type, data_set_meta_info_id)
+                                elif child2.tag == '{http://www.w3.org/2005/Atom}date' and 'name' in child2.attrib \
+                                        and child2.attrib['name'] == 'beginposition':
+                                    data_set_meta_info_start_time = child2.text
+                                elif child2.tag == '{http://www.w3.org/2005/Atom}date' and 'name' in child2.attrib \
+                                        and child2.attrib['name'] == 'endposition':
+                                    data_set_meta_info_end_time = child2.text
+                                elif child2.tag == '{http://www.w3.org/2005/Atom}str' and 'name' in child2.attrib \
+                                        and child2.attrib['name'] == 'footprint':
+                                    data_set_meta_info_coverage = child2.text
+                            data_set_meta_info = \
+                                DataSetMetaInfo(data_set_meta_info_coverage, data_set_meta_info_start_time,
+                                                data_set_meta_info_end_time, data_type, data_set_meta_info_id,
+                                                data_set_meta_info_reference)
                             data_set_meta_infos.append(data_set_meta_info)
                             continue_checking_for_data_sets = True
         return data_set_meta_infos
@@ -94,20 +109,15 @@ class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
     @staticmethod
     def _create_scihub_query(roi: str, data_type: str, start_time: str, end_time: str, run: int) -> str:
         data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-        # "https: // scihub.copernicus.eu / dhus / search?start = 0 & rows = 100 & q = " \
-        # "((beginPosition:[2019-09-29T00:00:00.000Z TO 2019-10-01T23:59:59.999Z] AND " \
-        # "endPosition:[2019-09-29T00:00:00.000Z TO 2019-10-01T23:59:59.999Z]) AND " \
-        # "(platformname:Sentinel-1 AND producttype:SLC) AND " \
-        # "(footprint: \"Intersects(POLYGON((-4.53%2029.85,26.75%2029.85,26.75%2046.80,-4.53%2046.80,-4.53%2029.85)))\"))"
         query_part = "(beginPosition:[{} TO {}] AND endPosition:[{} TO {}]) " \
                      "AND (footprint:\"Intersects({})\") " \
                      "AND (platformname:{} AND producttype:{})"
         query_part = query_part.format(start_time, end_time, start_time, end_time, roi,
                                        data_type_dict['platformname'], data_type_dict['productType'])
-        return _BASE_CATALOGUE_URL.format((100 * run), query_part)
+        return _BASE_CATALOGUE_URL.format((50 * run), query_part)
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
-        return {}
+        return {'username': self._username, 'password': self._password}
 
     def provides_data_type(self, data_type: str) -> bool:
         return data_type == DataTypeConstants.S1_SLC
