@@ -37,7 +37,7 @@ setup(name='multiply-data-access',
               'lpdaac_file_system = multiply_data_access:lpdaac_data_access.LpDaacFileSystemAccessor',
               'http_file_system = multiply_data_access:general_remote_access.HttpFileSystemAccessor',
               'vrt_file_system = multiply_data_access:vrt_data_access.VrtFileSystemAccessor',
-              'mundi_file_system = multiply_data_access:mundi_data_access.MundiFileSystemAccessor'
+              'mundi_file_system = multiply_data_access:mundi_data_access.MundiFileSystemAccessor',
               'scihub_file_system = multiply_data_access:scihub_data_access.SciHubFileSystemAccessor'
           ],
           'meta_info_provider_plugins': [
@@ -48,6 +48,7 @@ setup(name='multiply-data-access',
               'multiply_data_access:lpdaac_data_access.LpDaacMetaInfoProviderAccessor',
               'http_meta_info_provider = multiply_data_access:general_remote_access.HttpMetaInfoProviderAccessor',
               'vrt_meta_info_provider = multiply_data_access:vrt_data_access.VrtMetaInfoProviderAccessor',
+              'mundi_meta_info_provider = multiply_data_access:mundi_data_access.MundiMetaInfoProviderAccessor',
               'scihub_meta_info_provider = multiply_data_access:scihub_data_access.SciHubMetaInfoProviderAccessor'
           ],
       },
