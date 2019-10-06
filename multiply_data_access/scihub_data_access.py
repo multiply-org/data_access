@@ -5,13 +5,16 @@ Description
 This module contains the functionality to access data from the MUNDI DIAS.
 """
 from datetime import datetime
+from http.cookiejar import CookieJar
 from lxml.etree import XML
+import base64
 import logging
 import os
 import requests
 import shutil
 from shapely.geometry import Polygon
 from shapely.wkt import dumps
+from sys import stdout
 from typing import List, Sequence
 import urllib.request as urllib2
 
@@ -25,16 +28,11 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 _META_INFO_PROVIDER_NAME = 'SciHubMetaInfoProvider'
 _FILE_SYSTEM_NAME = 'SciHubFileSystem'
 
-_BASE_URL = 'https://mundiwebservices.com/acdc/catalog/proxy/search/'
-_COLLECTIONS_DESCRIPTIONS_ADDITION = 'collections/opensearch/description.xml'
-_COLLECTION_DESCRIPTION_ADDITION = '{}/opensearch/description.xml'
-
 _BASE_CATALOGUE_URL = "https://scihub.copernicus.eu/dhus/search?start={}&rows=50&q=({})"
-_POLYGON_FORMAT = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
 _DATA_TYPE_PARAMETER_DICTS = {
     DataTypeConstants.S1_SLC: {'platformname': 'Sentinel-1', 'productType': 'SLC'}
 }
-_MUNDI_SERVER = 'obs.otc.t-systems.com'
+_DOWNLOAD_URL = "https://scihub.copernicus.eu/dhus/odata/v1/Products(\'{}\')/$value"
 
 
 class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
@@ -45,10 +43,10 @@ class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
     def _init_wrapped_meta_info_provider(self, parameters: dict) -> None:
         if 'username' not in parameters.keys():
-            raise ValueError('No username provided for Lp Daac File System')
+            raise ValueError('No username provided for Copernicus Sci Hub')
         self._username = parameters['username']
         if 'password' not in parameters.keys():
-            raise ValueError('No password provided for Lp Daac File System')
+            raise ValueError('No password provided for Copernicus Sci Hub')
         self._password = parameters['password']
 
     def _query_wrapped_meta_info_provider(self, query_string: str,
@@ -142,94 +140,54 @@ class SciHubMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 
 class SciHubFileSystem(LocallyWrappedFileSystem):
 
-    def _init_wrapped_file_system(self, parameters: dict) -> None:
-        if 'access_key_id' not in parameters.keys():
-            self._access_key_id = ''
-            logging.warning('No access key id set. Will not be able to download data from MUNDI DIAS')
-        else:
-            self._access_key_id = parameters['access_key_id']
-        if 'secret_access_key' not in parameters.keys():
-            logging.warning('No secret access key set. Will not be able to download data from MUNDI DIAS')
-            self._secret_access_key = ''
-        else:
-            self._secret_access_key = parameters['secret_access_key']
-        if 'temp_dir' not in parameters.keys():
-            raise ValueError('No valid temporal directory provided for AWS S2 File System')
-        if not os.path.exists(parameters['temp_dir']):
-            os.makedirs(parameters['temp_dir'])
-        self._temp_dir = parameters['temp_dir']
-
     @classmethod
     def name(cls) -> str:
         return _FILE_SYSTEM_NAME
 
+    def _init_wrapped_file_system(self, parameters: dict) -> None:
+        if 'username' not in parameters.keys():
+            raise ValueError('No username provided for Copernicus Sci Hub')
+        self._username = parameters['username']
+        if 'password' not in parameters.keys():
+            raise ValueError('No password provided for Copernicus Sci Hub')
+        self._password = parameters['password']
+        if 'temp_dir' not in parameters.keys():
+            raise ValueError('No valid temporal directory provided for Copernicus Sci Hub File System')
+        self._temp_dir = parameters['temp_dir']
+        if not os.path.exists(parameters['temp_dir']):
+            os.makedirs(parameters['temp_dir'])
+        cj = CookieJar()
+        self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
-        from com.obs.client.obs_client import ObsClient
-        if data_set_meta_info.data_type not in _DATA_TYPE_PARAMETER_DICTS:
-            logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
-                            f'implementation.')
-            return []
-        buckets = self._get_bucket_names(data_set_meta_info)
-        prefix = self._get_prefix(data_set_meta_info)
-        obs_client = ObsClient(access_key_id=self._access_key_id,
-                               secret_access_key=self._secret_access_key,
-                               server=_MUNDI_SERVER)
-        keys = []
-        right_bucket = None
-        for bucket in buckets:
-            right_bucket = bucket
-            objects = obs_client.listObjects(bucketName=bucket, prefix=prefix)
-            if objects.status < 300:
-                for content in objects.body.contents:
-                    keys.append(content.key)
-                if len(keys) > 0:
-                    break
-            else:
-                logging.error(objects.errorCode)
-        if len(keys) == 0:
-            return []
-        for key in keys:
-            relative_path_to_file = key.split(data_set_meta_info.identifier)[1]
-            resp = obs_client.getObject(right_bucket, key, downloadPath=
-            f'{self._temp_dir}/{data_set_meta_info.identifier}/{relative_path_to_file}')
-            if resp.status >= 300:
-                logging.error(resp.errorCode)
-                return []
-        obs_client.close()
-        file_ref = FileRef(f'{self._temp_dir}/{data_set_meta_info.identifier}',
-                           data_set_meta_info.start_time, data_set_meta_info.end_time,
-                           get_mime_type(data_set_meta_info.identifier))
-        return [file_ref]
-
-    @staticmethod
-    def _get_bucket_names(data_set_meta_info: DataSetMetaInfo) -> List[str]:
-        start_time = get_time_from_string(data_set_meta_info.start_time)
-        base_bucket_names = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['baseBuckets']
-        bucket_names = []
-        for base_bucket_name in base_bucket_names:
-            quarter = int(int(start_time.month - 1) / 3) + 1
-            bucket_name = base_bucket_name.replace('{YYYY}', str(start_time.year))
-            bucket_name = bucket_name.replace('{q}', str(quarter))
-            bucket_names.append(bucket_name)
-        return bucket_names
-
-    @staticmethod
-    def _get_prefix(data_set_meta_info: DataSetMetaInfo):
-        data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]
-        storage_structure = data_type_dict['storageStructure']
-        data_time = get_time_from_string(data_set_meta_info.start_time)
-        prefix = storage_structure.replace('{}'.format('YYYY'), '{:04d}'.format(data_time.year))
-        prefix = prefix.replace('{}'.format('MM'), '{:02d}'.format(data_time.month))
-        prefix = prefix.replace('{}'.format('DD'), '{:02d}'.format(data_time.day))
-        for placeholder in data_type_dict['placeholders'].keys():
-            start = data_type_dict['placeholders'][placeholder]['start']
-            end = data_type_dict['placeholders'][placeholder]['end']
-            prefix = prefix.replace(placeholder, data_set_meta_info.identifier[start:end])
-        return prefix
-
-    def _get_wrapped_parameters_as_dict(self) -> dict:
-        return {'access_key_id': self._access_key_id, 'secret_access_key': self._secret_access_key,
-                'temp_dir': self._temp_dir}
+        file_refs = []
+        file_url = _DOWNLOAD_URL.format(data_set_meta_info.referenced_data)
+        request = urllib2.Request(file_url)
+        authorization = base64.encodebytes(str.encode('{}:{}'.format(self._username, self._password))). \
+            replace(b'\n', b'').decode()
+        request.add_header('Authorization', 'Basic {}'.format(authorization))
+        remote_file = self._opener.open(request)
+        temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
+        logging.info('Downloading {}'.format(data_set_meta_info.identifier))
+        with open(temp_url, 'wb') as temp_file:
+            total_size_in_bytes = int(remote_file.info()['Content-Length'])
+            one_percent = total_size_in_bytes / 100
+            downloaded_bytes = 0
+            next_threshold = one_percent
+            length = 1024 * 1024
+            buf = remote_file.read(length)
+            while buf:
+                temp_file.write(buf)
+                buf = remote_file.read(length)
+                downloaded_bytes += 1024 * 1024
+                if downloaded_bytes > next_threshold:
+                    stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
+                    stdout.flush()
+                    next_threshold += one_percent
+        logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
+        file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                                 get_mime_type(temp_url)))
+        return file_refs
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
         full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
@@ -238,6 +196,9 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
                 shutil.rmtree(full_path)
             else:
                 os.remove(full_path)
+
+    def _get_wrapped_parameters_as_dict(self) -> dict:
+        return {'username': self._username, 'password': self._password, 'temp_dir': self._temp_dir}
 
 
 class SciHubFileSystemAccessor(FileSystemAccessor):

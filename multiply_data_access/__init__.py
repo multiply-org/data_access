@@ -11,6 +11,8 @@ from .registrations import create_file_system_from_dict, create_meta_info_provid
 from .vrt_data_access import VrtFileSystem, VrtFileSystemAccessor, VrtMetaInfoProvider, VrtMetaInfoProviderAccessor
 from .mundi_data_access import MundiFileSystem, MundiFileSystemAccessor, MundiMetaInfoProvider, \
     MundiMetaInfoProviderAccessor
+from .scihub_data_access import SciHubFileSystemAccessor, SciHubFileSystem, SciHubMetaInfoProviderAccessor, \
+    SciHubMetaInfoProvider
 from .data_access_component import DataAccessComponent
 from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem

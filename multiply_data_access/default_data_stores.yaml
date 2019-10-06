@@ -117,3 +117,19 @@
       parameters:
         path_to_json_file: user_dir/s2_l2_store.json
         supported_data_types: AWS_S2_L2
+- DataStore:
+    FileSystem:
+      type: SciHubFileSystem
+      parameters:
+        temp_dir: user_dir/temp/scihub/
+        path: user_dir/data/
+        pattern: /dt/yy/mm/dd/
+        username:
+        password:
+    Id: SciHub
+    MetaInfoProvider:
+      type: SciHubMetaInfoProvider
+      parameters:
+        path_to_json_file: user_dir/scihub_store.json
+        username:
+        password:
