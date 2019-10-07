@@ -12,6 +12,7 @@ import logging
 import os
 import requests
 import shutil
+import time
 from shapely.geometry import Polygon
 from shapely.wkt import dumps
 from sys import stdout
@@ -157,8 +158,6 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
         self._temp_dir = parameters['temp_dir']
         if not os.path.exists(parameters['temp_dir']):
             os.makedirs(parameters['temp_dir'])
-        cj = CookieJar()
-        self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
@@ -168,7 +167,17 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
             replace(b'\n', b'').decode()
         request.add_header('Authorization', 'Basic {}'.format(authorization))
         try:
-            remote_file = self._opener.open(request)
+            status = 202
+            first = True
+            while status != 200:
+                if not first:
+                    time.sleep(10)
+                cj = CookieJar()
+                opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+                remote_file = opener.open(request)
+                status = remote_file.status
+                logging.info(f"Request '{file_url}' awaiting status")
+                first = False
             temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
             logging.info('Downloading {}'.format(data_set_meta_info.identifier))
             with open(temp_url, 'wb') as temp_file:
@@ -186,9 +195,11 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
                         stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
                         stdout.flush()
                         next_threshold += one_percent
+            temp_file.close()
             logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
             file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
                                  get_mime_type(temp_url)))
+            opener.close()
         except HTTPError as e:
             logging.info(f"Could not download from url '{file_url}'. {e.reason}")
         return file_refs
