@@ -178,10 +178,11 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
                 status = remote_file.status
                 logging.info(f"Request '{file_url}' awaiting status")
                 first = False
+            total_size_in_bytes = int(remote_file.info()['Content-Length'])
+            # todo check in advance whether there is enough disk space left
             temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
             logging.info('Downloading {}'.format(data_set_meta_info.identifier))
             with open(temp_url, 'wb') as temp_file:
-                total_size_in_bytes = int(remote_file.info()['Content-Length'])
                 one_percent = total_size_in_bytes / 100
                 downloaded_bytes = 0
                 next_threshold = one_percent
@@ -198,7 +199,7 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
             temp_file.close()
             logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
             file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
-                                 get_mime_type(temp_url)))
+                                     get_mime_type(temp_url)))
             opener.close()
         except HTTPError as e:
             logging.info(f"Could not download from url '{file_url}'. {e.reason}")
