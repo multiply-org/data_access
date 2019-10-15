@@ -9,8 +9,8 @@ from .aws_s2_file_system import AwsS2FileSystem, AwsS2FileSystemAccessor
 from .aws_s2_meta_info_provider import AwsS2MetaInfoProvider, AwsS2MetaInfoProviderAccessor
 from .registrations import create_file_system_from_dict, create_meta_info_provider_from_dict
 from .vrt_data_access import VrtFileSystem, VrtFileSystemAccessor, VrtMetaInfoProvider, VrtMetaInfoProviderAccessor
-from .mundi_data_access import MundiFileSystem, MundiFileSystemAccessor, MundiMetaInfoProvider, \
-    MundiMetaInfoProviderAccessor
+from .mundi_data_access import MundiMetaInfoProvider, MundiMetaInfoProviderAccessor, MundiObsFileSystem, \
+    MundiObsFileSystemAccessor
 from .scihub_data_access import SciHubFileSystemAccessor, SciHubFileSystem, SciHubMetaInfoProviderAccessor, \
     SciHubMetaInfoProvider
 from .data_access_component import DataAccessComponent

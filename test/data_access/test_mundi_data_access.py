@@ -2,7 +2,7 @@ import os
 import pytest
 import shutil
 from multiply_data_access import DataSetMetaInfo
-from multiply_data_access.mundi_data_access import MundiFileSystem, MundiFileSystemAccessor, \
+from multiply_data_access.mundi_data_access import MundiObsFileSystem, MundiObsFileSystemAccessor, \
     MundiMetaInfoProvider, MundiMetaInfoProviderAccessor
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
@@ -149,22 +149,22 @@ def test_mundi_meta_info_provider_accessor_create_from_parameters():
 
 
 def test_mundi_file_system_accessor_name():
-    assert 'MundiFileSystem' == MundiFileSystemAccessor.name()
+    assert 'MundiFileSystem' == MundiObsFileSystemAccessor.name()
 
 
 def test_mundi_file_system_accessor_create_from_parameters():
     mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
-    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+    mundi_file_system = MundiObsFileSystemAccessor.create_from_parameters(mundi_parameters)
 
     assert mundi_file_system is not None
-    assert isinstance(mundi_file_system, MundiFileSystem)
+    assert isinstance(mundi_file_system, MundiObsFileSystem)
 
 
 def test_mundi_file_system_name():
-    assert 'MundiFileSystem' == MundiFileSystem.name()
+    assert 'MundiFileSystem' == MundiObsFileSystem.name()
 
     mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
-    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+    mundi_file_system = MundiObsFileSystemAccessor.create_from_parameters(mundi_parameters)
     assert 'MundiFileSystem' == mundi_file_system.name()
 
 
@@ -174,7 +174,7 @@ def test_mundi_file_system_get():
         mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
         mundi_parameters['access_key_id'] = '' # enter access key id here
         mundi_parameters['secret_access_key'] = '' # enter secret access key here
-        mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+        mundi_file_system = MundiObsFileSystemAccessor.create_from_parameters(mundi_parameters)
         data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                              start_time='2018-09-26', end_time='2018-09-26', data_type='S2_L1C',
                                              identifier='S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404')
@@ -193,7 +193,7 @@ def test_mundi_file_system_get():
 
 def test_mundi_file_system_get_wrapped_parameters_as_dict():
     mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
-    mundi_file_system = MundiFileSystemAccessor.create_from_parameters(mundi_parameters)
+    mundi_file_system = MundiObsFileSystemAccessor.create_from_parameters(mundi_parameters)
 
     mundi_file_system_as_dict = mundi_file_system._get_wrapped_parameters_as_dict()
     assert mundi_file_system_as_dict is not None
@@ -211,7 +211,7 @@ def test_mundi_file_system_get_bucket():
     data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-06-01', end_time='2018-06-01', data_type='S2_L1C',
                                          identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
-    bucket_names = MundiFileSystem._get_bucket_names(data_set_meta_info)
+    bucket_names = MundiObsFileSystem._get_bucket_names(data_set_meta_info)
     assert 's2-l1c' in bucket_names
     assert 's2-l1c-2018' in bucket_names
     assert 's2-l1c-2018-q2' in bucket_names
@@ -219,14 +219,14 @@ def test_mundi_file_system_get_bucket():
     data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
                                          identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
-    bucket_names = MundiFileSystem._get_bucket_names(data_set_meta_info)
+    bucket_names = MundiObsFileSystem._get_bucket_names(data_set_meta_info)
     assert 's1-l1-slc' == bucket_names[0]
     assert 's1-l1-slc-2018-q4' == bucket_names[1]
 
     data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
                                          identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
-    bucket_names = MundiFileSystem._get_bucket_names(data_set_meta_info)
+    bucket_names = MundiObsFileSystem._get_bucket_names(data_set_meta_info)
     assert 's3-olci' == bucket_names[0]
 
 
@@ -234,17 +234,17 @@ def test_mundi_file_system_get_prefix():
     data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-06-02', end_time='2018-06-02', data_type='S2_L1C',
                                          identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
-    prefix = MundiFileSystem._get_prefix(data_set_meta_info)
+    prefix = MundiObsFileSystem._get_prefix(data_set_meta_info)
     assert '32/U/NE/2018/06/02/' == prefix
 
     data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
                                          identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
-    prefix = MundiFileSystem._get_prefix(data_set_meta_info)
+    prefix = MundiObsFileSystem._get_prefix(data_set_meta_info)
     assert '2018/10/02/IW/DV/' == prefix
 
     data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
                                          identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
-    prefix = MundiFileSystem._get_prefix(data_set_meta_info)
+    prefix = MundiObsFileSystem._get_prefix(data_set_meta_info)
     assert 'LFR/2018/01/05/' == prefix

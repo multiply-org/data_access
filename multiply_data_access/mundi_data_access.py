@@ -23,7 +23,7 @@ from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileS
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 _META_INFO_PROVIDER_NAME = 'MundiMetaInfoProvider'
-_FILE_SYSTEM_NAME = 'MundiFileSystem'
+_OBS_FILE_SYSTEM_NAME = 'MundiFileSystem'
 
 _BASE_URL = 'https://mundiwebservices.com/acdc/catalog/proxy/search/'
 _COLLECTIONS_DESCRIPTIONS_ADDITION = 'collections/opensearch/description.xml'
@@ -183,7 +183,7 @@ class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
         return MundiMetaInfoProvider(parameters)
 
 
-class MundiFileSystem(LocallyWrappedFileSystem):
+class MundiObsFileSystem(LocallyWrappedFileSystem):
 
     def _init_wrapped_file_system(self, parameters: dict) -> None:
         if 'access_key_id' not in parameters.keys():
@@ -204,7 +204,7 @@ class MundiFileSystem(LocallyWrappedFileSystem):
 
     @classmethod
     def name(cls) -> str:
-        return _FILE_SYSTEM_NAME
+        return _OBS_FILE_SYSTEM_NAME
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         from obs import ObsClient
@@ -283,12 +283,12 @@ class MundiFileSystem(LocallyWrappedFileSystem):
                 os.remove(full_path)
 
 
-class MundiFileSystemAccessor(FileSystemAccessor):
+class MundiObsFileSystemAccessor(FileSystemAccessor):
 
     @classmethod
     def name(cls) -> str:
-        return _FILE_SYSTEM_NAME
+        return _OBS_FILE_SYSTEM_NAME
 
     @classmethod
-    def create_from_parameters(cls, parameters: dict) -> MundiFileSystem:
-        return MundiFileSystem(parameters)
+    def create_from_parameters(cls, parameters: dict) -> MundiObsFileSystem:
+        return MundiObsFileSystem(parameters)
