@@ -32,8 +32,8 @@ _BASE_CATALOGUE_URL = "https://mundiwebservices.com/acdc/catalog/proxy/search/{}
 _POLYGON_FORMAT = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
 _DATA_TYPE_PARAMETER_DICTS = {
     DataTypeConstants.S1_SLC:
-        {'platform': 'Sentinel1', 'processingLevel': 'L1_', 'instrument': 'SAR', 'productType': 'SLC',
-         'baseBuckets': ['s1-l1-slc-{YYYY}-q{q}'], 'storageStructure': 'YYYY/MM/DD/mm/pp/',
+        {'platform': 'Sentinel1', 'processingLevel': 'L1_', 'productType': 'SLC',
+         'baseBuckets': ['s1-l1-slc', 's1-l1-slc-{YYYY}-q{q}'], 'storageStructure': 'YYYY/MM/DD/mm/pp/',
          'placeholders': {'mm': {'start': 4, 'end': 6}, 'pp': {'start': 14, 'end': 16}}},
     DataTypeConstants.S2_L1C:
         {'platform': 'Sentinel2', 'processingLevel': 'L1C', 'instrument': 'MSI', 'productType': 'IMAGE',
@@ -93,10 +93,13 @@ class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
     @staticmethod
     def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str, run: int) -> str:
         data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-        query_part = "(sensingStartDate:[{} TO {}] AND footprint:\"Intersects({})\")&startIndex={}&maxRecords=10" \
-                     "&processingLevel={}&instrument={}&productType={}"
-        query_part = query_part.format(start_time, end_time, roi, (10 * run) + 1, data_type_dict['processingLevel'],
-                                       data_type_dict['instrument'], data_type_dict['productType'])
+        start_index = (10 * run) + 1
+        instrument_part = ''
+        if 'instrument' in data_type_dict:
+            instrument_part = f"instrument={data_type_dict['instrument']}"
+        query_part = f"(sensingStartDate:[{start_time} TO {end_time}] AND footprint:\"Intersects({roi})\")&" \
+                     f"startIndex={start_index}&maxRecords=10&processingLevel={data_type_dict['processingLevel']}&" \
+                     f"{instrument_part}&productType={data_type_dict['productType']}"
         return _BASE_CATALOGUE_URL.format(data_type_dict['platform'], query_part)
 
     @staticmethod
@@ -159,7 +162,8 @@ class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                                 elif child2.get('name') == 'productType':
                                     for child3 in child2:
                                         product_types.append(child3.get('value'))
-            if data_type_dict['instrument'] in instruments and \
+            if (('instrument' in data_type_dict and data_type_dict['instrument'] in instruments)
+                or 'instrument' not in data_type_dict) and \
                     data_type_dict['processingLevel'] in processing_levels and \
                     data_type_dict['productType'] in product_types:
                 self._provided_data_types.append(data_type)
@@ -203,7 +207,7 @@ class MundiFileSystem(LocallyWrappedFileSystem):
         return _FILE_SYSTEM_NAME
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
-        from com.obs.client.obs_client import ObsClient
+        from obs import ObsClient
         if data_set_meta_info.data_type not in _DATA_TYPE_PARAMETER_DICTS:
             logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
                             f'implementation.')
@@ -220,7 +224,8 @@ class MundiFileSystem(LocallyWrappedFileSystem):
             objects = obs_client.listObjects(bucketName=bucket, prefix=prefix)
             if objects.status < 300:
                 for content in objects.body.contents:
-                    keys.append(content.key)
+                    if data_set_meta_info.identifier in content.key:
+                        keys.append(content.key)
                 if len(keys) > 0:
                     break
             else:
