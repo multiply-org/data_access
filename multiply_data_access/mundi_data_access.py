@@ -381,7 +381,6 @@ class MundiRestFileSystem(LocallyWrappedFileSystem):
                 if not os.path.exists(destination_dir):
                     os.makedirs(destination_dir)
                 key_url = _REST_BASE_KEY_URL.format(bucket, key)
-                logging.info(f'Downloading {relative_path_to_file}')
                 mode = 'wb'
                 hundred_mb = 250 * 1024 * 1024
                 file_downloaded_bytes = 0
@@ -391,7 +390,6 @@ class MundiRestFileSystem(LocallyWrappedFileSystem):
                         end = min(file_sizes[index], start + hundred_mb) - 1
                         key_request = urllib2.Request(key_url)
                         if start != 0 or end != file_sizes[index] - 1:
-                            logging.info(f'Downloading from {start} to {end}.')
                             key_request.add_header('Range', f'bytes={start}-{end}')
                             time.sleep(3) # sleep to avoid double connections
                         remote_file = opener.open(key_request)
@@ -414,12 +412,9 @@ class MundiRestFileSystem(LocallyWrappedFileSystem):
                                 buf = remote_file.read(length)
                         fp.close()
                         remote_file.close()
-                        if start > 0:
-                            logging.info(f'Downloaded part of {relative_path_to_file}')
                         start += hundred_mb
                         mode = 'ab'
                     except ConnectionResetError:
-                        logging.info(f'Continue after ConnectionResetError')
                         start = downloaded_bytes
                 if file_downloaded_bytes != file_sizes[index]:
                     logging.warning(f'File download incomplete. Should be {file_sizes[index]}, '
