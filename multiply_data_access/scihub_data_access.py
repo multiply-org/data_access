@@ -190,13 +190,14 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
                 buf = remote_file.read(length)
                 while buf:
                     temp_file.write(buf)
-                    buf = remote_file.read(length)
                     downloaded_bytes += 1024 * 1024
                     if downloaded_bytes > next_threshold:
                         stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
                         stdout.flush()
                         next_threshold += one_percent
+                    buf = remote_file.read(length)
             temp_file.close()
+            remote_file.close()
             logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
             file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
                                      get_mime_type(temp_url)))

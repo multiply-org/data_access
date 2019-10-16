@@ -4,14 +4,19 @@ Description
 
 This module contains the functionality to access data from the MUNDI DIAS.
 """
+from bs4 import BeautifulSoup
 from datetime import datetime
 from lxml.etree import XML
+import glob
 import logging
 import os
 import requests
 import shutil
+import time
+from http.cookiejar import CookieJar
 from shapely.geometry import Polygon
 from shapely.wkt import dumps
+from sys import stdout
 from typing import List, Sequence
 import urllib.request as urllib2
 
@@ -23,29 +28,34 @@ from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileS
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
 _META_INFO_PROVIDER_NAME = 'MundiMetaInfoProvider'
-_FILE_SYSTEM_NAME = 'MundiFileSystem'
+_OBS_FILE_SYSTEM_NAME = 'MundiFileSystem'
+_REST_FILE_SYSTEM_NAME = 'MundiRestFileSystem'
 
 _BASE_URL = 'https://mundiwebservices.com/acdc/catalog/proxy/search/'
 _COLLECTIONS_DESCRIPTIONS_ADDITION = 'collections/opensearch/description.xml'
 _COLLECTION_DESCRIPTION_ADDITION = '{}/opensearch/description.xml'
 _BASE_CATALOGUE_URL = "https://mundiwebservices.com/acdc/catalog/proxy/search/{}/opensearch?q=({})"
+_REST_BASE_URL = "https://obs.eu-de.otc.t-systems.com/{}/?prefix={}{}"
+_REST_BASE_KEY_URL = "https://obs.eu-de.otc.t-systems.com/{}/{}"
 _POLYGON_FORMAT = 'POLYGON(({1} {0}, {3} {2}, {5} {4}, {7} {6}, {9} {8}))'
 _DATA_TYPE_PARAMETER_DICTS = {
     DataTypeConstants.S1_SLC:
-        {'platform': 'Sentinel1', 'processingLevel': 'L1_', 'instrument': 'SAR', 'productType': 'SLC',
-         'baseBuckets': ['s1-l1-slc-{YYYY}-q{q}'], 'storageStructure': 'YYYY/MM/DD/mm/pp/',
+        {'platform': 'Sentinel1', 'processingLevel': 'L1_', 'productType': 'SLC',
+         'baseBuckets': ['s1-l1-slc', 's1-l1-slc-{YYYY}-q{q}'], 'storageStructure': 'YYYY/MM/DD/mm/pp/',
+         'excludes': [],
          'placeholders': {'mm': {'start': 4, 'end': 6}, 'pp': {'start': 14, 'end': 16}}},
     DataTypeConstants.S2_L1C:
         {'platform': 'Sentinel2', 'processingLevel': 'L1C', 'instrument': 'MSI', 'productType': 'IMAGE',
          'baseBuckets': ['s2-l1c-{YYYY}-q{q}', 's2-l1c-{YYYY}', 's2-l1c'], 'storageStructure': 'UU/L/SS/YYYY/MM/DD/',
+         'excludes': ['.zip'],
          'placeholders': {'UU': {'start': 39, 'end': 41}, 'L': {'start': 41, 'end': 42},
                           'SS': {'start': 42, 'end': 44}}},
     DataTypeConstants.S3_L1_OLCI_RR:
         {'platform': 'Sentinel3', 'processingLevel': 'L1_', 'instrument': 'OLCI', 'productType': 'OL_1_ERR___',
-         'baseBuckets': ['s3-olci'], 'storageStructure': 'LRR/YYYY/MM/DD/', 'placeholders': {}},
+         'baseBuckets': ['s3-olci'], 'storageStructure': 'LRR/YYYY/MM/DD/', 'excludes': [], 'placeholders': {}},
     DataTypeConstants.S3_L1_OLCI_FR:
         {'platform': 'Sentinel3', 'processingLevel': 'L1_', 'instrument': 'OLCI', 'productType': 'OL_1_EFR___',
-         'baseBuckets': ['s3-olci'], 'storageStructure': 'LFR/YYYY/MM/DD/', 'placeholders': {}}
+         'baseBuckets': ['s3-olci'], 'storageStructure': 'LFR/YYYY/MM/DD/', 'excludes': [], 'placeholders': {}}
 }
 _MUNDI_SERVER = 'obs.otc.t-systems.com'
 
@@ -93,10 +103,13 @@ class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
     @staticmethod
     def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str, run: int) -> str:
         data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-        query_part = "(sensingStartDate:[{} TO {}] AND footprint:\"Intersects({})\")&startIndex={}&maxRecords=10" \
-                     "&processingLevel={}&instrument={}&productType={}"
-        query_part = query_part.format(start_time, end_time, roi, (10 * run) + 1, data_type_dict['processingLevel'],
-                                       data_type_dict['instrument'], data_type_dict['productType'])
+        start_index = (10 * run) + 1
+        instrument_part = ''
+        if 'instrument' in data_type_dict:
+            instrument_part = f"instrument={data_type_dict['instrument']}"
+        query_part = f"(sensingStartDate:[{start_time} TO {end_time}] AND footprint:\"Intersects({roi})\")&" \
+                     f"startIndex={start_index}&maxRecords=10&processingLevel={data_type_dict['processingLevel']}&" \
+                     f"{instrument_part}&productType={data_type_dict['productType']}"
         return _BASE_CATALOGUE_URL.format(data_type_dict['platform'], query_part)
 
     @staticmethod
@@ -159,7 +172,8 @@ class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                                 elif child2.get('name') == 'productType':
                                     for child3 in child2:
                                         product_types.append(child3.get('value'))
-            if data_type_dict['instrument'] in instruments and \
+            if (('instrument' in data_type_dict and data_type_dict['instrument'] in instruments)
+                or 'instrument' not in data_type_dict) and \
                     data_type_dict['processingLevel'] in processing_levels and \
                     data_type_dict['productType'] in product_types:
                 self._provided_data_types.append(data_type)
@@ -179,7 +193,7 @@ class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
         return MundiMetaInfoProvider(parameters)
 
 
-class MundiFileSystem(LocallyWrappedFileSystem):
+class MundiObsFileSystem(LocallyWrappedFileSystem):
 
     def _init_wrapped_file_system(self, parameters: dict) -> None:
         if 'access_key_id' not in parameters.keys():
@@ -200,10 +214,10 @@ class MundiFileSystem(LocallyWrappedFileSystem):
 
     @classmethod
     def name(cls) -> str:
-        return _FILE_SYSTEM_NAME
+        return _OBS_FILE_SYSTEM_NAME
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
-        from com.obs.client.obs_client import ObsClient
+        from obs import ObsClient
         if data_set_meta_info.data_type not in _DATA_TYPE_PARAMETER_DICTS:
             logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
                             f'implementation.')
@@ -220,7 +234,8 @@ class MundiFileSystem(LocallyWrappedFileSystem):
             objects = obs_client.listObjects(bucketName=bucket, prefix=prefix)
             if objects.status < 300:
                 for content in objects.body.contents:
-                    keys.append(content.key)
+                    if data_set_meta_info.identifier in content.key:
+                        keys.append(content.key)
                 if len(keys) > 0:
                     break
             else:
@@ -278,12 +293,185 @@ class MundiFileSystem(LocallyWrappedFileSystem):
                 os.remove(full_path)
 
 
-class MundiFileSystemAccessor(FileSystemAccessor):
+class MundiObsFileSystemAccessor(FileSystemAccessor):
 
     @classmethod
     def name(cls) -> str:
-        return _FILE_SYSTEM_NAME
+        return _OBS_FILE_SYSTEM_NAME
 
     @classmethod
-    def create_from_parameters(cls, parameters: dict) -> MundiFileSystem:
-        return MundiFileSystem(parameters)
+    def create_from_parameters(cls, parameters: dict) -> MundiObsFileSystem:
+        return MundiObsFileSystem(parameters)
+
+
+class MundiRestFileSystem(LocallyWrappedFileSystem):
+
+    def _init_wrapped_file_system(self, parameters: dict) -> None:
+        if 'temp_dir' not in parameters.keys():
+            raise ValueError('No valid temporal directory provided for AWS S2 File System')
+        if not os.path.exists(parameters['temp_dir']):
+            os.makedirs(parameters['temp_dir'])
+        self._temp_dir = parameters['temp_dir']
+
+    @classmethod
+    def name(cls) -> str:
+        return _REST_FILE_SYSTEM_NAME
+
+    def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
+        if data_set_meta_info.data_type not in _DATA_TYPE_PARAMETER_DICTS:
+            logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
+                            f'implementation.')
+            return []
+        buckets = self._get_bucket_names(data_set_meta_info)
+        prefix = self._get_prefix(data_set_meta_info)
+        file_refs = []
+        for bucket in buckets:
+            file_url = _REST_BASE_URL.format(bucket, prefix, data_set_meta_info.identifier)
+            excludes = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['excludes']
+            success = self._download_url(file_url, data_set_meta_info.identifier, bucket, excludes)
+            if success:
+                url = glob.glob(f"{self._temp_dir}/{data_set_meta_info.identifier}*")[0]
+                file_refs.append(FileRef(url, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                                         get_mime_type(url)))
+                logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
+                break
+        return file_refs
+
+    def _download_url(self, url: str, file_name: str, bucket: str, excludes: List[str]) -> bool:
+        try:
+            request = requests.get(url, stream=True)
+        except ConnectionError:
+            logging.warning('Could not retrieve data from Mundi due to a connection error.')
+            return False
+        if request.status_code > 300:
+            request.close()
+            return False
+        content_type = urllib2.urlopen(url).info().get_content_type()
+        if content_type == 'application/xml':
+            soup = BeautifulSoup(request.content, 'xml')
+            contents = soup.find_all('Contents')
+            total_size_in_bytes = 0
+            file_sizes = []
+            keys = []
+            for content in contents:
+                key = content.find('Key').text
+                move_on = False
+                for exclude in excludes:
+                    if key.endswith(exclude):
+                        move_on = True
+                if move_on:
+                    continue
+                file_size = int(content.find('Size').text)
+                total_size_in_bytes += file_size
+                file_sizes.append(file_size)
+                keys.append(key)
+            if len(keys) == 0:
+                request.close()
+                return False
+            cj = CookieJar()
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+            logging.info('Downloading {}'.format(file_name))
+            one_percent = total_size_in_bytes / 100
+            downloaded_bytes = 0
+            next_threshold = one_percent
+            for index, key in enumerate(keys):
+                relative_path_to_file = key.split(file_name)[1]
+                destination = f'{self._temp_dir}/{file_name}{relative_path_to_file}'
+                destination_dir = os.path.abspath(os.path.join(destination, os.pardir))
+                if not os.path.exists(destination_dir):
+                    os.makedirs(destination_dir)
+                key_url = _REST_BASE_KEY_URL.format(bucket, key)
+                logging.info(f'Downloading {relative_path_to_file}')
+                mode = 'wb'
+                hundred_mb = 250 * 1024 * 1024
+                file_downloaded_bytes = 0
+                start = 0
+                while start < file_sizes[index]:
+                    try:
+                        end = min(file_sizes[index], start + hundred_mb) - 1
+                        key_request = urllib2.Request(key_url)
+                        if start != 0 or end != file_sizes[index] - 1:
+                            logging.info(f'Downloading from {start} to {end}.')
+                            key_request.add_header('Range', f'bytes={start}-{end}')
+                            time.sleep(3) # sleep to avoid double connections
+                        remote_file = opener.open(key_request)
+                        if remote_file.status >= 300:
+                            logging.warning(f'Could not download {key}.')
+                            return False
+                        with open(destination, mode) as fp:
+                            length = 1024 * 1024
+                            buf = remote_file.read(length)
+                            while buf:
+                                fp.write(buf)
+                                downloaded_bytes += min(len(buf), 1024 * 1024)
+                                file_downloaded_bytes += min(len(buf), 1024 * 1024)
+                                fp.flush()
+                                remote_file.flush()
+                                if downloaded_bytes > next_threshold:
+                                    stdout.write('\r{} %'.format(int(next_threshold / one_percent)))
+                                    stdout.flush()
+                                    next_threshold += one_percent
+                                buf = remote_file.read(length)
+                        fp.close()
+                        remote_file.close()
+                        if start > 0:
+                            logging.info(f'Downloaded part of {relative_path_to_file}')
+                        start += hundred_mb
+                        mode = 'ab'
+                    except ConnectionResetError:
+                        logging.info(f'Continue after ConnectionResetError')
+                        start = downloaded_bytes
+                if file_downloaded_bytes != file_sizes[index]:
+                    logging.warning(f'File download incomplete. Should be {file_sizes[index]}, '
+                                    f'is {file_downloaded_bytes}')
+                logging.info(f'Downloaded {relative_path_to_file}')
+        request.close()
+        return True
+
+    @staticmethod
+    def _get_bucket_names(data_set_meta_info: DataSetMetaInfo) -> List[str]:
+        start_time = get_time_from_string(data_set_meta_info.start_time)
+        base_bucket_names = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['baseBuckets']
+        bucket_names = []
+        for base_bucket_name in base_bucket_names:
+            quarter = int(int(start_time.month - 1) / 3) + 1
+            bucket_name = base_bucket_name.replace('{YYYY}', str(start_time.year))
+            bucket_name = bucket_name.replace('{q}', str(quarter))
+            bucket_names.append(bucket_name)
+        return bucket_names
+
+    @staticmethod
+    def _get_prefix(data_set_meta_info: DataSetMetaInfo):
+        data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]
+        storage_structure = data_type_dict['storageStructure']
+        data_time = get_time_from_string(data_set_meta_info.start_time)
+        prefix = storage_structure.replace('{}'.format('YYYY'), '{:04d}'.format(data_time.year))
+        prefix = prefix.replace('{}'.format('MM'), '{:02d}'.format(data_time.month))
+        prefix = prefix.replace('{}'.format('DD'), '{:02d}'.format(data_time.day))
+        for placeholder in data_type_dict['placeholders'].keys():
+            start = data_type_dict['placeholders'][placeholder]['start']
+            end = data_type_dict['placeholders'][placeholder]['end']
+            prefix = prefix.replace(placeholder, data_set_meta_info.identifier[start:end])
+        return prefix
+
+    def _get_wrapped_parameters_as_dict(self) -> dict:
+        return {'temp_dir': self._temp_dir}
+
+    def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
+        full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
+        if os.path.exists(full_path):
+            if os.path.isdir(full_path):
+                shutil.rmtree(full_path)
+            else:
+                os.remove(full_path)
+
+
+class MundiRestFileSystemAccessor(FileSystemAccessor):
+
+    @classmethod
+    def name(cls) -> str:
+        return _REST_FILE_SYSTEM_NAME
+
+    @classmethod
+    def create_from_parameters(cls, parameters: dict) -> MundiRestFileSystem:
+        return MundiRestFileSystem(parameters)
