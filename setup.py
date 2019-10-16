@@ -38,6 +38,7 @@ setup(name='multiply-data-access',
               'http_file_system = multiply_data_access:general_remote_access.HttpFileSystemAccessor',
               'vrt_file_system = multiply_data_access:vrt_data_access.VrtFileSystemAccessor',
               'mundi_file_system = multiply_data_access:mundi_data_access.MundiObsFileSystemAccessor',
+              'mundi_rest_file_system = multiply_data_access:mundi_data_access.MundiRestFileSystemAccessor',
               'scihub_file_system = multiply_data_access:scihub_data_access.SciHubFileSystemAccessor'
           ],
           'meta_info_provider_plugins': [

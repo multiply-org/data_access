@@ -10,7 +10,7 @@ from .aws_s2_meta_info_provider import AwsS2MetaInfoProvider, AwsS2MetaInfoProvi
 from .registrations import create_file_system_from_dict, create_meta_info_provider_from_dict
 from .vrt_data_access import VrtFileSystem, VrtFileSystemAccessor, VrtMetaInfoProvider, VrtMetaInfoProviderAccessor
 from .mundi_data_access import MundiMetaInfoProvider, MundiMetaInfoProviderAccessor, MundiObsFileSystem, \
-    MundiObsFileSystemAccessor
+    MundiObsFileSystemAccessor, MundiRestFileSystem, MundiRestFileSystemAccessor
 from .scihub_data_access import SciHubFileSystemAccessor, SciHubFileSystem, SciHubMetaInfoProviderAccessor, \
     SciHubMetaInfoProvider
 from .data_access_component import DataAccessComponent
