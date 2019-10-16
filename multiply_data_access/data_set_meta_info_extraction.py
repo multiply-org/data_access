@@ -14,13 +14,20 @@ from multiply_core.observations import DataTypeConstants, get_relative_path
 from multiply_core.util import reproject, get_time_from_year_and_day_of_year
 from multiply_data_access.modis_tile_coverage_provider import get_tile_coverage
 from datetime import timedelta
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Polygon
 from typing import Optional
 import gdal
 import osr
+import zipfile
 from xml.etree import ElementTree
+from lxml.etree import XML
 
 GLOBAL = 'POLYGON((-180.0 90.0, 180.0 90.0, 180.0 -90.0, -180.0 -90.0, -180.0 90.0))'
+
+
+def _get_xml_root(xml_file_name: str):
+    tree = ElementTree.parse(xml_file_name)
+    return tree.getroot()
 
 
 class DataSetMetaInfoExtractor(metaclass=ABCMeta):
@@ -33,6 +40,53 @@ class DataSetMetaInfoExtractor(metaclass=ABCMeta):
     @abstractmethod
     def extract_meta_info(self, path: str) -> DataSetMetaInfo:
         """Whether the data at the given path is a valid data product for the type."""
+
+
+class S1SlcMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.S1_SLC
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        s1_slc_archive = zipfile.ZipFile(f'{path}.zip', 'r')
+        manifest_file = s1_slc_archive.read('manifest.safe')
+        manifest = XML(manifest_file)
+        coverage = self._extract_coverage(manifest)
+        start_time = self._extract_start_time(manifest)
+        end_time = self._extract_stop_time(manifest)
+        id = path.split('/')[-1]
+        return DataSetMetaInfo(identifier=id, coverage=coverage, start_time=start_time, end_time=end_time,
+                                           data_type=DataTypeConstants.S1_SLC)
+
+    def _extract_coverage(self, manifest) -> str:
+        for child in manifest:
+            for x in child.findall("metadataObject"):
+                if x.attrib['ID'] == 'measurementFrameSet':
+                    coords = x.find('metadataWrap/xmlData/{http://www.esa.int/safe/sentinel-1.0}frameSet/'
+                                    '{http://www.esa.int/safe/sentinel-1.0}frame/'
+                                    '{http://www.esa.int/safe/sentinel-1.0}footPrint/'
+                                    '{http://www.opengis.net/gml}coordinates').text
+                    coords = coords.replace(' ', ',').split(',')
+                    return f'POLYGON(({coords[1]} {coords[0]}, {coords[3]} {coords[2]}, {coords[5]} {coords[4]}, ' \
+                           f'{coords[7]} {coords[6]}, {coords[1]} {coords[0]}))'
+        return ''
+
+    def _extract_start_time(self, manifest) -> str:
+        for child in manifest:
+            for x in child.findall("metadataObject"):
+                if x.attrib['ID'] == 'acquisitionPeriod':
+                    return x.find('metadataWrap/xmlData/{http://www.esa.int/safe/sentinel-1.0}acquisitionPeriod/'
+                                  '{http://www.esa.int/safe/sentinel-1.0}startTime').text
+        return ''
+
+    def _extract_stop_time(self, manifest) -> str:
+        for child in manifest:
+            for x in child.findall("metadataObject"):
+                if x.attrib['ID'] == 'acquisitionPeriod':
+                    return x.find('metadataWrap/xmlData/{http://www.esa.int/safe/sentinel-1.0}acquisitionPeriod/'
+                                  '{http://www.esa.int/safe/sentinel-1.0}stopTime').text
+        return ''
 
 
 class AwsS2MetaInfoExtractor(DataSetMetaInfoExtractor):
@@ -366,6 +420,7 @@ def add_data_set_meta_info_extractor(data_set_meta_info_provider: DataSetMetaInf
     DATA_SET_META_INFO_PROVIDERS.append(data_set_meta_info_provider)
 
 
+add_data_set_meta_info_extractor(S1SlcMetaInfoExtractor())
 add_data_set_meta_info_extractor(AwsS2MetaInfoExtractor())
 add_data_set_meta_info_extractor(S2L1CMetaInfoExtractor())
 add_data_set_meta_info_extractor(S2L2MetaInfoExtractor())
