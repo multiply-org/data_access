@@ -29,7 +29,6 @@ _NAME = 'AwsS2FileSystem'
 class AwsS2FileSystem(LocallyWrappedFileSystem):
 
     def __init__(self, parameters: dict):
-        from sentinelhub import AwsTileRequest
         super().__init__(parameters)
 
     def _init_wrapped_file_system(self, parameters: dict):
@@ -58,6 +57,7 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
         if not self._is_valid_identifier(data_set_meta_info.identifier):
             # consider throwing an exception
             return None
+        from sentinelhub import AwsTileRequest
         tile_name = self._get_tile_name(data_set_meta_info.identifier)
         start_time_as_datetime = get_time_from_string(data_set_meta_info.start_time)
         time = start_time_as_datetime.strftime('%Y-%m-%d')
