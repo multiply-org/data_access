@@ -49,23 +49,24 @@ def test_meta_info_provider_get_parameters_as_dict():
     assert 'supported_data_types' in parameters_as_dict.keys()
     assert 'MCD43A1.006,TYPE_X' == parameters_as_dict['supported_data_types']
 
-# this test is expensive. Execute to test access to elevation data
-# def test_query_wrapped_meta_info_provider_eles():
-#     parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': ELES_TEST_URL,
-#                   'data_types': '{}, TYPE_X'.format(DataTypeConstants.ASTER)}
-#     provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
-#
-#     query_string = 'POLYGON((-6.5 42.7, -6.7 42.6, -6.7 42.1, -6.5 42.1, -6.5 42.7));2017-09-04;2017-09-04;ASTER'
-#     data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string)
-#
-#     assert 1 == len(data_set_meta_infos)
-#     expected_aster_coverage = loads('POLYGON((-7. 42., -7. 43., -6. 43., -6. 42., -7. 42.))')
-#     aster_coverage = loads(data_set_meta_infos[0].coverage)
-#     assert expected_aster_coverage.almost_equals(aster_coverage)
-#     assert '' == data_set_meta_infos[0].start_time
-#     assert '' == data_set_meta_infos[0].end_time
-#     assert 'ASTER' == data_set_meta_infos[0].data_type
-#     assert 'ASTGTM2_N42W007_dem.tif' == data_set_meta_infos[0].identifier
+
+@pytest.mark.skip(reason='This test is expensive. Execute to test access to elevation data')
+def test_query_wrapped_meta_info_provider_eles():
+    parameters = {'path_to_json_file': PATH_TO_JSON_FILE, 'url': ELES_TEST_URL,
+                  'data_types': '{}, TYPE_X'.format(DataTypeConstants.ASTER)}
+    provider = HttpMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = 'POLYGON((-6.5 42.7, -6.7 42.6, -6.7 42.1, -6.5 42.1, -6.5 42.7));2017-09-04;2017-09-04;ASTER'
+    data_set_meta_infos = provider._query_wrapped_meta_info_provider(query_string)
+
+    assert 1 == len(data_set_meta_infos)
+    expected_aster_coverage = loads('POLYGON((-7. 42., -7. 43., -6. 43., -6. 42., -7. 42.))')
+    aster_coverage = loads(data_set_meta_infos[0].coverage)
+    assert expected_aster_coverage.almost_equals(aster_coverage)
+    assert '' == data_set_meta_infos[0].start_time
+    assert '' == data_set_meta_infos[0].end_time
+    assert 'ASTER' == data_set_meta_infos[0].data_type
+    assert 'ASTGTM2_N42W007_dem.tif' == data_set_meta_infos[0].identifier
 
 
 @pytest.mark.skip(reason='Test will not work when server is down')
