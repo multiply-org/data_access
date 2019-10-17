@@ -93,7 +93,8 @@ class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                                 DataSetMetaInfo(data_set_meta_info_coverage, data_set_meta_info_start_time,
                                                 data_set_meta_info_end_time, data_type, data_set_meta_info_id,
                                                 data_set_meta_info_reference)
-                            data_set_meta_infos.append(data_set_meta_info)
+                            if not self._is_provided_locally(data_set_meta_info, local_data_set_meta_infos):
+                                data_set_meta_infos.append(data_set_meta_info)
                             continue_checking_for_data_sets = True
         return data_set_meta_infos
 

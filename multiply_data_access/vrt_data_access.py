@@ -64,6 +64,38 @@ class VrtMetaInfoProvider(MetaInfoProvider):
                                              self._path_to_vrt_file, referenced_data)
         return [data_set_meta_info]
 
+    def query_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        if self._provided_data_type not in self.get_data_types_from_query_string(query_string):
+            return []
+        roi = self.get_roi_from_query_string(query_string)
+        coverages, referenced_data = self._get_coverages_from_local_meta_info_provider()
+        coverage = cascaded_union(coverages)
+        if not roi.within(coverage):
+            return []
+        referenced_data = ';'.join(referenced_data)
+        data_set_meta_info = DataSetMetaInfo(coverage.wkt, None, None, self._provided_data_type,
+                                             self._path_to_vrt_file, referenced_data)
+        return [data_set_meta_info]
+
+    def query_non_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        if self._provided_data_type not in self.get_data_types_from_query_string(query_string):
+            return []
+        roi = self.get_roi_from_query_string(query_string)
+        coverages, referenced_data = self._get_coverages_from_local_meta_info_provider()
+        coverage = cascaded_union(coverages)
+        if roi.within(coverage):
+            return []
+        additional_coverages, additional_files = self._get_coverages_from_wrapped_meta_info_provider(query_string)
+        for i in range(len(additional_files)):
+            if additional_files[i] not in referenced_data:
+                referenced_data.append(additional_files[i])
+                coverages.append(additional_coverages[i])
+        coverage = cascaded_union(coverages)
+        referenced_data = ';'.join(referenced_data)
+        data_set_meta_info = DataSetMetaInfo(coverage.wkt, None, None, self._provided_data_type,
+                                             self._path_to_vrt_file, referenced_data)
+        return [data_set_meta_info]
+
     def _get_referenced_data_sets_from_vrt(self) -> List[str]:
         referenced_data_sets = []
         if not os.path.exists(self._path_to_vrt_file):

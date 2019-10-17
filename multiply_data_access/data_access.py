@@ -163,6 +163,22 @@ class MetaInfoProvider(metaclass=ABCMeta):
         """
 
     @abstractmethod
+    def query_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        """
+        Processes a query and retrieves a result. The result will consist of all the data sets that satisfy the query
+        that do not require to be downloaded.
+        :return: A list of meta information about data sets that fulfill the query.
+        """
+
+    @abstractmethod
+    def query_non_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        """
+        Processes a query and retrieves a result. The result will consist of all the data sets that satisfy the query
+        that must be downloaded first.
+        :return: A list of meta information about data sets that fulfill the query.
+        """
+
+    @abstractmethod
     def provides_data_type(self, data_type: str) -> bool:
         """
         Whether the meta info provider provides access to data of the queried type

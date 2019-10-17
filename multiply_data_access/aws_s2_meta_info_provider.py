@@ -79,10 +79,11 @@ class AwsS2MetaInfoProvider(LocallyWrappedMetaInfoProvider):
             end_time = datetime.now()
         data_set_meta_infos = []
         for tile_description in tile_descriptions:
-            data_set_meta_infos += self._get_data_set_meta_infos_for_tile_description(tile_description, start_time,
-                                                                                      end_time)
+            data_set_meta_infos_for_tile = self._get_data_set_meta_infos_for_tile_description(tile_description, start_time, end_time)
+            for data_set_meta_info_for_tile in data_set_meta_infos_for_tile:
+                if not self._is_provided_locally(data_set_meta_info_for_tile, local_data_set_meta_infos):
+                    data_set_meta_infos.append(data_set_meta_info_for_tile)
         return data_set_meta_infos
-
 
     def _get_data_set_meta_infos_for_tile_description(self, tile_description: TileDescription, start_time: datetime,
                                                       end_time: datetime) -> List[DataSetMetaInfo]:

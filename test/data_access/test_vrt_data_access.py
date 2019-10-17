@@ -87,6 +87,50 @@ def test_vrt_meta_info_provider_query_existing_vrt_file_can_use_existing_vrt():
            data_set_meta_infos[0].referenced_data
 
 
+def test_vrt_meta_info_provider_query_local_can_use_existing_vrt():
+    parameters = {'path_to_vrt_file': PATH_TO_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
+                  'provided_data_type': 'Aster DEM',
+                  'accessed_meta_info_provider': 'JsonMetaInfoProvider', 'path_to_json_file': PATH_TO_JSON_FILE}
+    provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = 'POLYGON ((-4.6 36.8, -4. 36.8, -4. 36.2, -4.6 36.2, -4.6 36.8));2017-09-01;2017-09-12;Aster DEM'
+    data_set_meta_infos = provider.query_local(query_string)
+
+    assert 1 == len(data_set_meta_infos)
+    polygon = loads(COVERED_GEOMETRY)
+    covered_geometry = loads(data_set_meta_infos[0].coverage)
+    assert covered_geometry.almost_equals(polygon)
+    assert data_set_meta_infos[0].start_time is None
+    assert data_set_meta_infos[0].end_time is None
+    assert 'Aster DEM' == data_set_meta_infos[0].data_type
+    assert PATH_TO_VRT_FILE == data_set_meta_infos[0].identifier
+    assert data_set_meta_infos[0].referenced_data is not None
+    assert 'ASTGTM2_N36W005_dem.tif;ASTGTM2_N36W006_dem.tif;ASTGTM2_N38W007_dem.tif' == \
+           data_set_meta_infos[0].referenced_data
+
+
+def test_vrt_meta_info_provider_query_non_local_can_use_existing_vrt():
+    parameters = {'path_to_vrt_file': PATH_TO_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
+                  'provided_data_type': 'Aster DEM',
+                  'accessed_meta_info_provider': 'JsonMetaInfoProvider', 'path_to_json_file': PATH_TO_JSON_FILE}
+    provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = 'POLYGON ((-4.6 36.8, -4. 36.8, -4. 36.2, -4.6 36.2, -4.6 36.8));2017-09-01;2017-09-12;Aster DEM'
+    data_set_meta_infos = provider.query_non_local(query_string)
+
+
+def test_vrt_meta_info_provider_query_local_can_not_use_existing_vrt():
+    parameters = {'path_to_vrt_file': PATH_TO_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
+                  'provided_data_type': 'Aster DEM',
+                  'accessed_meta_info_provider': 'JsonMetaInfoProvider', 'path_to_json_file': PATH_TO_JSON_FILE}
+    provider = VrtMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = 'POLYGON ((-4.6 36.8, 4. 36.8, 4. 36.2, -4.6 36.2, -4.6 36.8));2017-09-01;2017-09-12;Aster DEM'
+    data_set_meta_infos = provider.query_local(query_string)
+
+    assert 0 == len(data_set_meta_infos)
+
+
 def test_vrt_meta_info_provider_query_existing_vrt_file_new_vrt():
     parameters = {'path_to_vrt_file': PATH_TO_VRT_FILE, 'encapsulated_data_type': DataTypeConstants.ASTER,
                   'provided_data_type': 'Aster DEM',

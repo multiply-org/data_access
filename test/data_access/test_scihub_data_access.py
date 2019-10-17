@@ -72,6 +72,38 @@ def test_scihub_meta_info_provider_query():
            '12.684868 54.064266,12.121230 52.448013))' == data_set_meta_infos[0].coverage
 
 
+def test_scihub_meta_info_provider_query_local():
+    parameters = {'path_to_json_file': META_INFO_FILE}
+    parameters['username'] = ''  # enter access key id here
+    parameters['password'] = ''  # enter secret access key here
+    scihub_meta_info_provider = SciHubMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-03;2018-06-05;S1_SLC"
+    data_set_meta_infos = scihub_meta_info_provider.query_local(query_string)
+
+    assert 0 == len(data_set_meta_infos)
+
+
+@pytest.mark.skip(reason='Test needs authorization')
+def test_scihub_meta_info_provider_query_non_local():
+    parameters = {'path_to_json_file': META_INFO_FILE}
+    parameters['username'] = ''  # enter access key id here
+    parameters['password'] = ''  # enter secret access key here
+    scihub_meta_info_provider = SciHubMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-03;2018-06-05;S1_SLC"
+    data_set_meta_infos = scihub_meta_info_provider.query_non_local(query_string)
+
+    assert 1 == len(data_set_meta_infos)
+    assert 'S1_SLC'  == data_set_meta_infos[0].data_type
+    assert 'S1A_IW_SLC__1SDV_20180603T053307_20180603T053334_022188_026669_A432' == data_set_meta_infos[0].identifier
+    assert '2018-06-03T05:33:07.493Z' == data_set_meta_infos[0].start_time
+    assert '2018-06-03T05:33:34.589Z' == data_set_meta_infos[0].end_time
+    assert '8a44331c-c286-4c28-a15b-d26da4359ae2' == data_set_meta_infos[0].referenced_data
+    assert 'POLYGON ((12.121230 52.448013,8.330203 52.855953,8.744157 54.475960,' \
+           '12.684868 54.064266,12.121230 52.448013))' == data_set_meta_infos[0].coverage
+
+
 @pytest.mark.skip(reason='Test needs authorization')
 def test_scihub_meta_info_provider_query_more_than_fifty_data_sets():
     parameters = {'path_to_json_file': META_INFO_FILE}

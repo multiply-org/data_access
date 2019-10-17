@@ -140,6 +140,34 @@ def test_mundi_meta_info_provider_query_s1():
     assert '2018-06-03T05:33:07Z' == data_set_meta_infos[2].end_time
 
 
+def test_mundi_meta_info_provider_query_local():
+    parameters = {'path_to_json_file': META_INFO_FILE}
+    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-01;2018-06-05;S1_SLC, S2_L1C"
+    data_set_meta_infos = mundi_meta_info_provider.query_local(query_string)
+    assert 0 == len(data_set_meta_infos)
+
+
+def test_mundi_meta_info_provider_query_non_local_s1():
+    parameters = {'path_to_json_file': META_INFO_FILE}
+    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+
+    query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-01;2018-06-05;S1_SLC"
+    data_set_meta_infos = mundi_meta_info_provider.query_non_local(query_string)
+
+    assert 3 == len(data_set_meta_infos)
+
+    assert 'S1A_IW_SLC__1SDV_20180601T170037_20180601T170104_022166_0265B3_466C' == data_set_meta_infos[0].identifier
+    expected_coverage = loads('POLYGON ((9.1527709999999995 54.2447889999999973, '
+                              '13.1172269999999997 54.6578639999999965, 13.5328199999999992 53.0389899999999983, '
+                              '9.7198080000000004 52.6297950000000014, 9.1527709999999995 54.2447889999999973))')
+    coverage = loads(data_set_meta_infos[0].coverage)
+    assert coverage.almost_equals(expected_coverage)
+    assert 'S1_SLC' == data_set_meta_infos[0].data_type
+    assert '2018-06-01T17:00:37Z' == data_set_meta_infos[0].start_time
+    assert '2018-06-01T17:00:37Z' == data_set_meta_infos[0].end_time
+
+
 def test_mundi_meta_info_provider_query_more_than_fifty_data_sets():
     parameters = {'path_to_json_file': META_INFO_FILE}
     mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)

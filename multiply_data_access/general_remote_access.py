@@ -86,7 +86,8 @@ class HttpMetaInfoProvider(LocallyWrappedMetaInfoProvider):
             for file in available_files:
                 if is_valid_for(file, data_type, roi, start_time, end_time):
                     data_set_meta_info = get_data_set_meta_info(data_type, file)
-                    data_set_meta_infos.append(data_set_meta_info)
+                    if not self._is_provided_locally(data_set_meta_info, local_data_set_meta_infos):
+                        data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 
     def _get_wrapped_parameters_as_dict(self) -> dict:

@@ -63,6 +63,12 @@ class JsonMetaInfoProvider(MetaInfoProvider):
                 data_set_meta_infos.append(data_set_meta_info)
         return data_set_meta_infos
 
+    def query_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        return self.query(query_string)
+
+    def query_non_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        return []
+
     def provides_data_type(self, data_type: str):
         return data_type in self.provided_data_types
 
