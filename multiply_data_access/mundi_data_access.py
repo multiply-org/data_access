@@ -421,7 +421,6 @@ class MundiRestFileSystem(LocallyWrappedFileSystem):
                 if file_downloaded_bytes != file_sizes[index]:
                     logging.warning(f'File download incomplete. Should be {file_sizes[index]}, '
                                     f'is {file_downloaded_bytes}')
-                logging.info(f'Downloaded {relative_path_to_file}')
         request.close()
         return True
 
