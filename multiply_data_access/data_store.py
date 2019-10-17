@@ -42,6 +42,20 @@ class DataStore(object):
         """
         return self._meta_info_provider.query(query_string)
 
+    def query_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        """
+        Evaluates a query and retrieves a result set for it from data that is locally available.
+        :return:
+        """
+        return self._meta_info_provider.query_local(query_string)
+
+    def query_non_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        """
+        Evaluates a query and retrieves a result set for it from data that is not locally available.
+        :return:
+        """
+        return self._meta_info_provider.query_non_local(query_string)
+
     def provides_data_type(self, data_type: str) -> bool:
         """
         Whether the data store provides access to data of the queried type

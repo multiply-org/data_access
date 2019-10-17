@@ -55,9 +55,23 @@ class DataAccessComponent(object):
         query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types, roi_grid)
         meta_data_infos = []
         for data_store in self._data_stores:
-            query_results = data_store.query(query_string)
-            meta_data_infos.extend(query_results)
+            local_query_results = data_store.query_local(query_string)
+            for local_query_result in local_query_results:
+                if not self._is_already_included(local_query_result, meta_data_infos):
+                    meta_data_infos.append(local_query_result)
+        for data_store in self._data_stores:
+            non_local_query_results = data_store.query_non_local(query_string)
+            for non_local_query_result in non_local_query_results:
+                if not self._is_already_included(non_local_query_result, meta_data_infos):
+                    meta_data_infos.append(non_local_query_result)
         return meta_data_infos
+
+    @staticmethod
+    def _is_already_included(data_set_meta_info: DataSetMetaInfo, data_set_meta_infos: List[DataSetMetaInfo]) -> bool:
+        for provided_data_set_meta_info in data_set_meta_infos:
+            if provided_data_set_meta_info.equals(data_set_meta_info):
+                return True
+        return False
 
     def can_put(self, data_type: str) -> bool:
         """
@@ -124,12 +138,30 @@ class DataAccessComponent(object):
         """
         query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types, roi_grid)
         urls = []
+        query_results = {}
+        all_query_results = []
         for data_store in self._data_stores:
-            query_results = data_store.query(query_string)
-            for query_result in query_results:
-                file_refs = data_store.get(query_result)
-                for file_ref in file_refs:
-                    urls.append(file_ref.url)
+            local_query_results = data_store.query_local(query_string)
+            for local_query_result in local_query_results:
+                if not self._is_already_included(local_query_result, all_query_results):
+                    if data_store.id not in query_results:
+                        query_results[data_store.id] = []
+                    query_results[data_store.id].append(local_query_result)
+                    all_query_results.append(local_query_result)
+        for data_store in self._data_stores:
+            non_local_query_results = data_store.query_non_local(query_string)
+            for non_local_query_result in non_local_query_results:
+                if not self._is_already_included(non_local_query_result, all_query_results):
+                    if data_store.id not in query_results:
+                        query_results[data_store.id] = []
+                    query_results[data_store.id].append(non_local_query_result)
+                    all_query_results.append(non_local_query_result)
+        for data_store in self._data_stores:
+            if data_store.id in query_results:
+                for query_result in query_results[data_store.id]:
+                    file_refs = data_store.get(query_result)
+                    for file_ref in file_refs:
+                        urls.append(file_ref.url)
         return urls
 
     def get_data_urls_from_data_set_meta_infos(self, data_set_meta_infos: List[DataSetMetaInfo]) -> List[str]:
