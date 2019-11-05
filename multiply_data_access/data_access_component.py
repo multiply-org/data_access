@@ -148,6 +148,7 @@ class DataAccessComponent(object):
                         query_results[data_store.id] = []
                     query_results[data_store.id].append(local_query_result)
                     all_query_results.append(local_query_result)
+                    logging.info(f'Found local query result {local_query_result.identifier} in {data_store.id}')
         for data_store in self._data_stores:
             non_local_query_results = data_store.query_non_local(query_string)
             for non_local_query_result in non_local_query_results:
@@ -156,12 +157,14 @@ class DataAccessComponent(object):
                         query_results[data_store.id] = []
                     query_results[data_store.id].append(non_local_query_result)
                     all_query_results.append(non_local_query_result)
+                    logging.info(f'Found non-local query result {non_local_query_result.identifier} in {data_store.id}')
         for data_store in self._data_stores:
             if data_store.id in query_results:
                 for query_result in query_results[data_store.id]:
                     file_refs = data_store.get(query_result)
                     for file_ref in file_refs:
                         urls.append(file_ref.url)
+                        logging.info(f'Added {file_ref.url} as result from {query_result.identifier} in {data_store.id}')
         return urls
 
     def get_data_urls_from_data_set_meta_infos(self, data_set_meta_infos: List[DataSetMetaInfo]) -> List[str]:
