@@ -161,6 +161,7 @@ class DataAccessComponent(object):
         for data_store in self._data_stores:
             if data_store.id in query_results:
                 for query_result in query_results[data_store.id]:
+                    logging.info(f'Retrieving query result {query_result.identifier} from {data_store.id}')
                     file_refs = data_store.get(query_result)
                     for file_ref in file_refs:
                         urls.append(file_ref.url)
