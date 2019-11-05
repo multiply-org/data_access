@@ -287,12 +287,13 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
                 'temp_dir': self._temp_dir}
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
-        full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
-        if os.path.exists(full_path):
-            if os.path.isdir(full_path):
-                shutil.rmtree(full_path)
-            else:
-                os.remove(full_path)
+        files = glob.glob(f'{self._temp_dir}/{data_set_meta_info.identifier}*')
+        for file in files:
+            if os.path.exists(file):
+                if os.path.isdir(file):
+                    shutil.rmtree(file)
+                else:
+                    os.remove(file)
 
 
 class MundiObsFileSystemAccessor(FileSystemAccessor):
@@ -454,12 +455,13 @@ class MundiRestFileSystem(LocallyWrappedFileSystem):
         return {'temp_dir': self._temp_dir}
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
-        full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
-        if os.path.exists(full_path):
-            if os.path.isdir(full_path):
-                shutil.rmtree(full_path)
-            else:
-                os.remove(full_path)
+        files = glob.glob(f'{self._temp_dir}/{data_set_meta_info.identifier}*')
+        for file in files:
+            if os.path.exists(file):
+                if os.path.isdir(file):
+                    shutil.rmtree(file)
+                else:
+                    os.remove(file)
 
 
 class MundiRestFileSystemAccessor(FileSystemAccessor):
