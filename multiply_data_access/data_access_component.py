@@ -159,7 +159,9 @@ class DataAccessComponent(object):
                     all_query_results.append(non_local_query_result)
                     logging.info(f'Found non-local query result {non_local_query_result.identifier} in {data_store.id}')
         for data_store in self._data_stores:
+            logging.info(f'Checking for results from {data_store.id} ...')
             if data_store.id in query_results:
+                logging.info(f'Results found for {data_store.id}')
                 for query_result in query_results[data_store.id]:
                     logging.info(f'Retrieving query result {query_result.identifier} from {data_store.id}')
                     file_refs = data_store.get(query_result)
