@@ -1,5 +1,6 @@
 from multiply_data_access.data_set_meta_info_extraction import AwsS2MetaInfoExtractor, S2L1CMetaInfoExtractor, \
-    S2L2MetaInfoExtractor, MODISMCD43MetaInfoExtractor, MODISMCD15A2MetaInfoExtractor, S1SlcMetaInfoExtractor
+    S2L2MetaInfoExtractor, MODISMCD43MetaInfoExtractor, MODISMCD15A2MetaInfoExtractor, S1SlcMetaInfoExtractor, \
+    S1SpeckledMetaInfoExtractor
 
 from shapely import wkt
 
@@ -26,6 +27,29 @@ def test_s1_slc_meta_info_extractor_extract_meta_info():
     assert '2018-06-03T05:33:34.589538' == data_set_meta_info.end_time
     expected_coverage = wkt.loads('POLYGON ((12.121230 52.448013,8.330203 52.855953,8.744157 54.475960, 12.684868 54.064266, '
               '12.121230 52.448013))')
+    coverage = wkt.loads(data_set_meta_info.coverage)
+    assert coverage.almost_equals(expected_coverage)
+
+
+def test_s1_speckled_meta_info_extractor_name():
+    extractor = S1SpeckledMetaInfoExtractor()
+
+    assert 'S1_Speckled' == extractor.name()
+
+
+def test_s1_speckled_meta_info_extractor_extract_meta_info():
+    extractor = S1SpeckledMetaInfoExtractor()
+    path_to_s1_dir = './test/test_data/s1_speckled/' \
+                     'S1A_IW_SLC__1SDV_20170613T054059_20170613T054126_017011_01C547_62FA_GC_RC_No_Su_Co_speckle.nc'
+    data_set_meta_info = extractor.extract_meta_info(path_to_s1_dir)
+    assert 'S1_Speckled' == data_set_meta_info.data_type
+    assert 'S1A_IW_SLC__1SDV_20170613T054059_20170613T054126_017011_01C547_62FA_GC_RC_No_Su_Co_speckle.nc' \
+           == data_set_meta_info.identifier
+    assert '2017-06-13 05:40:59' == data_set_meta_info.start_time
+    assert '2017-06-13 05:41:26' == data_set_meta_info.end_time
+    expected_coverage = wkt.loads('POLYGON((9.990013694653712 53.509990658829, 10.00999222657253 53.509990658829, '
+                                  '10.00999222657253 53.49001212691018, 9.990013694653712 53.49001212691018, '
+                                  '9.990013694653712 53.509990658829))')
     coverage = wkt.loads(data_set_meta_info.coverage)
     assert coverage.almost_equals(expected_coverage)
 

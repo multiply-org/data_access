@@ -16,7 +16,9 @@ else:
         'shapely',
         'pytest',
         'pyyaml',
-        'requests']
+        'requests',
+        'xarray'
+    ]
 
 __version__ = None
 with open('multiply_data_access/version.py') as f:

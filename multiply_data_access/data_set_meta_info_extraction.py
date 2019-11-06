@@ -11,12 +11,13 @@ __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 from abc import ABCMeta, abstractmethod
 from multiply_data_access.data_access import DataSetMetaInfo
 from multiply_core.observations import DataTypeConstants, get_relative_path
-from multiply_core.util import reproject, get_time_from_year_and_day_of_year
+from multiply_core.util import reproject, get_time_from_year_and_day_of_year, get_time_from_string
 from multiply_data_access.modis_tile_coverage_provider import get_tile_coverage
 from datetime import timedelta
 from shapely.geometry import Polygon
 from typing import Optional
 import gdal
+import xarray
 import osr
 import zipfile
 from xml.etree import ElementTree
@@ -57,7 +58,7 @@ class S1SlcMetaInfoExtractor(DataSetMetaInfoExtractor):
         end_time = self._extract_stop_time(manifest)
         id = path.split('/')[-1]
         return DataSetMetaInfo(identifier=id, coverage=coverage, start_time=start_time, end_time=end_time,
-                                           data_type=DataTypeConstants.S1_SLC)
+                               data_type=DataTypeConstants.S1_SLC)
 
     def _extract_coverage(self, manifest) -> str:
         for child in manifest:
@@ -87,6 +88,29 @@ class S1SlcMetaInfoExtractor(DataSetMetaInfoExtractor):
                     return x.find('metadataWrap/xmlData/{http://www.esa.int/safe/sentinel-1.0}acquisitionPeriod/'
                                   '{http://www.esa.int/safe/sentinel-1.0}stopTime').text
         return ''
+
+
+class S1SpeckledMetaInfoExtractor(DataSetMetaInfoExtractor):
+
+    @classmethod
+    def name(cls) -> str:
+        return DataTypeConstants.S1_SPECKLED
+
+    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+        id = path.split('/')[-1]
+        dataset = xarray.open_dataset(path)
+        if 'lat' in dataset.coords and 'lon' in dataset.coords:
+            lat_min = dataset.lat.min().values.item(0)
+            lat_max = dataset.lat.max().values.item(0)
+            lon_min = dataset.lon.min().values.item(0)
+            lon_max = dataset.lon.max().values.item(0)
+        coverage = f'POLYGON(({lon_min} {lat_max}, {lon_max} {lat_max}, {lon_max} {lat_min}, ' \
+                   f'{lon_min} {lat_min}, {lon_min} {lat_max}))'
+        dataset.close()
+        start_time = get_time_from_string(id[17:32]).strftime('%Y-%m-%d %H:%M:%S')
+        end_time = get_time_from_string(id[33:48]).strftime('%Y-%m-%d %H:%M:%S')
+        return DataSetMetaInfo(identifier=id, coverage=coverage, start_time=start_time, end_time=end_time,
+                               data_type=DataTypeConstants.S1_SPECKLED)
 
 
 class AwsS2MetaInfoExtractor(DataSetMetaInfoExtractor):
@@ -199,10 +223,10 @@ class S2L1CMetaInfoExtractor(DataSetMetaInfoExtractor):
         return self._polygon_format.format(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5], coords[6],
                                            coords[7], coords[8], coords[9])
 
-    def _extract_start_time(self, path:str) -> str:
+    def _extract_start_time(self, path: str) -> str:
         return self._extract_time(path, self._start_time_element)
 
-    def _extract_end_time(self, path:str) -> str:
+    def _extract_end_time(self, path: str) -> str:
         return self._extract_time(path, self._stop_time_element)
 
     def _extract_time(self, path: str, final_element_name: str) -> str:
@@ -421,6 +445,7 @@ def add_data_set_meta_info_extractor(data_set_meta_info_provider: DataSetMetaInf
 
 
 add_data_set_meta_info_extractor(S1SlcMetaInfoExtractor())
+add_data_set_meta_info_extractor(S1SpeckledMetaInfoExtractor())
 add_data_set_meta_info_extractor(AwsS2MetaInfoExtractor())
 add_data_set_meta_info_extractor(S2L1CMetaInfoExtractor())
 add_data_set_meta_info_extractor(S2L2MetaInfoExtractor())
