@@ -17,8 +17,9 @@ else:
         'pytest',
         'pyyaml',
         'requests',
-        'xarray'
+        'xarrconda ay'
     ]
+requirements = []
 
 __version__ = None
 with open('multiply_data_access/version.py') as f:
