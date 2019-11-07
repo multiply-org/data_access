@@ -17,7 +17,7 @@ else:
         'pytest',
         'pyyaml',
         'requests',
-        'xarrconda ay'
+        'xarray'
     ]
 requirements = []
 
