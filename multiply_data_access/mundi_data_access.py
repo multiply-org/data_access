@@ -60,7 +60,7 @@ _DATA_TYPE_PARAMETER_DICTS = {
 _MUNDI_SERVER = 'obs.otc.t-systems.com'
 
 
-class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
+class LocallyWrappedMundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
     def _init_wrapped_meta_info_provider(self, parameters: dict) -> None:
         pass
@@ -184,15 +184,15 @@ class MundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         return False
 
 
-class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
+class LocallyWrappedMundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 
     @classmethod
     def name(cls) -> str:
         return _META_INFO_PROVIDER_NAME
 
     @classmethod
-    def create_from_parameters(cls, parameters: dict) -> MundiMetaInfoProvider:
-        return MundiMetaInfoProvider(parameters)
+    def create_from_parameters(cls, parameters: dict) -> LocallyWrappedMundiMetaInfoProvider:
+        return LocallyWrappedMundiMetaInfoProvider(parameters)
 
 
 class MundiObsFileSystem(LocallyWrappedFileSystem):

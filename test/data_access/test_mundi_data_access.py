@@ -2,7 +2,7 @@ import os
 import pytest
 import shutil
 from multiply_data_access import DataSetMetaInfo
-from multiply_data_access.mundi_data_access import MundiMetaInfoProvider, MundiMetaInfoProviderAccessor, \
+from multiply_data_access.mundi_data_access import LocallyWrappedMundiMetaInfoProvider, LocallyWrappedMundiMetaInfoProviderAccessor, \
     MundiObsFileSystem, MundiObsFileSystemAccessor, MundiRestFileSystem, MundiRestFileSystemAccessor
 from shapely.wkt import loads
 
@@ -17,14 +17,14 @@ _MUNDI_REST_TEMP_DIR = './test/test_data/mundi_rest_temp_dir'
 
 def test_mundi_meta_info_provider_name():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert 'MundiMetaInfoProvider' == mundi_meta_info_provider.name()
 
 
 def test_mundi_meta_info_provider_provides_data_type():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert mundi_meta_info_provider.provides_data_type('S2_L1C')
     assert not mundi_meta_info_provider.provides_data_type('AWS_S2_L1C')
@@ -35,7 +35,7 @@ def test_mundi_meta_info_provider_provides_data_type():
 
 def test_mundi_meta_info_provider_get_provided_data_types():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     provided_data_types = mundi_meta_info_provider.get_provided_data_types()
 
@@ -46,7 +46,7 @@ def test_mundi_meta_info_provider_get_provided_data_types():
 
 def test_mundi_meta_info_provider_encapsulates_data_type():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert not mundi_meta_info_provider.encapsulates_data_type('S2_L1C')
     assert not mundi_meta_info_provider.encapsulates_data_type('AWS_S2_L1C')
@@ -57,7 +57,7 @@ def test_mundi_meta_info_provider_encapsulates_data_type():
 
 def test_mundi_meta_info_provider_query_s2():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-01;2018-06-05;S2_L1C"
     data_set_meta_infos = mundi_meta_info_provider.query(query_string)
@@ -102,7 +102,7 @@ def test_mundi_meta_info_provider_query_s2():
 
 def test_mundi_meta_info_provider_query_s1():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-01;2018-06-05;S1_SLC"
     data_set_meta_infos = mundi_meta_info_provider.query(query_string)
@@ -142,7 +142,7 @@ def test_mundi_meta_info_provider_query_s1():
 
 def test_mundi_meta_info_provider_query_local():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
     query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-01;2018-06-05;S1_SLC, S2_L1C"
     data_set_meta_infos = mundi_meta_info_provider.query_local(query_string)
     assert 0 == len(data_set_meta_infos)
@@ -150,7 +150,7 @@ def test_mundi_meta_info_provider_query_local():
 
 def test_mundi_meta_info_provider_query_non_local_s1():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-06-01;2018-06-05;S1_SLC"
     data_set_meta_infos = mundi_meta_info_provider.query_non_local(query_string)
@@ -170,7 +170,7 @@ def test_mundi_meta_info_provider_query_non_local_s1():
 
 def test_mundi_meta_info_provider_query_more_than_fifty_data_sets():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     query_string = "POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6));2018-03-01;2018-09-05;S2_L1C"
     data_set_meta_infos = mundi_meta_info_provider.query(query_string)
@@ -179,15 +179,15 @@ def test_mundi_meta_info_provider_query_more_than_fifty_data_sets():
 
 
 def test_mundi_meta_info_provider_accessor_name():
-    assert 'MundiMetaInfoProvider' == MundiMetaInfoProviderAccessor.name()
+    assert 'MundiMetaInfoProvider' == LocallyWrappedMundiMetaInfoProviderAccessor.name()
 
 
 def test_mundi_meta_info_provider_accessor_create_from_parameters():
     parameters = {'path_to_json_file': META_INFO_FILE}
-    mundi_meta_info_provider = MundiMetaInfoProviderAccessor.create_from_parameters(parameters)
+    mundi_meta_info_provider = LocallyWrappedMundiMetaInfoProviderAccessor.create_from_parameters(parameters)
 
     assert mundi_meta_info_provider is not None
-    assert isinstance(mundi_meta_info_provider, MundiMetaInfoProvider)
+    assert isinstance(mundi_meta_info_provider, LocallyWrappedMundiMetaInfoProvider)
 
 
 def test_mundi_obs_file_system_accessor_name():
