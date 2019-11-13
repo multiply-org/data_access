@@ -4,6 +4,7 @@ import logging
 import os
 import osr
 import re
+import shutil
 from sys import stdout
 import urllib.request as urllib2
 from urllib.error import URLError
@@ -168,6 +169,7 @@ class LpDaacMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 
 
 class LpDaacFileSystem(LocallyWrappedFileSystem):
+
     @classmethod
     def name(cls) -> str:
         return _FILE_SYSTEM_NAME
@@ -227,6 +229,9 @@ class LpDaacFileSystem(LocallyWrappedFileSystem):
     def _get_wrapped_parameters_as_dict(self) -> dict:
         parameters = {'temp_dir': self._temp_dir, 'username': self._username, 'password': self._password}
         return parameters
+
+    def clear_cache(self):
+        shutil.rmtree(self._temp_dir)
 
 
 class LpDaacFileSystemAccessor(FileSystemAccessor):

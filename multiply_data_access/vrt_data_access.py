@@ -8,6 +8,7 @@ format that is globally an.
 
 import gdal
 import os
+import shutil
 import xml.etree.ElementTree as ET
 
 from shapely.geometry import Polygon
@@ -241,6 +242,9 @@ class VrtFileSystem(FileSystem):
 
     def scan(self) -> Sequence[DataSetMetaInfo]:
         return self._file_system.scan()
+
+    def clear_cache(self):
+        self._file_system.clear_cache()
 
 
 class VrtFileSystemAccessor(FileSystemAccessor):

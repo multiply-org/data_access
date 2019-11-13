@@ -207,7 +207,6 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
             logging.info(f"Could not download from url '{file_url}'. {e.reason}")
         return file_refs
 
-
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
         full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
         if os.path.exists(full_path):
@@ -218,6 +217,9 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
         return {'username': self._username, 'password': self._password, 'temp_dir': self._temp_dir}
+
+    def clear_cache(self):
+        shutil.rmtree(self._temp_dir)
 
 
 class SciHubFileSystemAccessor(FileSystemAccessor):

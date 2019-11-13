@@ -224,6 +224,9 @@ class TestWrappedFileSystem(LocallyWrappedFileSystem):
         wrapped_parameters_as_dict = {'some_parameter': self._some_parameter}
         return wrapped_parameters_as_dict
 
+    def clear_cache(self):
+        pass
+
 
 def test_locally_wrappd_file_system_create():
     parameters = {'some_parameter': 'something', 'path': './test/test_data/', 'pattern': '/dt/yy/mm/dd/'}

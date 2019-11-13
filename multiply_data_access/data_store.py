@@ -126,3 +126,7 @@ class DataStore(object):
                     break
             if not found:
                 self._meta_info_provider.remove(registered_data_set_meta_info)
+
+    def clear_cache(self):
+        self._file_system.clear_cache()
+        self.update()

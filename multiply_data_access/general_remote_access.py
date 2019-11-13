@@ -179,6 +179,9 @@ class HttpFileSystem(LocallyWrappedFileSystem):
         parameters = {'url': self._url, 'temp_dir': self._temp_dir}
         return parameters
 
+    def clear_cache(self):
+        shutil.rmtree(self._temp_dir)
+
 
 class HttpFileSystemAccessor(FileSystemAccessor):
 

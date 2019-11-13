@@ -349,3 +349,7 @@ class DataAccessComponent(object):
         data_store.update()
         self._data_stores.append(data_store)
         logging.info('Added local data store {}'.format(data_store.id))
+
+    def clear_caches(self):
+        for data_store in self._data_stores:
+            data_store.clear_cache()

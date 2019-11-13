@@ -133,6 +133,13 @@ class FileSystem(metaclass=ABCMeta):
     def scan(self) -> Sequence[DataSetMetaInfo]:
         """Retrieves a sequence of data set meta informations of all file refs found in the file system."""
 
+    @abstractmethod
+    def clear_cache(self):
+        """
+        Removes any cached data that this file system might hold.
+        :return:
+        """
+
 
 class FileSystemAccessor(metaclass=ABCMeta):
 

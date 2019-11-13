@@ -305,6 +305,7 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
         if not os.path.exists(parameters['temp_dir']):
             os.makedirs(parameters['temp_dir'])
         self._temp_dir = parameters['temp_dir']
+        self._path = parameters['path']
 
     @classmethod
     def name(cls) -> str:
@@ -386,6 +387,10 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
                     shutil.rmtree(file)
                 else:
                     os.remove(file)
+
+    def clear_cache(self):
+        shutil.rmtree(self._temp_dir)
+        shutil.rmtree(self._path)
 
 
 class MundiObsFileSystemAccessor(FileSystemAccessor):
@@ -554,6 +559,9 @@ class MundiRestFileSystem(LocallyWrappedFileSystem):
                     shutil.rmtree(file)
                 else:
                     os.remove(file)
+
+    def clear_cache(self):
+        shutil.rmtree(self._temp_dir)
 
 
 class MundiRestFileSystemAccessor(FileSystemAccessor):

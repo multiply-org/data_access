@@ -41,7 +41,7 @@ def test_locally_wrapped_mundi_meta_info_provider_get_provided_data_types():
     provided_data_types = mundi_meta_info_provider.get_provided_data_types()
 
     assert 4 == len(provided_data_types)
-    expected_data_types = ['S1_SLC','S2_L1C', 'S3_L1_OLCI_RR', 'S3_L1_OLCI_FR']
+    expected_data_types = ['S1_SLC', 'S2_L1C', 'S3_L1_OLCI_RR', 'S3_L1_OLCI_FR']
     assert all([a == b for a, b in zip(provided_data_types, expected_data_types)])
 
 
@@ -408,17 +408,24 @@ def test_mundi_obs_file_system_name():
 def test_mundi_obs_file_system_get():
     try:
         mundi_parameters = {'path': _MUNDI_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_TEMP_DIR}
-        mundi_parameters['access_key_id'] = '' # enter access key id here
-        mundi_parameters['secret_access_key'] = '' # enter secret access key here
+        mundi_parameters['access_key_id'] = ''  # enter access key id here
+        mundi_parameters['secret_access_key'] = ''  # enter secret access key here
         mundi_file_system = MundiObsFileSystemAccessor.create_from_parameters(mundi_parameters)
-        data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
-                                             start_time='2018-09-26', end_time='2018-09-26', data_type='S2_L1C',
-                                             identifier='S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404')
+        data_set_meta_info = DataSetMetaInfo(
+            coverage='POLYGON ((10.3882277619999996 54.1384156120000029, 10.3173421249999997 54.0163176499999977,'
+                     '10.2348201129999996 53.8730417960000025, 10.1528176469999991 53.7297406859999995, '
+                     '10.0714324099999999 53.5864079979999985, 9.9905949619999994 53.4430542019999990, '
+                     '9.9101521629999993 53.2996597570000006, 9.8301509550000006 53.1562272170000014, '
+                     '9.8297230889999998 53.1554540790000019, 8.9997008679999997 53.1611735449999969, '
+                     '8.9996937989999992 54.1481041039999980, 10.3882277619999996 54.1384156120000029))',
+            start_time='2018-06-02T10:40:19Z', end_time='2018-06-02T10:40:19Z', data_type='S2_L1C',
+            identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
         file_refs = mundi_file_system.get(data_set_meta_info)
         assert 1 == len(file_refs)
-        assert '{}/S2_L1C/2018/09/26/S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404'.format(_MUNDI_DIR) == file_refs[0].url
-        assert '2018-09-26' == file_refs[0].start_time
-        assert '2018-09-26' == file_refs[0].end_time
+        assert '{}/S2_L1C/2018/06/02/S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118'.format(_MUNDI_DIR) == \
+               file_refs[0].url
+        assert '2018-06-02T10:40:19Z' == file_refs[0].start_time
+        assert '2018-06-02T10:40:19Z' == file_refs[0].end_time
         assert 'application/x-directory' == file_refs[0].mime_type
     finally:
         if os.path.exists(_MUNDI_TEMP_DIR):
@@ -444,7 +451,7 @@ def test_mundi_obs_file_system_get_wrapped_parameters_as_dict():
 
 
 def test_mundi_obs_file_system_get_bucket():
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-06-01', end_time='2018-06-01', data_type='S2_L1C',
                                          identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
     bucket_names = MundiObsFileSystem._get_bucket_names(data_set_meta_info)
@@ -452,7 +459,7 @@ def test_mundi_obs_file_system_get_bucket():
     assert 's2-l1c-2018' in bucket_names
     assert 's2-l1c-2018-q2' in bucket_names
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
                                          identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
     bucket_names = MundiObsFileSystem._get_bucket_names(data_set_meta_info)
@@ -460,7 +467,7 @@ def test_mundi_obs_file_system_get_bucket():
     assert 's1-l1-slc-2018' == bucket_names[1]
     assert 's1-l1-slc-2018-q4' == bucket_names[2]
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
                                          identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
     bucket_names = MundiObsFileSystem._get_bucket_names(data_set_meta_info)
@@ -468,19 +475,19 @@ def test_mundi_obs_file_system_get_bucket():
 
 
 def test_mundi_obs_file_system_get_prefix():
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-06-02', end_time='2018-06-02', data_type='S2_L1C',
                                          identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
     prefix = MundiObsFileSystem._get_prefix(data_set_meta_info)
     assert '32/U/NE/2018/06/02/' == prefix
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
                                          identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
     prefix = MundiObsFileSystem._get_prefix(data_set_meta_info)
     assert '2018/10/02/IW/DV/' == prefix
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
                                          identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
     prefix = MundiObsFileSystem._get_prefix(data_set_meta_info)
@@ -522,7 +529,8 @@ def test_mundi_rest_file_system_get_s1():
                                              identifier='S1A_IW_SLC__1SDV_20180601T170037_20180601T170104_022166_0265B3_466C')
         file_refs = mundi_file_system.get(data_set_meta_info)
         assert 1 == len(file_refs)
-        assert '{}/S1_SLC/2018/06/01/S1A_IW_SLC__1SDV_20180601T170037_20180601T170104_022166_0265B3_466C'.format(_MUNDI_REST_DIR) == file_refs[0].url
+        assert '{}/S1_SLC/2018/06/01/S1A_IW_SLC__1SDV_20180601T170037_20180601T170104_022166_0265B3_466C'.format(
+            _MUNDI_REST_DIR) == file_refs[0].url
         assert '2018-06-01T17:00:37Z' == file_refs[0].start_time
         assert '2018-06-01T17:00:37Z' == file_refs[0].end_time
         assert 'application/zip' == file_refs[0].mime_type
@@ -538,12 +546,22 @@ def test_mundi_rest_file_system_get_s2():
     try:
         mundi_parameters = {'path': _MUNDI_REST_DIR, 'pattern': '/dt/yy/mm/dd/', 'temp_dir': _MUNDI_REST_TEMP_DIR}
         mundi_file_system = MundiRestFileSystemAccessor.create_from_parameters(mundi_parameters)
-        data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
-                                             start_time='2018-09-26', end_time='2018-09-26', data_type='S2_L1C',
-                                             identifier='S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404')
+        # data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+        #                                      start_time='2018-09-26', end_time='2018-09-26', data_type='S2_L1C',
+        #                                      identifier='S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404')
+        data_set_meta_info = DataSetMetaInfo(
+            coverage='POLYGON ((10.3882277619999996 54.1384156120000029, 10.3173421249999997 54.0163176499999977,'
+                     '10.2348201129999996 53.8730417960000025, 10.1528176469999991 53.7297406859999995, '
+                     '10.0714324099999999 53.5864079979999985, 9.9905949619999994 53.4430542019999990, '
+                     '9.9101521629999993 53.2996597570000006, 9.8301509550000006 53.1562272170000014, '
+                     '9.8297230889999998 53.1554540790000019, 8.9997008679999997 53.1611735449999969, '
+                     '8.9996937989999992 54.1481041039999980, 10.3882277619999996 54.1384156120000029))',
+            start_time='2018-06-02T10:40:19Z', end_time='2018-06-02T10:40:19Z', data_type='S2_L1C',
+            identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
         file_refs = mundi_file_system.get(data_set_meta_info)
         assert 1 == len(file_refs)
-        assert '{}/S2_L1C/2018/09/26/S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404'.format(_MUNDI_REST_DIR) == file_refs[0].url
+        assert '{}/S2_L1C/2018/09/26/S2B_MSIL1C_20180926T200619_N0206_R099_T01CDQ_20180926T231404'.format(
+            _MUNDI_REST_DIR) == file_refs[0].url
         assert '2018-09-26' == file_refs[0].start_time
         assert '2018-09-26' == file_refs[0].end_time
         assert 'application/x-directory' == file_refs[0].mime_type
@@ -567,7 +585,7 @@ def test_mundi_rest_file_system_get_wrapped_parameters_as_dict():
 
 
 def test_mundi_rest_file_system_get_bucket():
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-06-01', end_time='2018-06-01', data_type='S2_L1C',
                                          identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
     bucket_names = MundiRestFileSystem._get_bucket_names(data_set_meta_info)
@@ -575,7 +593,7 @@ def test_mundi_rest_file_system_get_bucket():
     assert 's2-l1c-2018' in bucket_names
     assert 's2-l1c-2018-q2' in bucket_names
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
                                          identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
     bucket_names = MundiRestFileSystem._get_bucket_names(data_set_meta_info)
@@ -583,7 +601,7 @@ def test_mundi_rest_file_system_get_bucket():
     assert 's1-l1-slc-2018' == bucket_names[1]
     assert 's1-l1-slc-2018-q4' == bucket_names[2]
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
                                          identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
     bucket_names = MundiRestFileSystem._get_bucket_names(data_set_meta_info)
@@ -591,19 +609,19 @@ def test_mundi_rest_file_system_get_bucket():
 
 
 def test_mundi_rest_file_system_get_prefix():
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-06-02', end_time='2018-06-02', data_type='S2_L1C',
                                          identifier='S2B_MSIL1C_20180602T104019_N0206_R008_T32UNE_20180602T132118')
     prefix = MundiRestFileSystem._get_prefix(data_set_meta_info)
     assert '32/U/NE/2018/06/02/' == prefix
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-10-02', end_time='2018-10-02', data_type='S1_SLC',
                                          identifier='S1A_IW_SLC__1SDV_20181002T012023_20181002T012053_023950_029D89_4DB1')
     prefix = MundiRestFileSystem._get_prefix(data_set_meta_info)
     assert '2018/10/02/IW/DV/' == prefix
 
-    data_set_meta_info = DataSetMetaInfo(coverage = 'POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
+    data_set_meta_info = DataSetMetaInfo(coverage='POLYGON((9.8 53.6,10.2 53.6,10.2 53.4,9.8 53.4,9.8 53.6))',
                                          start_time='2018-01-05', end_time='2018-01-05', data_type='S3_L1_OLCI_FR',
                                          identifier='S3A_OL_2_LFR____20180105T104935_20180105T105235_20180106T153005_0180_026_222_3239_LN1_O_NT_002')
     prefix = MundiRestFileSystem._get_prefix(data_set_meta_info)

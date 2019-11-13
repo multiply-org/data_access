@@ -107,6 +107,9 @@ class AwsS2FileSystem(LocallyWrappedFileSystem):
         parameters = {'temp_dir': self._temp_dir}
         return parameters
 
+    def clear_cache(self):
+        shutil.rmtree(self._temp_dir)
+
 
 class AwsS2FileSystemAccessor(FileSystemAccessor):
 
