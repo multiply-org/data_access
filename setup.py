@@ -54,7 +54,7 @@ setup(name='multiply-data-access',
               'vrt_meta_info_provider = multiply_data_access:vrt_data_access.VrtMetaInfoProviderAccessor',
               'locally_wrapped_mundi_meta_info_provider = '
               'multiply_data_access:mundi_data_access.LocallyWrappedMundiMetaInfoProviderAccessor',
-              # 'mundi_meta_info_provider = multiply_data_access:mundi_data_access.MundiMetaInfoProviderAccessor',
+              'mundi_meta_info_provider = multiply_data_access:mundi_data_access.MundiMetaInfoProviderAccessor',
               'scihub_meta_info_provider = multiply_data_access:scihub_data_access.SciHubMetaInfoProviderAccessor'
           ],
       },

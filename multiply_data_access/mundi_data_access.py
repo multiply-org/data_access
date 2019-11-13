@@ -22,12 +22,14 @@ import urllib.request as urllib2
 
 from multiply_core.observations import DataTypeConstants
 from multiply_core.util import FileRef, get_mime_type, get_time_from_string
-from multiply_data_access.data_access import DataSetMetaInfo, FileSystemAccessor, MetaInfoProviderAccessor
+from multiply_data_access.data_access import DataSetMetaInfo, FileSystemAccessor, MetaInfoProvider, \
+    MetaInfoProviderAccessor
 from multiply_data_access.locally_wrapped_data_access import LocallyWrappedFileSystem, LocallyWrappedMetaInfoProvider
 
 __author__ = 'Tonio Fincke (Brockmann Consult GmbH)'
 
-_META_INFO_PROVIDER_NAME = 'MundiMetaInfoProvider'
+_LOCALLY_WRAPPED_META_INFO_PROVIDER_NAME = 'MundiMetaInfoProvider'
+_MUNDI_META_INFO_PROVIDER_NAME = 'MundiDiasMetaInfoProvider'
 _OBS_FILE_SYSTEM_NAME = 'MundiFileSystem'
 _REST_FILE_SYSTEM_NAME = 'MundiRestFileSystem'
 
@@ -60,6 +62,71 @@ _DATA_TYPE_PARAMETER_DICTS = {
 _MUNDI_SERVER = 'obs.otc.t-systems.com'
 
 
+def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str, run: int) -> str:
+    data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
+    start_index = (10 * run) + 1
+    instrument_part = ''
+    if 'instrument' in data_type_dict:
+        instrument_part = f"instrument={data_type_dict['instrument']}"
+    query_part = f"(sensingStartDate:[{start_time} TO {end_time}] AND footprint:\"Intersects({roi})\")&" \
+                 f"startIndex={start_index}&maxRecords=10&processingLevel={data_type_dict['processingLevel']}&" \
+                 f"{instrument_part}&productType={data_type_dict['productType']}"
+    return _BASE_CATALOGUE_URL.format(data_type_dict['platform'], query_part)
+
+
+def _convert_mundi_coverage(mundi_coverage_string: str):
+    coords = mundi_coverage_string.split(" ")
+    coord_list = []
+    for i in range(0, len(coords), 2):
+        coord_list.append((float(coords[i + 1]), float(coords[i])))
+    coverage = Polygon(coord_list)
+    return dumps(coverage)
+
+
+def _get_provided_data_types() -> List[str]:
+    collections_description_url = '{}{}'.format(_BASE_URL, _COLLECTIONS_DESCRIPTIONS_ADDITION)
+    descriptions = urllib2.urlopen(collections_description_url).read()
+    descriptions_root = XML(descriptions)
+    platforms = []
+    # todo make this more sophisticated
+    for child in descriptions_root:
+        if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
+            if child.get('rel') == 'search':
+                for child2 in child:
+                    if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
+                        for child3 in child2:
+                            platforms.append(child3.get('value'))
+    provided_data_types = []
+    for data_type in _DATA_TYPE_PARAMETER_DICTS:
+        data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
+        instruments = []
+        processing_levels = []
+        product_types = []
+        if data_type_dict['platform'] in platforms:
+            platform_url = '{}{}'.format(_BASE_URL, _COLLECTION_DESCRIPTION_ADDITION.format(data_type_dict['platform']))
+            description = urllib2.urlopen(platform_url).read()
+            platform_description_root = XML(description)
+            for child in platform_description_root:
+                if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
+                    for child2 in child:
+                        if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
+                            if child2.get('name') == 'instrument':
+                                for child3 in child2:
+                                    instruments.append(child3.get('value'))
+                            elif child2.get('name') == 'processingLevel':
+                                for child3 in child2:
+                                    processing_levels.append(child3.get('value'))
+                            elif child2.get('name') == 'productType':
+                                for child3 in child2:
+                                    product_types.append(child3.get('value'))
+        if (('instrument' in data_type_dict and data_type_dict['instrument'] in instruments)
+            or 'instrument' not in data_type_dict) and \
+                data_type_dict['processingLevel'] in processing_levels and \
+                data_type_dict['productType'] in product_types:
+            provided_data_types.append(data_type)
+    return provided_data_types
+
+
 class LocallyWrappedMundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
 
     def _init_wrapped_meta_info_provider(self, parameters: dict) -> None:
@@ -77,7 +144,7 @@ class LocallyWrappedMundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                 run = 0
                 continue_checking_for_data_sets = True
                 while continue_checking_for_data_sets:
-                    mundi_query = self._create_mundi_query(roi, data_type, start_time, end_time, run)
+                    mundi_query = _create_mundi_query(roi, data_type, start_time, end_time, run)
                     run += 1
                     response = requests.get(mundi_query)
                     response_xml = XML(response.content)
@@ -91,7 +158,7 @@ class LocallyWrappedMundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                                 if child2.tag == '{http://www.w3.org/2005/Atom}id':
                                     data_set_meta_info_id = child2.text
                                 elif child2.tag == '{http://www.georss.org/georss}polygon':
-                                    data_set_meta_info_coverage = self._convert_mundi_coverage(child2.text)
+                                    data_set_meta_info_coverage = _convert_mundi_coverage(child2.text)
                                 elif child2.tag == '{http://tas/DIAS}sensingStartDate':
                                     data_set_meta_info_time = child2.text
                             data_set_meta_info = DataSetMetaInfo(data_set_meta_info_coverage, data_set_meta_info_time,
@@ -102,83 +169,22 @@ class LocallyWrappedMundiMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                             continue_checking_for_data_sets = True
         return data_set_meta_infos
 
-    @staticmethod
-    def _create_mundi_query(roi: str, data_type: str, start_time: str, end_time: str, run: int) -> str:
-        data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-        start_index = (10 * run) + 1
-        instrument_part = ''
-        if 'instrument' in data_type_dict:
-            instrument_part = f"instrument={data_type_dict['instrument']}"
-        query_part = f"(sensingStartDate:[{start_time} TO {end_time}] AND footprint:\"Intersects({roi})\")&" \
-                     f"startIndex={start_index}&maxRecords=10&processingLevel={data_type_dict['processingLevel']}&" \
-                     f"{instrument_part}&productType={data_type_dict['productType']}"
-        return _BASE_CATALOGUE_URL.format(data_type_dict['platform'], query_part)
-
-    @staticmethod
-    def _convert_mundi_coverage(mundi_coverage_string: str):
-        coords = mundi_coverage_string.split(" ")
-        coord_list = []
-        for i in range(0, len(coords), 2):
-            coord_list.append((float(coords[i + 1]), float(coords[i])))
-        coverage = Polygon(coord_list)
-        return dumps(coverage)
-
     def _get_wrapped_parameters_as_dict(self) -> dict:
         return {}
 
     @classmethod
     def name(cls) -> str:
-        return _META_INFO_PROVIDER_NAME
+        return _LOCALLY_WRAPPED_META_INFO_PROVIDER_NAME
 
     def provides_data_type(self, data_type: str) -> bool:
+        if not hasattr(self, '_provided_data_types'):
+            self._provided_data_types = _get_provided_data_types()
         return data_type in self._provided_data_types
 
     def get_provided_data_types(self) -> List[str]:
         if not hasattr(self, '_provided_data_types'):
-            self._init_data_types()
+            self._provided_data_types = _get_provided_data_types()
         return self._provided_data_types
-
-    def _init_data_types(self):
-        collections_description_url = '{}{}'.format(_BASE_URL, _COLLECTIONS_DESCRIPTIONS_ADDITION)
-        descriptions = urllib2.urlopen(collections_description_url).read()
-        descriptions_root = XML(descriptions)
-        platforms = []
-        # todo make this more sophisticated
-        for child in descriptions_root:
-            if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
-                if child.get('rel') == 'search':
-                    for child2 in child:
-                        if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
-                            for child3 in child2:
-                                platforms.append(child3.get('value'))
-        self._provided_data_types = []
-        for data_type in _DATA_TYPE_PARAMETER_DICTS:
-            data_type_dict = _DATA_TYPE_PARAMETER_DICTS[data_type]
-            instruments = []
-            processing_levels = []
-            product_types = []
-            if data_type_dict['platform'] in platforms:
-                platform_url = '{}{}'.format(_BASE_URL, _COLLECTION_DESCRIPTION_ADDITION.format(data_type_dict['platform']))
-                description = urllib2.urlopen(platform_url).read()
-                platform_description_root = XML(description)
-                for child in platform_description_root:
-                    if child.tag == '{http://a9.com/-/spec/opensearch/1.1/}Url':
-                        for child2 in child:
-                            if child2.tag == '{http://a9.com/-/spec/opensearch/extensions/parameters/1.0/}Parameter':
-                                if child2.get('name') == 'instrument':
-                                    for child3 in child2:
-                                        instruments.append(child3.get('value'))
-                                elif child2.get('name') == 'processingLevel':
-                                    for child3 in child2:
-                                        processing_levels.append(child3.get('value'))
-                                elif child2.get('name') == 'productType':
-                                    for child3 in child2:
-                                        product_types.append(child3.get('value'))
-            if (('instrument' in data_type_dict and data_type_dict['instrument'] in instruments)
-                or 'instrument' not in data_type_dict) and \
-                    data_type_dict['processingLevel'] in processing_levels and \
-                    data_type_dict['productType'] in product_types:
-                self._provided_data_types.append(data_type)
 
     def encapsulates_data_type(self, data_type: str) -> bool:
         return False
@@ -188,11 +194,97 @@ class LocallyWrappedMundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
 
     @classmethod
     def name(cls) -> str:
-        return _META_INFO_PROVIDER_NAME
+        return _LOCALLY_WRAPPED_META_INFO_PROVIDER_NAME
 
     @classmethod
     def create_from_parameters(cls, parameters: dict) -> LocallyWrappedMundiMetaInfoProvider:
         return LocallyWrappedMundiMetaInfoProvider(parameters)
+
+
+class MundiMetaInfoProvider(MetaInfoProvider):
+
+    def __init__(self, parameters: dict):
+        self._provided_data_types = _get_provided_data_types()
+
+    @classmethod
+    def name(cls) -> str:
+        return _MUNDI_META_INFO_PROVIDER_NAME
+
+    def query(self, query_string: str) -> List[DataSetMetaInfo]:
+        return self.query_non_local(query_string)
+
+    def query_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        # this meta info provider holds no information on locally available data
+        return []
+
+    def query_non_local(self, query_string: str) -> List[DataSetMetaInfo]:
+        roi = dumps(self.get_roi_from_query_string(query_string))
+        data_types = self.get_data_types_from_query_string(query_string)
+        start_time = datetime.strftime(self.get_start_time_from_query_string(query_string), "%Y-%m-%dT%H:%M:%SZ")
+        end_time = datetime.strftime(self.get_end_time_from_query_string(query_string), "%Y-%m-%dT%H:%M:%SZ")
+        data_set_meta_infos = []
+        for data_type in data_types:
+            if self.provides_data_type(data_type):
+                run = 0
+                continue_checking_for_data_sets = True
+                while continue_checking_for_data_sets:
+                    mundi_query = _create_mundi_query(roi, data_type, start_time, end_time, run)
+                    run += 1
+                    response = requests.get(mundi_query)
+                    response_xml = XML(response.content)
+                    continue_checking_for_data_sets = False
+                    for child in response_xml:
+                        if child.tag == '{http://www.w3.org/2005/Atom}entry':
+                            data_set_meta_info_id = ""
+                            data_set_meta_info_time = ""
+                            data_set_meta_info_coverage = ""
+                            for child2 in child:
+                                if child2.tag == '{http://www.w3.org/2005/Atom}id':
+                                    data_set_meta_info_id = child2.text
+                                elif child2.tag == '{http://www.georss.org/georss}polygon':
+                                    data_set_meta_info_coverage = _convert_mundi_coverage(child2.text)
+                                elif child2.tag == '{http://tas/DIAS}sensingStartDate':
+                                    data_set_meta_info_time = child2.text
+                            data_set_meta_infos.append(DataSetMetaInfo(data_set_meta_info_coverage,
+                                                                       data_set_meta_info_time, data_set_meta_info_time,
+                                                                       data_type, data_set_meta_info_id))
+                            continue_checking_for_data_sets = True
+        return data_set_meta_infos
+
+    def provides_data_type(self, data_type: str) -> bool:
+        return data_type in self._provided_data_types
+
+    def get_provided_data_types(self) -> List[str]:
+        return self._provided_data_types
+
+    def encapsulates_data_type(self, data_type: str) -> bool:
+        return False
+
+    def _get_parameters_as_dict(self) -> dict:
+        return {}
+
+    def can_update(self) -> bool:
+        return False
+
+    def update(self, data_set_meta_info: DataSetMetaInfo):
+        pass
+
+    def remove(self, data_set_meta_info: DataSetMetaInfo):
+        pass
+
+    def get_all_data(self) -> Sequence[DataSetMetaInfo]:
+        return []
+
+
+class MundiMetaInfoProviderAccessor(MetaInfoProviderAccessor):
+
+    @classmethod
+    def name(cls) -> str:
+        return _MUNDI_META_INFO_PROVIDER_NAME
+
+    @classmethod
+    def create_from_parameters(cls, parameters: dict) -> MundiMetaInfoProvider:
+        return MundiMetaInfoProvider(parameters)
 
 
 class MundiObsFileSystem(LocallyWrappedFileSystem):
