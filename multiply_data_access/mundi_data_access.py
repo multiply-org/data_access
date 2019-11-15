@@ -312,7 +312,7 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
         return _OBS_FILE_SYSTEM_NAME
 
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
-        from obs import ObsClient
+        from com.obs.client.obs_client import ObsClient
         if data_set_meta_info.data_type not in _DATA_TYPE_PARAMETER_DICTS:
             logging.warning(f'Data Type {data_set_meta_info.data_type} not supported by MUNDI DIAS File System '
                             f'implementation.')
