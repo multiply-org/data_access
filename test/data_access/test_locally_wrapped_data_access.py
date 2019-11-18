@@ -280,6 +280,7 @@ class TypeXValidator(DataValidator):
     def is_valid_for(self, path: str, roi: Polygon, start_time: datetime, end_time: datetime) -> bool:
         return self.is_valid(path)
 
+    @staticmethod
     def differs_by_name(cls):
         return False
 
