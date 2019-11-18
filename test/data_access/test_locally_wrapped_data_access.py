@@ -280,6 +280,9 @@ class TypeXValidator(DataValidator):
     def is_valid_for(self, path: str, roi: Polygon, start_time: datetime, end_time: datetime) -> bool:
         return self.is_valid(path)
 
+    def differs_by_name(cls):
+        return False
+
 
 def test_wrapped_file_system_get():
     try:
