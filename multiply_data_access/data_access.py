@@ -12,6 +12,7 @@ from typing import List, Sequence, Optional
 from datetime import datetime
 from multiply_core.util import FileRef, are_times_equal, are_polygons_almost_equal, get_time_from_string, \
     reproject_to_wgs84
+from multiply_core.observations import differs_by_name, get_relative_path
 from shapely.wkt import loads
 from shapely.geometry import Polygon
 
@@ -73,8 +74,15 @@ class DataSetMetaInfo(object):
         return self._referenced_data
 
     def equals(self, other: object) -> bool:
-        """Checks whether two data set meta infos are equal. Does not check the identifier or referenced data sets!"""
-        return self.equals_except_data_type(other) and self._data_type == other.data_type
+        """Checks whether two data set meta infos are equal. Does not check for referenced data sets. Only checks for
+        the identifier if two different items must always carry different names."""
+        equals = self.equals_except_data_type(other) and self._data_type == other.data_type
+        if equals and differs_by_name(self._data_type):
+            equals = self._identifier.split('/')[-1] == other.identifier.split('/')[-1]
+            relative_path = get_relative_path(self._identifier, self._data_type)
+            other_relative_path = get_relative_path(other.identifier, other.data_type)
+            equals = equals and relative_path == other_relative_path
+        return equals
 
     def equals_except_data_type(self, other: object) -> bool:
         """Checks whether two data set meta infos are equal, except that they may have the same data type.
