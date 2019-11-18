@@ -220,8 +220,10 @@ class S2L1CMetaInfoExtractor(DataSetMetaInfoExtractor):
         coords = element.text.split(' ')
         if len(coords) < 10:
             return ''
-        return self._polygon_format.format(coords[0], coords[1], coords[2], coords[3], coords[4], coords[5], coords[6],
-                                           coords[7], coords[8], coords[9])
+        formatted_coords = []
+        for index in range(int(len(coords) / 2)):
+            formatted_coords.append(f'{coords[2 * index + 1]} {coords[2 * index]}')
+        return f"POLYGON(({', '.join(formatted_coords)}))"
 
     def _extract_start_time(self, path: str) -> str:
         return self._extract_time(path, self._start_time_element)
