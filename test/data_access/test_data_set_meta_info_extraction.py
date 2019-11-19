@@ -1,6 +1,6 @@
 from multiply_data_access.data_set_meta_info_extraction import AwsS2MetaInfoExtractor, S2L1CMetaInfoExtractor, \
-    S2L2MetaInfoExtractor, MODISMCD43MetaInfoExtractor, MODISMCD15A2MetaInfoExtractor, S1SlcMetaInfoExtractor, \
-    S1SpeckledMetaInfoExtractor
+    AwsS2L2MetaInfoExtractor, MODISMCD43MetaInfoExtractor, MODISMCD15A2MetaInfoExtractor, S1SlcMetaInfoExtractor, \
+    S1SpeckledMetaInfoExtractor, S2L2MetaInfoExtractor
 
 from shapely import wkt
 from shapely.wkt import loads
@@ -10,7 +10,8 @@ __author__ = "Tonio Fincke (Brockmann Consult GmbH)"
 path_to_s2_dir = './test/test_data/aws_s2_data/29/S/QB/2017/9/4/0/'
 path_to_s2_l1c_dir = './test/test_data/S2B_MSIL1C_20180819T100019_N0206_R122_T32TQR_20180819T141300'
 path_to_other_s2_l1c_dir = './test/test_data/S2A_MSIL1C_20180510T094031_N0206_R036_T35VNE_20180510T114819'
-path_to_s2_l2_dir = './test/test_data/s2_l2_dir/'
+path_to_aws_s2_l2_dir = './test/test_data/s2_l2_dir/'
+path_to_s2_l2_dir = './test/test_data/S2A_MSIL1C_20180510T094031_N0206_R036_T35VNE_20180510T114819-ac'
 
 
 def test_s1_slc_meta_info_extractor_name():
@@ -101,10 +102,28 @@ def test_s2_l1c_meta_info_extractor():
 
 def test_s2_l2_meta_info_extractor():
     provider = S2L2MetaInfoExtractor()
-    assert 'AWS_S2_L2' == provider.name()
+    assert 'S2_L2' == provider.name()
     data_set_meta_info = provider.extract_meta_info(path_to_s2_l2_dir)
-    assert 'AWS_S2_L2' == data_set_meta_info.data_type
+    assert 'S2_L2' == data_set_meta_info.data_type
     assert path_to_s2_l2_dir == data_set_meta_info.identifier
+    assert '2018-05-10T09:40:31' == data_set_meta_info.start_time
+    assert '2018-05-10T09:40:31' == data_set_meta_info.end_time
+    expected_wkt = loads('POLYGON((28.394882641284777 58.63040715531772, 28.393297474410343 58.62823859389064, ' \
+                         '28.29082169566504 58.486996787971286, 28.18907762762528 58.345753584683216, ' \
+                         '28.088319012350805 58.204356444908974, 27.98829962738705 58.06294231078879,' \
+                         '27.888678484216804 57.92140960784396, 27.78962872691684 57.77984244002506, ' \
+                         '27.698886982431844 57.64936699051037, 26.99966486553254 57.65444945078362, ' \
+                         '26.999655468075847 58.64065618624541, 28.394882641284777 58.63040715531772))')
+    coverage = loads(data_set_meta_info.coverage)
+    assert expected_wkt.almost_equals(coverage)
+
+
+def test_aws_s2_l2_meta_info_extractor():
+    provider = AwsS2L2MetaInfoExtractor()
+    assert 'AWS_S2_L2' == provider.name()
+    data_set_meta_info = provider.extract_meta_info(path_to_aws_s2_l2_dir)
+    assert 'AWS_S2_L2' == data_set_meta_info.data_type
+    assert path_to_aws_s2_l2_dir == data_set_meta_info.identifier
     assert '2017-01-19 11:05:33' == data_set_meta_info.start_time
     assert '2017-01-19 11:05:33' == data_set_meta_info.end_time
     expected_wkt_coverage = wkt.loads('POLYGON((-3.000233454377241 39.75026792656398, '
