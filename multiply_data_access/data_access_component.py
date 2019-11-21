@@ -1,4 +1,4 @@
-from multiply_core.observations import get_valid_type
+from multiply_core.observations import get_valid_type, INPUT_TYPES
 from multiply_data_access import DataSetMetaInfo, DataStore, create_file_system_from_dict, \
     create_meta_info_provider_from_dict
 from .json_meta_info_provider import JsonMetaInfoProvider
@@ -138,27 +138,27 @@ class DataAccessComponent(object):
         """
         query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types, roi_grid)
         urls = []
-        query_results = {}
+        data_store_query_results = {}
         all_query_results = []
         for data_store in self._data_stores:
             local_query_results = data_store.query_local(query_string)
             for local_query_result in local_query_results:
                 if not self._is_already_included(local_query_result, all_query_results):
-                    if data_store.id not in query_results:
-                        query_results[data_store.id] = []
-                    query_results[data_store.id].append(local_query_result)
+                    if data_store.id not in data_store_query_results:
+                        data_store_query_results[data_store.id] = []
+                    data_store_query_results[data_store.id].append(local_query_result)
                     all_query_results.append(local_query_result)
         for data_store in self._data_stores:
             non_local_query_results = data_store.query_non_local(query_string)
             for non_local_query_result in non_local_query_results:
                 if not self._is_already_included(non_local_query_result, all_query_results):
-                    if data_store.id not in query_results:
-                        query_results[data_store.id] = []
-                    query_results[data_store.id].append(non_local_query_result)
+                    if data_store.id not in data_store_query_results:
+                        data_store_query_results[data_store.id] = []
+                    data_store_query_results[data_store.id].append(non_local_query_result)
                     all_query_results.append(non_local_query_result)
         for data_store in self._data_stores:
-            if data_store.id in query_results:
-                for query_result in query_results[data_store.id]:
+            if data_store.id in data_store_query_results:
+                for query_result in data_store_query_results[data_store.id]:
                     file_refs = data_store.get(query_result)
                     for file_ref in file_refs:
                         urls.append(file_ref.url)
@@ -190,7 +190,11 @@ class DataAccessComponent(object):
         :param data_types:
         :return:    A query string that may be passed on to a data store
         """
-        # return roi + ';' + start_time + ';' + end_time + ';' + data_types + ';' + roi_grid
+        for data_model_type in INPUT_TYPES:
+            if data_model_type in data_types:
+                replacement = INPUT_TYPES[data_model_type]['unprocessed'] + INPUT_TYPES[data_model_type]['preprocessed']
+                replacement = ','.join(replacement)
+                data_types = data_types.replace(data_model_type, replacement)
         if roi_grid is None:
             roi_grid = 'EPSG:4326'
         return ';'.join([roi, start_time, end_time, data_types, roi_grid])

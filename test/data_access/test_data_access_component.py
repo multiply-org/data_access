@@ -91,3 +91,35 @@ def test_create_local_data_store():
                                                   meta_info_file='./test/test_data/meta_store.json',
                                                   base_pattern='mm/dt/', id='cgfsvt',
                                                   supported_data_types='TYPE_A,TYPE_B')
+
+
+def test_build_query_string():
+    data_access_component = DataAccessComponent()
+
+    query_string = data_access_component._build_query_string(roi="POLYGON((15 15, 25 15, 25 25, 15 25, 15 15))",
+                                                       start_time="2017-03-21 14:33:00", end_time="2017-03-21 14:45:00",
+                                                       data_types="TYPE_A,TYPE_B", roi_grid="EPSG:3301")
+    expected = "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
+               "TYPE_A,TYPE_B;EPSG:3301"
+
+    assert expected == query_string
+
+
+def test_build_query_string_sentinel_1():
+    data_access_component = DataAccessComponent()
+    query_string = data_access_component._build_query_string(roi="POLYGON((15 15, 25 15, 25 25, 15 25, 15 15))",
+                                                       start_time="2017-03-21 14:33:00", end_time="2017-03-21 14:45:00",
+                                                       data_types="Sentinel-1", roi_grid="EPSG:3301")
+    expected = "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
+               "S1_SLC,S1_Speckled;EPSG:3301"
+    assert expected == query_string
+
+
+def test_build_query_string_sentinel_2():
+    data_access_component = DataAccessComponent()
+    query_string = data_access_component._build_query_string(roi="POLYGON((15 15, 25 15, 25 25, 15 25, 15 15))",
+                                                       start_time="2017-03-21 14:33:00", end_time="2017-03-21 14:45:00",
+                                                       data_types="Sentinel-2", roi_grid="EPSG:3301")
+    expected = "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
+               "S2_L1C,AWS_S2_L1C,S2_L2,AWS_S2_L2;EPSG:3301"
+    assert expected == query_string
