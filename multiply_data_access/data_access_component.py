@@ -19,6 +19,21 @@ PATH_TO_DEFAULT_DATA_STORES_FILE = pkg_resources.resource_filename(__name__, 'de
 logging.getLogger().setLevel(logging.INFO)
 
 
+def _build_query_string(roi: str, start_time: str, end_time: str, data_types: str,
+                        roi_grid: Optional[str] = 'EPSG:4326') -> str:
+    """
+    Builds a query string. In a future version, this will be an opensearch url.
+    :param roi:
+    :param start_time:
+    :param end_time:
+    :param data_types:
+    :return:    A query string that may be passed on to a data store
+    """
+    if roi_grid is None:
+        roi_grid = 'EPSG:4326'
+    return ';'.join([roi, start_time, end_time, data_types, roi_grid])
+
+
 class DataAccessComponent(object):
     """
     The controlling component. The data access component is responsible for communicating with the various data stores
@@ -40,6 +55,26 @@ class DataAccessComponent(object):
         for data_store in self._data_stores:
             print(data_store)
 
+    @classmethod
+    def _get_query_strings(cls, roi: str, start_time: str, end_time: str, data_types: str, roi_grid) -> List[str]:
+        query_strings = []
+        data_types = data_types.rstrip().replace(' ', '')
+        for data_model_type in INPUT_TYPES:
+            if data_model_type in data_types:
+                data_types = data_types.replace(data_model_type, '')
+                unprocessed_model_data_types = INPUT_TYPES[data_model_type]['unprocessed']
+                preprocessed_model_data_types = INPUT_TYPES[data_model_type]['preprocessed']
+                for i in range(len(unprocessed_model_data_types)):
+                    query_1 = _build_query_string(roi, start_time, end_time, unprocessed_model_data_types[i], roi_grid)
+                    query_strings.append(query_1)
+                    query_2 = _build_query_string(roi, start_time, end_time, preprocessed_model_data_types[i], roi_grid)
+                    query_strings.append(query_2)
+        while ',,' in data_types:
+            data_types = data_types.replace(',,', ',')
+        if data_types != ',' and data_types != '':
+            query_strings.append(_build_query_string(roi, start_time, end_time, data_types, roi_grid))
+        return query_strings
+
     def query(self, roi: str, start_time: str, end_time: str, data_types: str, roi_grid: str = 'EPSG:4326') \
             -> List[DataSetMetaInfo]:
         """
@@ -52,19 +87,31 @@ class DataAccessComponent(object):
         :param roi_grid: The EPSG code of the spatial reference system in which the roi is given. Default is WGS 84.
         :return: A list of DataSetMetaInfos that meet the conditions of the query.
         """
-        query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types, roi_grid)
+        query_strings = self._get_query_strings(roi, start_time, end_time, data_types, roi_grid)
         meta_data_infos = []
-        for data_store in self._data_stores:
-            local_query_results = data_store.query_local(query_string)
-            for local_query_result in local_query_results:
-                if not self._is_already_included(local_query_result, meta_data_infos):
-                    meta_data_infos.append(local_query_result)
-        for data_store in self._data_stores:
-            non_local_query_results = data_store.query_non_local(query_string)
-            for non_local_query_result in non_local_query_results:
-                if not self._is_already_included(non_local_query_result, meta_data_infos):
-                    meta_data_infos.append(non_local_query_result)
-        return meta_data_infos
+        for i, query_string in enumerate(query_strings):
+            query_meta_data_infos = []
+            for data_store in self._data_stores:
+                local_query_results = data_store.query_local(query_string)
+                for local_query_result in local_query_results:
+                    if not self._is_already_included(local_query_result, query_meta_data_infos):
+                        query_meta_data_infos.append(local_query_result)
+            for data_store in self._data_stores:
+                non_local_query_results = data_store.query_non_local(query_string)
+                for non_local_query_result in non_local_query_results:
+                    if not self._is_already_included(non_local_query_result, query_meta_data_infos):
+                        query_meta_data_infos.append(non_local_query_result)
+            meta_data_infos.append(query_meta_data_infos)
+            if (i % 2) == 0:
+                for meta_data_on_preprocessed in meta_data_infos[i]:
+                    for meta_data_on_unprocessed in meta_data_infos[i-1]:
+                        if meta_data_on_unprocessed.equals_except_data_type(meta_data_on_preprocessed):
+                            meta_data_infos[i-1].remove(meta_data_on_unprocessed)
+                            break
+        result = []
+        for meta_data_info_list in meta_data_infos:
+            result += meta_data_info_list
+        return result
 
     @staticmethod
     def _is_already_included(data_set_meta_info: DataSetMetaInfo, data_set_meta_infos: List[DataSetMetaInfo]) -> bool:
@@ -136,26 +183,37 @@ class DataAccessComponent(object):
         query. If datasets are found, url's to their positions are returned.
         :return: a list of url's to locally stored files that match the conditions given by the query in the parameter.
         """
-        query_string = DataAccessComponent._build_query_string(roi, start_time, end_time, data_types, roi_grid)
+        query_strings = self._get_query_strings(roi, start_time, end_time, data_types, roi_grid)
         urls = []
         data_store_query_results = {}
-        all_query_results = []
-        for data_store in self._data_stores:
-            local_query_results = data_store.query_local(query_string)
-            for local_query_result in local_query_results:
-                if not self._is_already_included(local_query_result, all_query_results):
-                    if data_store.id not in data_store_query_results:
-                        data_store_query_results[data_store.id] = []
-                    data_store_query_results[data_store.id].append(local_query_result)
-                    all_query_results.append(local_query_result)
-        for data_store in self._data_stores:
-            non_local_query_results = data_store.query_non_local(query_string)
-            for non_local_query_result in non_local_query_results:
-                if not self._is_already_included(non_local_query_result, all_query_results):
-                    if data_store.id not in data_store_query_results:
-                        data_store_query_results[data_store.id] = []
-                    data_store_query_results[data_store.id].append(non_local_query_result)
-                    all_query_results.append(non_local_query_result)
+        for i, query_string in enumerate(query_strings):
+            query_results = []
+            for data_store in self._data_stores:
+                local_query_results = data_store.query_local(query_string)
+                for local_query_result in local_query_results:
+                    if not self._is_already_included(local_query_result, query_results):
+                        if data_store.id not in data_store_query_results:
+                            data_store_query_results[data_store.id] = []
+                        data_store_query_results[data_store.id].append(local_query_result)
+                        query_results.append(local_query_result)
+            for data_store in self._data_stores:
+                non_local_query_results = data_store.query_non_local(query_string)
+                for non_local_query_result in non_local_query_results:
+                    if not self._is_already_included(non_local_query_result, query_results):
+                        if data_store.id not in data_store_query_results:
+                            data_store_query_results[data_store.id] = []
+                        data_store_query_results[data_store.id].append(non_local_query_result)
+                        query_results.append(non_local_query_result)
+            if (i % 2) == 0:
+                for meta_data_on_preprocessed in query_results[i]:
+                    for meta_data_on_unprocessed in query_results[i-1]:
+                        if meta_data_on_unprocessed.equals_except_data_type(meta_data_on_preprocessed):
+                            query_results[i-1].remove(meta_data_on_unprocessed)
+                            for data_store_id in data_store_query_results:
+                                if meta_data_on_unprocessed in data_store_query_results[data_store_id]:
+                                    data_store_query_results[data_store_id].remove(meta_data_on_unprocessed)
+                                    break
+                            break
         for data_store in self._data_stores:
             if data_store.id in data_store_query_results:
                 for query_result in data_store_query_results[data_store.id]:
@@ -178,26 +236,6 @@ class DataAccessComponent(object):
                     for file_ref in file_refs:
                         urls.append(file_ref.url)
         return urls
-
-    @staticmethod
-    def _build_query_string(roi: str, start_time: str, end_time: str, data_types: str,
-                            roi_grid: Optional[str] = 'EPSG:4326') -> str:
-        """
-        Builds a query string. In a future version, this will be an opensearch url.
-        :param roi:
-        :param start_time:
-        :param end_time:
-        :param data_types:
-        :return:    A query string that may be passed on to a data store
-        """
-        for data_model_type in INPUT_TYPES:
-            if data_model_type in data_types:
-                replacement = INPUT_TYPES[data_model_type]['unprocessed'] + INPUT_TYPES[data_model_type]['preprocessed']
-                replacement = ','.join(replacement)
-                data_types = data_types.replace(data_model_type, replacement)
-        if roi_grid is None:
-            roi_grid = 'EPSG:4326'
-        return ';'.join([roi, start_time, end_time, data_types, roi_grid])
 
     def _read_registered_data_stores(self) -> None:
         data_stores_file = self._get_default_data_stores_file()
