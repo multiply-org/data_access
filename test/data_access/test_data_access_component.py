@@ -139,14 +139,10 @@ def test_get_query_strings_sentinel_2_and_other_types():
                                                              end_time="2017-03-21 14:45:00",
                                                              data_types="TYPE_A,Sentinel-2,TYPE_B",
                                                              roi_grid="EPSG:3301")
-    assert 5 == len(query_strings)
+    assert 3 == len(query_strings)
     assert "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
-           "S2_L1C;EPSG:3301" == query_strings[0]
+           "S2_L1C,AWS_S2_L1C;EPSG:3301" == query_strings[0]
     assert "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
-           "S2_L2;EPSG:3301" == query_strings[1]
+           "S2_L2,AWS_S2_L2;EPSG:3301" == query_strings[1]
     assert "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
-           "AWS_S2_L1C;EPSG:3301" == query_strings[2]
-    assert "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
-           "AWS_S2_L2;EPSG:3301" == query_strings[3]
-    assert "POLYGON((15 15, 25 15, 25 25, 15 25, 15 15));2017-03-21 14:33:00;2017-03-21 14:45:00;" \
-           "TYPE_A,TYPE_B;EPSG:3301" == query_strings[4]
+           "TYPE_A,TYPE_B;EPSG:3301" == query_strings[2]

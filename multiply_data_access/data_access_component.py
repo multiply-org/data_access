@@ -62,13 +62,12 @@ class DataAccessComponent(object):
         for data_model_type in INPUT_TYPES:
             if data_model_type in data_types:
                 data_types = data_types.replace(data_model_type, '')
-                unprocessed_model_data_types = INPUT_TYPES[data_model_type]['unprocessed']
-                preprocessed_model_data_types = INPUT_TYPES[data_model_type]['preprocessed']
-                for i in range(len(unprocessed_model_data_types)):
-                    query_1 = _build_query_string(roi, start_time, end_time, unprocessed_model_data_types[i], roi_grid)
-                    query_strings.append(query_1)
-                    query_2 = _build_query_string(roi, start_time, end_time, preprocessed_model_data_types[i], roi_grid)
-                    query_strings.append(query_2)
+                unprocessed_model_data_types = ",".join(INPUT_TYPES[data_model_type]['unprocessed'])
+                preprocessed_model_data_types = ",".join(INPUT_TYPES[data_model_type]['preprocessed'])
+                query_strings.append(
+                    _build_query_string(roi, start_time, end_time, unprocessed_model_data_types, roi_grid))
+                query_strings.append(
+                    _build_query_string(roi, start_time, end_time, preprocessed_model_data_types, roi_grid))
         while ',,' in data_types:
             data_types = data_types.replace(',,', ',')
         if data_types != ',' and data_types != '':
@@ -102,7 +101,7 @@ class DataAccessComponent(object):
                     if not self._is_already_included(non_local_query_result, query_meta_data_infos):
                         query_meta_data_infos.append(non_local_query_result)
             meta_data_infos.append(query_meta_data_infos)
-            if (i % 2) == 0:
+            if (i + 1) % 2 == 0:
                 for meta_data_on_preprocessed in meta_data_infos[i]:
                     for meta_data_on_unprocessed in meta_data_infos[i-1]:
                         if meta_data_on_unprocessed.equals_except_data_type(meta_data_on_preprocessed):
@@ -204,7 +203,7 @@ class DataAccessComponent(object):
                             data_store_query_results[data_store.id] = []
                         data_store_query_results[data_store.id].append(non_local_query_result)
                         query_results.append(non_local_query_result)
-            if (i % 2) == 0:
+            if (i + 1) % 2 == 0:
                 for meta_data_on_preprocessed in query_results[i]:
                     for meta_data_on_unprocessed in query_results[i-1]:
                         if meta_data_on_unprocessed.equals_except_data_type(meta_data_on_preprocessed):
