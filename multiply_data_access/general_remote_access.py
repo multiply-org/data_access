@@ -125,6 +125,7 @@ class HttpFileSystem(LocallyWrappedFileSystem):
     def _get_from_wrapped(self, data_set_meta_info: DataSetMetaInfo) -> Sequence[FileRef]:
         file_refs = []
         url = '{}/{}'.format(self._url, data_set_meta_info.identifier)
+        logging.info(f"Attempting to download from {url}")
         success = self._download_url(url, self._temp_dir, data_set_meta_info.identifier)
         if success:
             destination = os.path.join(self._temp_dir, data_set_meta_info.identifier)
