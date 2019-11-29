@@ -223,7 +223,7 @@ class DataAccessComponent(object):
         for data_store in self._data_stores:
             if data_store.id in data_store_query_results:
                 for query_result in data_store_query_results[data_store.id]:
-                    logger.info(f'{int((count/num_query_results) * 100)}-{int((count+1/num_query_results) * 100)}')
+                    logger.info(f'{int((count/num_query_results) * 100)}')
                     file_refs = data_store.get(query_result)
                     for file_ref in file_refs:
                         urls.append(file_ref.url)
@@ -237,12 +237,16 @@ class DataAccessComponent(object):
         :return: a list of url's to locally stored files that match the conditions given by the query in the parameter.
         """
         urls = []
+        count = 0.0
+        num_query_results = float(len(data_set_meta_infos))
         for data_store in self._data_stores:
             for data_set_meta_info in data_set_meta_infos:
                 if data_store.provides_data_type(data_set_meta_info.data_type):
+                    logger.info(f'{int((count/num_query_results) * 100)}')
                     file_refs = data_store.get(data_set_meta_info)
                     for file_ref in file_refs:
                         urls.append(file_ref.url)
+                    count += 1.0
         return urls
 
     def _read_registered_data_stores(self) -> None:
