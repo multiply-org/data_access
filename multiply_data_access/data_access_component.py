@@ -16,6 +16,8 @@ DATA_STORES_FILE_NAME = 'data_stores.yml'
 DATA_FOLDER_NAME = 'data'
 PATH_TO_DEFAULT_DATA_STORES_FILE = pkg_resources.resource_filename(__name__, 'default_data_stores.yaml')
 
+logger = logging.getLogger('ComponentProgress')
+logger.setLevel(logging.INFO)
 logging.getLogger().setLevel(logging.INFO)
 
 
@@ -103,9 +105,9 @@ class DataAccessComponent(object):
             meta_data_infos.append(query_meta_data_infos)
             if (i + 1) % 2 == 0:
                 for meta_data_on_preprocessed in meta_data_infos[i]:
-                    for meta_data_on_unprocessed in meta_data_infos[i-1]:
+                    for meta_data_on_unprocessed in meta_data_infos[i - 1]:
                         if meta_data_on_unprocessed.equals_except_data_type(meta_data_on_preprocessed):
-                            meta_data_infos[i-1].remove(meta_data_on_unprocessed)
+                            meta_data_infos[i - 1].remove(meta_data_on_unprocessed)
                             break
         result = []
         for meta_data_info_list in meta_data_infos:
@@ -129,7 +131,7 @@ class DataAccessComponent(object):
                 return True
         return False
 
-    def put(self, path: str, data_store_id: Optional[str]=None) -> None:
+    def put(self, path: str, data_store_id: Optional[str] = None) -> None:
         """
         Puts data into the data access component. If the id to a data store is provided, the data access component
         will attempt to put the data into the store. If data cannot be added to that particular store, it will not be
@@ -185,6 +187,7 @@ class DataAccessComponent(object):
         query_strings = self._get_query_strings(roi, start_time, end_time, data_types, roi_grid)
         urls = []
         data_store_query_results = {}
+        num_query_results = 0
         for i, query_string in enumerate(query_strings):
             query_results = []
             for data_store in self._data_stores:
@@ -194,6 +197,7 @@ class DataAccessComponent(object):
                         if data_store.id not in data_store_query_results:
                             data_store_query_results[data_store.id] = []
                         data_store_query_results[data_store.id].append(local_query_result)
+                        num_query_results += 1.0
                         query_results.append(local_query_result)
             for data_store in self._data_stores:
                 non_local_query_results = data_store.query_non_local(query_string)
@@ -202,23 +206,28 @@ class DataAccessComponent(object):
                         if data_store.id not in data_store_query_results:
                             data_store_query_results[data_store.id] = []
                         data_store_query_results[data_store.id].append(non_local_query_result)
+                        num_query_results += 1.0
                         query_results.append(non_local_query_result)
             if (i + 1) % 2 == 0:
                 for meta_data_on_preprocessed in query_results[i]:
-                    for meta_data_on_unprocessed in query_results[i-1]:
+                    for meta_data_on_unprocessed in query_results[i - 1]:
                         if meta_data_on_unprocessed.equals_except_data_type(meta_data_on_preprocessed):
-                            query_results[i-1].remove(meta_data_on_unprocessed)
+                            query_results[i - 1].remove(meta_data_on_unprocessed)
                             for data_store_id in data_store_query_results:
                                 if meta_data_on_unprocessed in data_store_query_results[data_store_id]:
                                     data_store_query_results[data_store_id].remove(meta_data_on_unprocessed)
+                                    num_query_results -= 1.0
                                     break
                             break
+        count = 0.0
         for data_store in self._data_stores:
             if data_store.id in data_store_query_results:
                 for query_result in data_store_query_results[data_store.id]:
+                    logger.info(f'{int((count/num_query_results) * 100)}-{int((count+1/num_query_results) * 100)}')
                     file_refs = data_store.get(query_result)
                     for file_ref in file_refs:
                         urls.append(file_ref.url)
+                    count += 1.0
         return urls
 
     def get_data_urls_from_data_set_meta_infos(self, data_set_meta_infos: List[DataSetMetaInfo]) -> List[str]:
@@ -330,7 +339,7 @@ class DataAccessComponent(object):
     #
 
     def create_local_data_store(self, base_dir: Optional[str] = None, meta_info_file: Optional[str] = None,
-                                base_pattern: Optional[str]='/dt/yy/mm/dd/', id: Optional[str] = None,
+                                base_pattern: Optional[str] = '/dt/yy/mm/dd/', id: Optional[str] = None,
                                 supported_data_types: Optional[str] = None):
         """
         Adds a a new local data store and saves it permanently. It will consist of a LocalFileSystem and a
