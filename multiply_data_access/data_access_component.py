@@ -188,6 +188,7 @@ class DataAccessComponent(object):
         urls = []
         data_store_query_results = {}
         num_query_results = 0
+        all_query_results = []
         for i, query_string in enumerate(query_strings):
             query_results = []
             for data_store in self._data_stores:
@@ -208,11 +209,12 @@ class DataAccessComponent(object):
                         data_store_query_results[data_store.id].append(non_local_query_result)
                         num_query_results += 1.0
                         query_results.append(non_local_query_result)
+            all_query_results.append(query_results)
             if (i + 1) % 2 == 0:
-                for meta_data_on_preprocessed in query_results[i]:
-                    for meta_data_on_unprocessed in query_results[i - 1]:
+                for meta_data_on_preprocessed in all_query_results[i]:
+                    for meta_data_on_unprocessed in all_query_results[i - 1]:
                         if meta_data_on_unprocessed.equals_except_data_type(meta_data_on_preprocessed):
-                            query_results[i - 1].remove(meta_data_on_unprocessed)
+                            all_query_results[i - 1].remove(meta_data_on_unprocessed)
                             for data_store_id in data_store_query_results:
                                 if meta_data_on_unprocessed in data_store_query_results[data_store_id]:
                                     data_store_query_results[data_store_id].remove(meta_data_on_unprocessed)
