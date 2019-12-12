@@ -323,6 +323,7 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
                                secret_access_key=self._secret_access_key,
                                server=_MUNDI_SERVER)
         keys = []
+        excludes = _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['excludes']
         right_bucket = None
         for bucket in buckets:
             right_bucket = bucket
@@ -330,18 +331,21 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
             if objects.status < 300:
                 for content in objects.body.contents:
                     if data_set_meta_info.identifier in content.key:
-                        keys.append(content.key)
+                        move_on = False
+                        for exclude in excludes:
+                            if content.key.endswith(exclude):
+                                move_on = True
+                        if not move_on:
+                            keys.append(content.key)
                 if len(keys) > 0:
                     break
-            else:
-                logging.error(objects.errorCode)
         if len(keys) == 0:
             return []
         for key in keys:
             relative_path_to_file = key.split(data_set_meta_info.identifier)[1]
-            resp = obs_client.getObject(right_bucket, key, downloadPath=f'{self._temp_dir}/{data_set_meta_info.identifier}/{relative_path_to_file}')
+            target_file = f'{self._temp_dir}/{data_set_meta_info.identifier}{relative_path_to_file}'
+            resp = obs_client.getObject(right_bucket, key, downloadPath= target_file)
             if resp.status >= 300:
-                logging.error(resp.errorCode)
                 return []
         obs_client.close()
         file_ref = FileRef(f'{self._temp_dir}/{data_set_meta_info.identifier}',
