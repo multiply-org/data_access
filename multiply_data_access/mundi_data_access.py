@@ -341,14 +341,17 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
                     break
         if len(keys) == 0:
             return []
+        data_set_id = data_set_meta_info.identifier
         for key in keys:
             relative_path_to_file = key.split(data_set_meta_info.identifier)[1]
             target_file = f'{self._temp_dir}/{data_set_meta_info.identifier}{relative_path_to_file}'
+            if len(keys) == 1:
+                data_set_id = f'{data_set_meta_info.identifier}{relative_path_to_file}'
             resp = obs_client.getObject(right_bucket, key, downloadPath= target_file)
             if resp.status >= 300:
                 return []
         obs_client.close()
-        file_ref = FileRef(f'{self._temp_dir}/{data_set_meta_info.identifier}',
+        file_ref = FileRef(f'{self._temp_dir}/{data_set_id}',
                            data_set_meta_info.start_time, data_set_meta_info.end_time,
                            get_mime_type(data_set_meta_info.identifier))
         return [file_ref]
