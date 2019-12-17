@@ -18,6 +18,7 @@ from shapely.geometry import Polygon
 from typing import Optional
 import gdal
 import xarray
+import os
 import osr
 import zipfile
 from xml.etree import ElementTree
@@ -49,7 +50,11 @@ class S1SlcMetaInfoExtractor(DataSetMetaInfoExtractor):
     def name(cls) -> str:
         return DataTypeConstants.S1_SLC
 
-    def extract_meta_info(self, path: str) -> DataSetMetaInfo:
+    def extract_meta_info(self, path: str) -> Optional[DataSetMetaInfo]:
+        if not path.endswith('.zip'):
+            path = f'{path}.zip'
+        if not os.path.exists(path):
+            return None
         s1_slc_archive = zipfile.ZipFile(f'{path}.zip', 'r')
         manifest_file = s1_slc_archive.read('manifest.safe')
         manifest = XML(manifest_file)
