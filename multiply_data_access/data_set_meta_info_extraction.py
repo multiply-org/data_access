@@ -55,7 +55,7 @@ class S1SlcMetaInfoExtractor(DataSetMetaInfoExtractor):
             path = f'{path}.zip'
         if not os.path.exists(path):
             return None
-        s1_slc_archive = zipfile.ZipFile(f'{path}.zip', 'r')
+        s1_slc_archive = zipfile.ZipFile(path, 'r')
         manifest_file = s1_slc_archive.read('manifest.safe')
         manifest = XML(manifest_file)
         coverage = self._extract_coverage(manifest)
