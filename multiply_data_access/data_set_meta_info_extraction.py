@@ -56,14 +56,19 @@ class S1SlcMetaInfoExtractor(DataSetMetaInfoExtractor):
         if not os.path.exists(path):
             return None
         s1_slc_archive = zipfile.ZipFile(path, 'r')
-        manifest_file = s1_slc_archive.read('manifest.safe')
+        for file in s1_slc_archive.filelist:
+            if file.filename.endswith('manifest.safe'):
+                return self._create_data_set_meta_info(path, s1_slc_archive.read(file))
+        return None
+
+    def _create_data_set_meta_info(self, path: str, manifest_file):
         manifest = XML(manifest_file)
         coverage = self._extract_coverage(manifest)
         start_time = self._extract_start_time(manifest)
         end_time = self._extract_stop_time(manifest)
         id = path.split('/')[-1]
         return DataSetMetaInfo(identifier=id, coverage=coverage, start_time=start_time, end_time=end_time,
-                               data_type=DataTypeConstants.S1_SLC)
+                           data_type=DataTypeConstants.S1_SLC)
 
     def _extract_coverage(self, manifest) -> str:
         for child in manifest:

@@ -25,7 +25,7 @@ def test_s1_slc_meta_info_extractor_extract_meta_info():
     path_to_s1_dir = './test/test_data/S1_SLC/S1A_IW_SLC__1SDV_20180603T053307_20180603T053334_022188_026669_A432'
     data_set_meta_info = extractor.extract_meta_info(path_to_s1_dir)
     assert 'S1_SLC' == data_set_meta_info.data_type
-    assert 'S1A_IW_SLC__1SDV_20180603T053307_20180603T053334_022188_026669_A432' == data_set_meta_info.identifier
+    assert 'S1A_IW_SLC__1SDV_20180603T053307_20180603T053334_022188_026669_A432.zip' == data_set_meta_info.identifier
     assert '2018-06-03T05:33:07.493195' == data_set_meta_info.start_time
     assert '2018-06-03T05:33:34.589538' == data_set_meta_info.end_time
     expected_coverage = wkt.loads(
