@@ -133,3 +133,15 @@
         path_to_json_file: user_dir/scihub_store.json
         username:
         password:
+- DataStore:
+    FileSystem:
+      parameters:
+        path: /data/archive/
+        pattern: /dt/yy/mm/dd/
+        temp_dir: /data/temp/creodias/
+      type: CreoDiasFileSystem
+    Id: CreoDias
+    MetaInfoProvider:
+      parameters:
+        path_to_json_file: /home/ubuntu/.multiply/creodias_store.json
+      type: CreoDiasMetaInfoProvider

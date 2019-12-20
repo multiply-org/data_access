@@ -42,7 +42,8 @@ setup(name='multiply-data-access',
               'vrt_file_system = multiply_data_access:vrt_data_access.VrtFileSystemAccessor',
               'mundi_file_system = multiply_data_access:mundi_data_access.MundiObsFileSystemAccessor',
               'mundi_rest_file_system = multiply_data_access:mundi_data_access.MundiRestFileSystemAccessor',
-              'scihub_file_system = multiply_data_access:scihub_data_access.SciHubFileSystemAccessor'
+              'scihub_file_system = multiply_data_access:scihub_data_access.SciHubFileSystemAccessor',
+              'creodias_file_system = multiply_data_access:creodias_data_access.CreoDiasFileSystemAccessor'
           ],
           'meta_info_provider_plugins': [
               'json_meta_info_provider = multiply_data_access:json_meta_info_provider.JsonMetaInfoProviderAccessor',
@@ -55,7 +56,8 @@ setup(name='multiply-data-access',
               'locally_wrapped_mundi_meta_info_provider = '
               'multiply_data_access:mundi_data_access.LocallyWrappedMundiMetaInfoProviderAccessor',
               'mundi_meta_info_provider = multiply_data_access:mundi_data_access.MundiMetaInfoProviderAccessor',
-              'scihub_meta_info_provider = multiply_data_access:scihub_data_access.SciHubMetaInfoProviderAccessor'
+              'scihub_meta_info_provider = multiply_data_access:scihub_data_access.SciHubMetaInfoProviderAccessor',
+              'creodias_meta_info_provider = multiply_data_access.creodias_data_access.CreoDiasMetaInfoProviderAccessor'
           ],
       },
       install_requires=requirements
