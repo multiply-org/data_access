@@ -98,8 +98,8 @@ class CreoDiasFileSystem(LocallyWrappedFileSystem):
         return _FILE_SYSTEM_NAME
 
     def clear_cache(self):
-        shutil.rmtree(self._temp_dir)
-        shutil.rmtree(self._path)
+        if os.path.exists(self._temp_dir):
+            shutil.rmtree(self._temp_dir)
 
 
 class CreodiasFileSystemAccessor(FileSystemAccessor):
