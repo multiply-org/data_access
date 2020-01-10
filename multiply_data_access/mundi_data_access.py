@@ -398,8 +398,6 @@ class MundiObsFileSystem(LocallyWrappedFileSystem):
     def clear_cache(self):
         if os.path.exists(self._temp_dir):
             shutil.rmtree(self._temp_dir)
-        if os.path.exists(self._path):
-            shutil.rmtree(self._path)
 
 
 class MundiObsFileSystemAccessor(FileSystemAccessor):
