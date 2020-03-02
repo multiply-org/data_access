@@ -14,8 +14,6 @@ from .mundi_data_access import LocallyWrappedMundiMetaInfoProvider, LocallyWrapp
     MundiMetaInfoProvider, MundiMetaInfoProviderAccessor
 from .scihub_data_access import SciHubFileSystemAccessor, SciHubFileSystem, SciHubMetaInfoProviderAccessor, \
     SciHubMetaInfoProvider
-from .creodias_data_access import CreoDiasFileSystem, CreodiasFileSystemAccessor, CreoDiasMetaInfoProvider, \
-    CreoDiasMetaInfoProviderCreator
 from .data_access_component import DataAccessComponent
 from .json_meta_info_provider import JsonMetaInfoProvider
 from .local_file_system import LocalFileSystem
