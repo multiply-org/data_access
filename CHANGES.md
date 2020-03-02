@@ -1,3 +1,8 @@
+## Version 0.5.1
+
+### Improvements and new Features
+- Removed CreoDIAS provision from setup.py
+
 ## Version 0.5
 ### Improvements and new Features
 - Added Data Set Meta Info Extraction of S1 SLC Data
