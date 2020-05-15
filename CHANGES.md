@@ -1,7 +1,31 @@
-## Version 0.4.5
+## Version 0.5.2
 
 ### Fixes
 - Improved data retrieval from Copernicus SciHub
+
+## Version 0.5.1
+
+### Improvements and new Features
+- Removed CreoDIAS provision from setup.py
+
+## Version 0.5
+### Improvements and new Features
+- Added Data Set Meta Info Extraction of S1 SLC Data
+- Added Data Set Meta Info Extraction of S1 GRD Data as creeated by sar pre-processing
+- Added Data Set Meta Info Extraction of S2 L1C Data
+- Added Data Set Meta Info Extraction of S2 L2 Data
+- Added Data Store to extract data from MUNDI DIAS
+- Added Data Store to extract data from SciHub
+- Do not automatically update at start up
+- Improved capabality to query for local and non-local data
+- Added capability to clear caches
+- Improved checking for equality of data set meta infos
+- Support Encompassing Model Data Types
+- Output progress via logs
+
+### Fixes
+- Removed necessity to install sentinelhub (moved import command)
+- Do not import requirements via setup.py
 
 ## Version 0.4.4
 

@@ -235,7 +235,8 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
         return {'username': self._username, 'password': self._password, 'temp_dir': self._temp_dir}
 
     def clear_cache(self):
-        shutil.rmtree(self._temp_dir)
+        if os.path.exists(self._temp_dir):
+            shutil.rmtree(self._temp_dir)
 
 
 class SciHubFileSystemAccessor(FileSystemAccessor):
