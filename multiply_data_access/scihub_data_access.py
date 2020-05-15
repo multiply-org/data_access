@@ -7,7 +7,9 @@ This module contains the functionality to access data from the MUNDI DIAS.
 from datetime import datetime
 from http.cookiejar import CookieJar
 from lxml.etree import XML
+from zipfile import ZipFile
 import base64
+import glob
 import logging
 import os
 import requests
@@ -32,7 +34,8 @@ _FILE_SYSTEM_NAME = 'SciHubFileSystem'
 
 _BASE_CATALOGUE_URL = "https://scihub.copernicus.eu/dhus/search?start={}&rows=50&q=({})"
 _DATA_TYPE_PARAMETER_DICTS = {
-    DataTypeConstants.S1_SLC: {'platformname': 'Sentinel-1', 'productType': 'SLC'}
+    DataTypeConstants.S1_SLC: {'platformname': 'Sentinel-1', 'productType': 'SLC', 'unzip': False},
+    DataTypeConstants.S2_L1C: {'platformname': 'Sentinel-2', 'productType': 'S2MSI1C', 'unzip': True}
 }
 _DOWNLOAD_URL = "https://scihub.copernicus.eu/dhus/odata/v1/Products(\'{}\')/$value"
 
@@ -96,6 +99,7 @@ class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
                             if not self._is_provided_locally(data_set_meta_info, local_data_set_meta_infos):
                                 data_set_meta_infos.append(data_set_meta_info)
                             continue_checking_for_data_sets = True
+                    response.close()
         return data_set_meta_infos
 
     @staticmethod
@@ -121,7 +125,7 @@ class SciHubMetaInfoProvider(LocallyWrappedMetaInfoProvider):
         return {'username': self._username, 'password': self._password}
 
     def provides_data_type(self, data_type: str) -> bool:
-        return data_type == DataTypeConstants.S1_SLC
+        return data_type == DataTypeConstants.S1_SLC or data_type == DataTypeConstants.S2_L1C
 
     def get_provided_data_types(self) -> List[str]:
         return [DataTypeConstants.S1_SLC]
@@ -168,20 +172,24 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
             replace(b'\n', b'').decode()
         request.add_header('Authorization', 'Basic {}'.format(authorization))
         try:
-            status = 202
-            first = True
+            cj = CookieJar()
+            opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+            remote_file = opener.open(request)
+            status = remote_file.status
             while status != 200:
-                if not first:
-                    time.sleep(10)
-                cj = CookieJar()
-                opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
+                logging.info(f"Request '{file_url}' awaiting status")
+                time.sleep(10)
                 remote_file = opener.open(request)
                 status = remote_file.status
-                logging.info(f"Request '{file_url}' awaiting status")
-                first = False
             total_size_in_bytes = int(remote_file.info()['Content-Length'])
             # todo check in advance whether there is enough disk space left
-            temp_url = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
+            file_name = data_set_meta_info.identifier
+            cdheader = remote_file.getheader('content-disposition')
+            if cdheader:
+                split_header = cdheader.split('"')
+                if file_name in cdheader and len(split_header) > 1:
+                    file_name = split_header[-2]
+            temp_url = f'{self._temp_dir}/{file_name}'
             logging.info('Downloading {}'.format(data_set_meta_info.identifier))
             with open(temp_url, 'wb') as temp_file:
                 one_percent = total_size_in_bytes / 100
@@ -200,20 +208,28 @@ class SciHubFileSystem(LocallyWrappedFileSystem):
             temp_file.close()
             remote_file.close()
             logging.info('Downloaded {}'.format(data_set_meta_info.identifier))
-            file_refs.append(FileRef(temp_url, data_set_meta_info.start_time, data_set_meta_info.end_time,
-                                     get_mime_type(temp_url)))
+            if _DATA_TYPE_PARAMETER_DICTS[data_set_meta_info.data_type]['unzip'] and file_name.endswith('.zip'):
+                with ZipFile(temp_url) as zipfile:
+                    zipfile.extractall(self._temp_dir)
+                os.remove(temp_url)
+            temp_content = glob.glob(f'{self._temp_dir}/*')
+            if len(temp_content) > 0:
+                id = temp_content[0]
+                file_refs.append(FileRef(id, data_set_meta_info.start_time, data_set_meta_info.end_time,
+                                         get_mime_type(temp_url)))
             opener.close()
         except HTTPError as e:
             logging.info(f"Could not download from url '{file_url}'. {e.reason}")
         return file_refs
 
     def _notify_copied_to_local(self, data_set_meta_info: DataSetMetaInfo) -> None:
-        full_path = '{}/{}'.format(self._temp_dir, data_set_meta_info.identifier)
-        if os.path.exists(full_path):
-            if os.path.isdir(full_path):
-                shutil.rmtree(full_path)
-            else:
-                os.remove(full_path)
+        full_paths = glob.glob(f'{self._temp_dir}/{data_set_meta_info.identifier}*')
+        for full_path in full_paths:
+            if os.path.exists(full_path):
+                if os.path.isdir(full_path):
+                    shutil.rmtree(full_path)
+                else:
+                    os.remove(full_path)
 
     def _get_wrapped_parameters_as_dict(self) -> dict:
         return {'username': self._username, 'password': self._password, 'temp_dir': self._temp_dir}
