@@ -1,3 +1,8 @@
+## Version 0.4.5
+
+### Fixes
+- Improved data retrieval from Copernicus SciHub
+
 ## Version 0.4.4
 
 ### Improvements and new Features
